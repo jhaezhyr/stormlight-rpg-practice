@@ -42,9 +42,9 @@ def test_actions():
     available = game.get_available_actions(game.player1)
     print(f"Available actions for {game.player1.name}: {available}")
 
-    # Test moving closer by directly changing distance
+    # Test moving closer by setting positions
     print("Testing movement system by setting distance to 5ft")
-    game.state.distance = 5
+    game.state.set_player_position(game.player2, 5)  # Move P2 to 5ft from P1 (at 0ft)
     print(f"Distance set to: {game.state.distance}ft")
 
     # Test attack (should work now that distance is 5ft)

@@ -13,8 +13,8 @@ def test_new_movement_system():
     # Create a game
     game = Game("Alice", "Bob")
 
-    print(f"Alice speed: {game.player1.speed}ft")
-    print(f"Bob speed: {game.player2.speed}ft")
+    print(f"Alice movement rate: {game.player1.movement_rate}ft")
+    print(f"Bob movement rate: {game.player2.movement_rate}ft")
     print(f"Starting distance: {game.state.distance}ft")
     print()
 
@@ -42,7 +42,7 @@ def test_new_movement_system():
     print(f"Can attack at {game.state.distance}ft: {can_attack}")
 
     # Move closer to attack range
-    game.state.distance = 5
+    game.state.set_player_position(game.player2, 5)  # Move P2 closer to P1 at 0
     can_attack_close = game.action_registry.get_action("attack").can_execute(
         game.player1, game.player2, game.state
     )
@@ -54,22 +54,29 @@ def test_distance_validation():
     game = Game("Alice", "Bob")
 
     # Set distance to 5ft to test minimum distance enforcement
-    game.state.distance = 5
+    game.state.set_player_position(game.player2, 5)  # Move P2 to position 5, P1 is at 0
     print(f"Starting at {game.state.distance}ft apart")
 
     # Simulate moving too close (should be capped at 0ft)
     print("Testing movement validation logic...")
 
     # Test case: trying to move 10ft closer when only 5ft apart
-    requested_movement = -10
-    new_distance = game.state.distance + requested_movement
+    # This logic is now handled by the movement action
+    current_distance = game.state.distance
+    requested_movement = -10  # Move toward position 0
+    player2_current_pos = game.state.get_player_position(game.player2)
+    new_position = player2_current_pos + requested_movement
 
-    if new_distance < 0:
-        actual_movement = -game.state.distance
-        new_distance = 0
-        print(f"Requested: {requested_movement}ft closer")
-        print(f"Actual: {actual_movement}ft closer (capped at minimum distance)")
-        print(f"Final distance: {new_distance}ft")
+    if new_position < 0:
+        new_position = 0
+        actual_movement = 0 - player2_current_pos
+
+    print(f"Requested: move {requested_movement}ft (from {player2_current_pos} to {player2_current_pos + requested_movement})")
+    print(f"Actual: move {actual_movement}ft (capped at position {new_position})")
+
+    # Update position and check distance
+    game.state.set_player_position(game.player2, new_position)
+    print(f"Final distance: {game.state.distance}ft")
 
     print("Distance validation working correctly!")
 

@@ -205,6 +205,28 @@ class Character:
         else:
             return 10  # Default defense
 
+    def get_reach(self, hand: str = "main") -> int:
+        """Get reach for attacks. Defaults to 5ft for unarmed, or weapon reach."""
+        if hand == "main" and self.mainhand_weapon:
+            return self.mainhand_weapon.reach
+        elif hand == "offhand" and self.offhand_weapon:
+            return self.offhand_weapon.reach
+        else:
+            return 5  # Unarmed reach is always 5ft
+
+    def get_max_reach(self) -> int:
+        """Get the maximum reach from all equipped weapons."""
+        max_reach = 5  # Base unarmed reach
+        if self.mainhand_weapon:
+            max_reach = max(max_reach, self.mainhand_weapon.reach)
+        if self.offhand_weapon:
+            max_reach = max(max_reach, self.offhand_weapon.reach)
+        return max_reach
+
+    def can_reach_target(self, target_distance: int, hand: str = "main") -> bool:
+        """Check if target is within reach for attacks."""
+        return target_distance <= self.get_reach(hand)
+
     def __str__(self) -> str:
         traits_str = ", ".join([f"{trait}: {value}" for trait, value in self.traits.items()])
         conditions_str = ", ".join(self.conditions) if self.conditions else "None"

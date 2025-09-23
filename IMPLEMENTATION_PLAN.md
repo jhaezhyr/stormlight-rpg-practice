@@ -35,26 +35,26 @@ This plan implements the full Stormlight Duel system as specified in prompts/REA
 - [x] Write tests for equipment system
 - [x] **REFACTOR**: Organize equipment code into separate modules
 
-## Phase 3: Enhanced Battlefield System
+## Phase 3: Enhanced Battlefield System ✅
 
 **🚨 CRITICAL: Read the ENTIRE prompts/README.md file before starting this phase to ensure all specification details are captured, including user input requirements, command parsing, and interaction patterns.**
 
-### 3.1 Position-Based Combat
-- [ ] **READ SPEC**: Re-read prompts/README.md completely for Phase 3 requirements
-- [ ] Replace distance with absolute positions (P1 at 0, P2 at 30)
-- [ ] Add 3 random cover points within 100ft
-- [ ] Update movement to use positions instead of relative distance
-- [ ] Display battlefield with cover positions
-- [ ] Write tests for positioning system
+### 3.1 Position-Based Combat ✅
+- [x] **READ SPEC**: Re-read prompts/README.md completely for Phase 3 requirements
+- [x] Replace distance with absolute positions (P1 at 0, P2 at 30)
+- [x] Add 3 random cover points within 100ft
+- [x] Update movement to use positions instead of relative distance
+- [x] Display battlefield with cover positions
+- [x] Write tests for positioning system
 
-### 3.2 Advanced Movement Actions
-- [ ] **READ SPEC**: Re-read prompts/README.md for user input patterns and command parsing
-- [ ] Implement Advance action (with distance options)
-- [ ] Implement Retreat action (with distance options)
-- [ ] Add Disengage action (5ft movement, no reactive strike)
-- [ ] Implement reach-based combat zones
-- [ ] Write tests for all movement actions
-- [ ] **REFACTOR**: Consolidate movement logic
+### 3.2 Advanced Movement Actions ✅
+- [x] **READ SPEC**: Re-read prompts/README.md for user input patterns and command parsing
+- [x] Implement Advance action (with distance options)
+- [x] Implement Retreat action (with distance options)
+- [x] Add Disengage action (5ft movement, no reactive strike)
+- [x] Implement reach-based combat zones
+- [x] Write tests for all movement actions
+- [x] **REFACTOR**: Consolidate movement logic
 
 ## Phase 4: Combat System Foundation
 

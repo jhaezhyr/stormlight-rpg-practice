@@ -128,7 +128,7 @@ python3 test_game.py
 - Each combatant has a position on the battlefield. P1 starts at 0 and P2 starts at 30.
 - Distance between players is the absolute difference between their positions. Any time the distance is displayed (after movement, at the start of a turn, etc), it should be shown in distances. For example, "Distance: X ft".
 - There are also 3 "cover" points on the battlefield, at random positions within 100ft of the starting positions. Any time the field is displayed, the cover points should be shown by distances, as "Retreat 20ft or 30ft to cover, or advance 10ft to cover" (even if the enemy is closer than 10ft).
-- All field positions should be represented as integers to avoid mathematical errors.
+- All field positions should be represented as integers to avoid mathematical errors. Negative integers are perfectly acceptable positions.
 
 # Battle actions
 
@@ -152,7 +152,7 @@ Some actions actually require 2 actions, such as the Shove action. These are ind
 - (a)dvance | > | Move toward the opponent.
   - Examples: `a` (advance full speed), `a 10` (advance 10ft)
   - All movement actions must be in increments of 5ft
-  - If you are already within 5ft of your opponent, you cannot advance closer.
+  - If you are already within 5ft of your opponent, you cannot advance closer. This 5ft is the same no matter what size your reach is.
 - re(t)reat | > | Move away
   - Examples: `r` (retreat full speed), `r 10` (retreat 10ft)
 - (b)race | > | If you are within 5ft of cover, or you have a weapon with the "Defensive" trait, gain the "Braced" condition.
@@ -203,6 +203,8 @@ Strikes can only be done if your opponent is in your reach. If you are unarmed, 
 - Prone: While Prone, you are lying flat on the ground. While Prone, you are Slowed and melee attacks against you gain an advantage. You can use the Brace action without cover. You can stand up and end this condition as a free action. After you do, your movement rate is reduced by 5 until the start of your next turn.
   - The condition of reduced movement rate is called "Had to Get Up".
 - Slowed: While Slowed, your movement rate is halved (rounded up). If you become Slowed in the middle of movement, halve your remaining movement (rounded up).
+- Gained advantage(x): You have advantage on your next test using skill `x` against the target that granted you this advantage. After you use that advantage, remove this condition. You may only have one "Gained advantage" condition at a time, no matter what the skill `x` is.
+- Cooldown(x): You cannot strike with the hand `x` until the start of your next turn. `x` is either "main" or "offhand". You may have up to two "Cooldown" conditions at a time, one for each hand.
 
 ### Armed conditions
 
