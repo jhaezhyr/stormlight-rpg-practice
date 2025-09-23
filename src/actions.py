@@ -46,7 +46,7 @@ class Move(Action):
 
     def execute(self, actor, target, game_state) -> Dict[str, Any]:
         print(f"Current distance: {game_state.distance}ft")
-        print(f"Your speed: {actor.speed}ft")
+        print(f"Your movement rate: {actor.movement_rate}ft")
         print("Enter movement distance (negative to move closer, positive to move away):")
 
         try:
@@ -55,9 +55,9 @@ class Move(Action):
         except (ValueError, EOFError):
             return {"success": False, "message": "Invalid movement input"}
 
-        # Validate movement doesn't exceed speed
-        if abs(movement) > actor.speed:
-            return {"success": False, "message": f"Cannot move more than {actor.speed}ft"}
+        # Validate movement doesn't exceed movement rate
+        if abs(movement) > actor.movement_rate:
+            return {"success": False, "message": f"Cannot move more than {actor.movement_rate}ft"}
 
         new_distance = game_state.distance + movement
 
