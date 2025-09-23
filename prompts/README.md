@@ -65,7 +65,9 @@ Some things do not require player input:
 
 Generally, we show the user all the commands they can take at a given time. We don't show them commands they can't take, such as the Brace action when they are not near cover or wielding a Defensive weapon. However, if the user types the command name, we still parse it for what it is; we simply tell the user they can't take that action right now and why. Similarly, if the player has already spent their reaction, we don't prompt them to say whether to Reactively Strike when their opponent retreats, or whether to Dodge when their opponent attacks.
 
-As often as possible, if we present the user with a list of options to choose from, we will allow them to choose by typing the full name of the option, or by typing a single-letter version of the option. The single-letter version is shown by putting the letter in parentheses in the list of options. For example, when choosing a turn type, the user sees `(f)ast` and can type `fast` or `f` to choose a fast turn.
+As often as possible, if we present the user with a list of options to choose from, we will allow them to choose by 1) typing the full name of the option, 2) by typing a single-letter version of the option, or 3) typing the number index of the option from the list. The single-letter version is shown by putting the letter in parentheses in the list of options. For example, when choosing a turn type, the user sees `(f)ast` and can type `fast` or `f` to choose a fast turn. The first word of a command can be any of these three options. The arguments and flags to the command (like 10 for 10ft of movement, or `+` to indicate they want to take a free action after their last action) come after that command word.
+
+User input should always be case-insensitive. For example, `FAST`, `Fast`, and `f` should all be accepted as valid input for choosing a fast turn.
 
 ## Testing
 

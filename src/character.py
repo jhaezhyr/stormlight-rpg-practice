@@ -1,5 +1,6 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 from .utils import create_traits_with_points, get_recovery_die, get_movement_rate, calculate_defense
+from .equipment import Weapon, Armor, EquipmentState, create_unarmed_attack
 
 class Character:
     def __init__(self, name: str):
@@ -41,6 +42,17 @@ class Character:
             "Survival": self.traits["Awareness"]
         }
 
+        # Equipment and inventory
+        self.mainhand_weapon: Optional[Weapon] = None
+        self.offhand_weapon: Optional[Weapon] = None
+        self.armor: Optional[Armor] = None
+        self.carried_weapons: List[Weapon] = []
+        self.carried_armor: List[Armor] = []
+        self.dropped_items: List[Weapon | Armor] = []  # Items dropped in battle
+
+        # Start with basic equipment - unarmed attack always available
+        self.unarmed_attack = create_unarmed_attack(self.traits["Strength"])
+
         self.conditions: List[str] = []
 
     def is_alive(self) -> bool:
@@ -72,6 +84,112 @@ class Character:
     def has_condition(self, condition: str) -> bool:
         return condition in self.conditions
 
+    # Equipment management methods
+    def equip_weapon(self, weapon: Weapon, hand: str = "main") -> bool:
+        """Equip a weapon in main hand or offhand."""
+        if hand == "main":
+            if self.mainhand_weapon:
+                self.unequip_weapon("main")
+            self.mainhand_weapon = weapon
+            weapon.state = EquipmentState.EQUIPPED
+            if weapon in self.carried_weapons:
+                self.carried_weapons.remove(weapon)
+            return True
+        elif hand == "offhand":
+            if self.offhand_weapon:
+                self.unequip_weapon("offhand")
+            self.offhand_weapon = weapon
+            weapon.state = EquipmentState.EQUIPPED
+            if weapon in self.carried_weapons:
+                self.carried_weapons.remove(weapon)
+            return True
+        return False
+
+    def unequip_weapon(self, hand: str) -> Optional[Weapon]:
+        """Unequip a weapon and move it to carried."""
+        weapon = None
+        if hand == "main" and self.mainhand_weapon:
+            weapon = self.mainhand_weapon
+            self.mainhand_weapon = None
+        elif hand == "offhand" and self.offhand_weapon:
+            weapon = self.offhand_weapon
+            self.offhand_weapon = None
+
+        if weapon:
+            weapon.state = EquipmentState.CARRIED
+            self.carried_weapons.append(weapon)
+        return weapon
+
+    def drop_weapon(self, hand: str) -> Optional[Weapon]:
+        """Drop a weapon to the ground."""
+        weapon = None
+        if hand == "main" and self.mainhand_weapon:
+            weapon = self.mainhand_weapon
+            self.mainhand_weapon = None
+        elif hand == "offhand" and self.offhand_weapon:
+            weapon = self.offhand_weapon
+            self.offhand_weapon = None
+
+        if weapon:
+            weapon.state = EquipmentState.DROPPED
+            self.dropped_items.append(weapon)
+        return weapon
+
+    def equip_armor(self, armor: Armor) -> bool:
+        """Equip armor."""
+        if self.armor:
+            self.unequip_armor()
+        self.armor = armor
+        armor.state = EquipmentState.EQUIPPED
+        if armor in self.carried_armor:
+            self.carried_armor.remove(armor)
+        return True
+
+    def unequip_armor(self) -> Optional[Armor]:
+        """Unequip armor and move it to carried."""
+        if self.armor:
+            old_armor = self.armor
+            self.armor = None
+            old_armor.state = EquipmentState.CARRIED
+            self.carried_armor.append(old_armor)
+            return old_armor
+        return None
+
+    def get_total_deflect(self) -> int:
+        """Get total deflect from equipped armor."""
+        if self.armor:
+            return self.armor.deflect
+        return 0
+
+    def get_equipped_weapons(self) -> List[Weapon]:
+        """Get list of currently equipped weapons."""
+        weapons = []
+        if self.mainhand_weapon:
+            weapons.append(self.mainhand_weapon)
+        if self.offhand_weapon:
+            weapons.append(self.offhand_weapon)
+        return weapons
+
+    def get_primary_weapon(self) -> Weapon:
+        """Get primary weapon for attacks (mainhand, offhand, or unarmed)."""
+        if self.mainhand_weapon:
+            return self.mainhand_weapon
+        elif self.offhand_weapon:
+            return self.offhand_weapon
+        else:
+            return self.unarmed_attack
+
+    def can_use_weapon(self, weapon: Weapon) -> tuple[bool, str]:
+        """Check if character can use a weapon based on requirements."""
+        # Check strength requirement for cumbersome weapons
+        for trait in weapon.traits:
+            if "Cumbersome" in trait and "[" in trait:
+                required_strength = int(trait.split("[")[1].split("]")[0])
+                if self.traits["Strength"] < required_strength:
+                    return False, f"Requires {required_strength} Strength"
+
+        return True, ""
+
     def get_skill_bonus(self, skill_name: str) -> int:
         """Get bonus for a specific skill."""
         return self.skills.get(skill_name, 0)
@@ -90,11 +208,18 @@ class Character:
     def __str__(self) -> str:
         traits_str = ", ".join([f"{trait}: {value}" for trait, value in self.traits.items()])
         conditions_str = ", ".join(self.conditions) if self.conditions else "None"
+
+        # Equipment display
+        mainhand_str = self.mainhand_weapon.name if self.mainhand_weapon else "None"
+        offhand_str = self.offhand_weapon.name if self.offhand_weapon else "None"
+        armor_str = f"{self.armor.name} (Deflect {self.armor.deflect})" if self.armor else "None"
+
         return (f"{self.name}\n"
                 f"Health: {self.current_health}/{self.max_health}\n"
                 f"Focus: {self.current_focus}/{self.max_focus}\n"
                 f"Recovery Die: {self.recovery_die}\n"
                 f"Movement: {self.movement_rate}ft\n"
                 f"Defenses: Phys {self.physical_defense}, Mental {self.mental_defense}, Spirit {self.spiritual_defense}\n"
+                f"Equipment: Main {mainhand_str}, Off {offhand_str}, Armor {armor_str}\n"
                 f"Traits: {traits_str}\n"
                 f"Conditions: {conditions_str}")

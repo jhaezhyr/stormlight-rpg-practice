@@ -10,19 +10,19 @@ This plan implements the full Stormlight Duel system as specified in prompts/REA
 - [x] Basic movement system
 - [x] Simple REPL interface
 
-## Phase 2: Updated Character System
-### 2.1 Trait System Overhaul
-- [ ] Replace current 6 traits with new 6: Strength, Speed, Intellect, Willpower, Presence, Awareness
-- [ ] Implement trait allocation (12 points total, 0-4 per trait)
-- [ ] Calculate derived stats:
-  - [ ] Health = 10 + Strength
-  - [ ] Focus = 2 + Willpower
-  - [ ] Recovery Die based on Willpower (d4/d6/d8)
-  - [ ] Movement Rate based on Speed (20ft/25ft/30ft)
-  - [ ] Defenses: Physical, Mental, Spiritual
-- [ ] Add Skills system (based on traits)
-- [ ] Write comprehensive tests for new character system
-- [ ] **REFACTOR**: Clean up character creation and display
+## Phase 2: Updated Character System ✅
+### 2.1 Trait System Overhaul ✅
+- [x] Replace current 6 traits with new 6: Strength, Speed, Intellect, Willpower, Presence, Awareness
+- [x] Implement trait allocation (12 points total, 0-4 per trait)
+- [x] Calculate derived stats:
+  - [x] Health = 10 + Strength
+  - [x] Focus = 2 + Willpower
+  - [x] Recovery Die based on Willpower (d4/d6/d8)
+  - [x] Movement Rate based on Speed (20ft/25ft/30ft)
+  - [x] Defenses: Physical, Mental, Spiritual
+- [x] Add Skills system (based on traits)
+- [x] Write comprehensive tests for new character system
+- [x] **REFACTOR**: Clean up character creation and display
 
 ### 2.2 Equipment System Foundation
 - [ ] Create basic Weapon class with damage, traits, range
