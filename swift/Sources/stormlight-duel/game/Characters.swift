@@ -250,7 +250,8 @@ extension FullCharacter {
 // - Every time you query it, you actually call a function with the number's name as a key.
 // - The key could be a complicated enum, or just a Swift key path.
 // - Without some level of caching, this could be really expensive.
+//   - Time to reinvent pipes, I think. Plus, anytime an attribute's value changes, I could have it send an update. We could bundle those updates and send them to a frontend.
 //
 // Another option is to make things less declarative and more imperative. I don't want to have to think about this if I don't have to.
 
-// What's the frontend for this thing? I really don't want to be the only person using it, so I think an actual websocket-backed frontend is in order here, with self Swift code running as a backend.
+// What's the frontend for this thing? I really don't want to be the only person using it, so I think an actual websocket-backed frontend is in order here, with this Swift code running as a backend.
