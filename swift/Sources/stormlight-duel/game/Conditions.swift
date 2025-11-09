@@ -9,7 +9,7 @@ struct Determined: ConditionType {}
 struct Disoriented: ConditionType {}
 struct Empowered: ConditionType {}
 struct Enhanced: ConditionType {
-    public var stat: StatName
+    public var stat: AttributeName
     public var amount: Int
 }
 struct Exhausted: ConditionType {

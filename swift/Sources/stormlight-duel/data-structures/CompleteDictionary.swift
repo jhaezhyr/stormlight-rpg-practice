@@ -42,10 +42,24 @@ extension CompleteDictionary: Collection {
             return core[position]
         }
     }
+
+    func mapValues<T: Sendable>(transform: (_ value: Value) -> T) -> CompleteDictionary<Key, T> {
+        CompleteDictionary<Key, T>(from: core.mapValues(transform))
+    }
+
+    func mapLabeledValues<T: Sendable>(transform: (_ key: Key, _ value: Value) -> T) -> CompleteDictionary<Key, T> {
+        CompleteDictionary<Key, T>(from: Dictionary(uniqueKeysWithValues: core.map({ key, value in (key, transform(key, value)) })))
+    }
 }
 
 extension CompleteDictionary: ExpressibleByDictionaryLiteral {
     init(dictionaryLiteral elements: (Key, Value)...) {
         self.init(from: Dictionary(uniqueKeysWithValues: elements))
+    }
+}
+
+extension Dictionary {
+    func mapLabeledValues<T: Sendable>(transform: (_ key: Key, _ value: Value) -> T) -> Dictionary<Key, T> {
+        Dictionary<Key, T>(uniqueKeysWithValues: self.map({ key, value in (key, transform(key, value)) }))
     }
 }

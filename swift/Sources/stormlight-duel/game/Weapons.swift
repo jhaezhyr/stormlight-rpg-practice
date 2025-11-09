@@ -20,6 +20,36 @@ enum DamageType {
     case impact
 }
 
+enum WeaponName: CaseIterable {
+    case axe
+    case crossbow
+    case grandbow
+    case greatsword
+    case halfShard
+    case hammer
+    case handBallista
+    case javelin
+    case knife
+    case longbow
+    case longspear
+    case longsword
+    case mace
+    case poleaxe
+    case rapier
+    case shardblade
+    case shield
+    case shortbow
+    case shortspear
+    case sidesword
+    case sling
+    case spikedShield
+    case staff
+    case warhammer
+
+    case unarmedAttack
+    case improvisedWeapon
+}
+
 protocol Weapon: Item {
     var type: WeaponType { get }
     var weaponsSkill: WeaponsSkill { get }
