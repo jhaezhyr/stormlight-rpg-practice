@@ -7,7 +7,7 @@
  */
 public class Computed<T>: ReadonlySignal<T> {
     private let node: ComputedNode<T>
-    init(_ compute: @escaping () -> T, _ equals: EqualsFn<T>? = nil) {
+    init(_ compute: @escaping () -> T, _ equals: EqualsFn<T>) {
         self.node = ComputedNode(compute, equals)
     }
 
@@ -15,9 +15,9 @@ public class Computed<T>: ReadonlySignal<T> {
      * @see {@link Signal.get}
      */
     public func get() throws -> T {
-        updateWatched(self.node)
+        self.node.updateWatched()
         try self.node.resolveValue()
-        recordAccess(self.node)
+        self.node.recordAccess()
         /**
          * Creating a Computed Signal that doesn't depend on other Signals
          * is wasteful. It would be simpler to just compute a function.
@@ -53,13 +53,13 @@ final class ComputedNode<T>: Producer, Consumer {
     }
     public var producers = Dictionary<any Producer, Int>()
     public var watched = Dictionary<any Consumer, Int>()
-    public var unwatched = Dictionary<WeakRef<Consumer>, Int>()
+    public var unwatched = Dictionary<WeakRef<any Consumer>, Int>()
     private let compute: () throws -> T
     public let equals: EqualsFn<T>
 
     init(
         _ compute: @escaping () throws -> T,
-        _ equals: EqualsFn<T>? = { (a: T, b: T) in a == b },
+        _ equals: EqualsFn<T>,
     ) {
         self.compute = compute
     }
@@ -70,7 +70,7 @@ final class ComputedNode<T>: Producer, Consumer {
                 throw SignalCircularDependencyError()
             case .unset:
                 fallthrough
-            case .value(_) where self.stale && anyProducersHaveChanged(self):
+            case .value(_) where self.stale && self.anyProducersHaveChanged():
                 self.computeVersion += 1
                 let oldValue = self.value
                 let newValue: T
@@ -92,7 +92,7 @@ final class ComputedNode<T>: Producer, Consumer {
                         throw error
                     }
                 }
-                if setIfWouldChange(self, newValue) {
+                if self.setIfWouldChange(newValue) {
                     self.valueVersion += 1
                 }
             case .value(_):
@@ -115,6 +115,6 @@ final class ComputedNode<T>: Producer, Consumer {
             return
         }
         self.stale = true
-        notifyConsumers(self)
+        self.notifyConsumers()
     }
 }

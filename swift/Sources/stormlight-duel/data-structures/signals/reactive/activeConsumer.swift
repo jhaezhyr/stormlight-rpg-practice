@@ -29,42 +29,45 @@ public func asActiveConsumer<T>(
     return try fn()
 }
 
-/**
- * When the activeConsumer is depended on by an Effect, all transitive
- * dependencies are moved to a watched state.
- */
-public func updateWatched(_ producer: any Producer) -> () {
-    guard let activeConsumer else {
-        return
+extension Producer {
+    /**
+    * When the activeConsumer is depended on by an Effect, all transitive
+    * dependencies are moved to a watched state.
+    */
+    public func updateWatched() {
+        guard let activeConsumer else {
+            return
+        }
+
+        var producerAgain = self // Only necessary because of language bugs
+        // Producers can be consumed by a variety of Signals, but it only takes
+        // 1 Consumer that is watched to move the Producer to a watched state
+        producerAgain.isWatched = self.isWatched || activeConsumer.isWatched
     }
 
-    var producerAgain = producer // Only needed because of a Swift language bug
-    // Producers can be consumed by a variety of Signals, but it only takes
-    // 1 Consumer that is watched to move the Producer to a watched state
-    producerAgain.isWatched = producer.isWatched || activeConsumer.isWatched
-}
 
-/**
- * When an activeConsumer depends on a Signal links are established in both
- * directions for the purpose of propogating changes and recomputing sparingly.
- *
- * @see {@link notifyConsumers} and {@link anyProducersHaveChanged}
- */
-public func recordAccess(_ producer: any Producer) -> () {
-    guard let newActiveConsumer = activeConsumer else {
-        return
+    /**
+    * When an activeConsumer depends on a Signal links are established in both
+    * directions for the purpose of propogating changes and recomputing sparingly.
+    *
+    * @see {@link notifyConsumers} and {@link anyProducersHaveChanged}
+    */
+    public func recordAccess() {
+        guard let newActiveConsumer = activeConsumer else {
+            return
+        }
+
+        newActiveConsumer.producers[self] = self.valueVersion
+        let computeVersion = newActiveConsumer.computeVersion
+        if (self.isWatched) {
+            self.watched[newActiveConsumer] = computeVersion
+            self.unwatched.remove(newActiveConsumer.weakRef)
+        } else {
+            self.unwatched[newActiveConsumer.weakRef] = computeVersion
+            // deletion is not necessary, because unwatching only happens
+            // (eagerly) when an Effect is disposed
+        }
+
+        activeConsumer = newActiveConsumer
     }
-
-    newActiveConsumer.producers.set(producer, producer.valueVersion)
-    let computeVersion = newActiveConsumer.computeVersion
-    if (producer.isWatched) {
-        producer.watched[newActiveConsumer] = computeVersion
-        producer.unwatched.remove(newActiveConsumer.weakRef)
-    } else {
-        producer.unwatched[newActiveConsumer.weakRef] = computeVersion
-        // deletion is not necessary, because unwatching only happens
-        // (eagerly) when an Effect is disposed
-    }
-
-    activeConsumer = newActiveConsumer
 }

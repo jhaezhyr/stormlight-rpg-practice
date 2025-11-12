@@ -19,7 +19,7 @@ public class Effect {
         enqueue(self.node)
     }
 
-    public func dispose() -> () {
+    public func dispose() {
         self.node.dispose()
         self.unenqueue(self.node)
     }
@@ -33,10 +33,7 @@ public class Effect {
  */
 class EffectNode: Consumer {
     public var computeVersion = 0
-    public var producers: Dictionary<any Producer, Int> = Dictionary<
-        any Producer,
-        Int
-    >()
+    public var producers: Dictionary<any Producer, Int> = Dictionary<any Producer, Int>()
 
     public var isWatched = true
     // Because isWatched is always true, self is never actually needed.
@@ -57,7 +54,7 @@ class EffectNode: Consumer {
         if (self.disposed) {
             return
         }
-        if (self.computeVersion == 0 || anyProducersHaveChanged(self)) {
+        if (self.computeVersion == 0 || self.anyProducersHaveChanged()) {
             self.computeVersion += 1
             asActiveConsumer(self, self.effectFn)
             /**
@@ -84,7 +81,7 @@ class EffectNode: Consumer {
         if (self.disposed) {
             return
         }
-        unwatchProducers(self)
+        self.unwatchProducers()
         self.disposed = true
     }
 }

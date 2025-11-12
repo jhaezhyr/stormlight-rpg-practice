@@ -1,31 +1,33 @@
-/**
- * Determine if a any of a Consumers dependencies have actually changed.
- */
-public func anyProducersHaveChanged(_ consumer: any Consumer) -> Bool {
-    for (producer, lastSeenVersion) in consumer.producers {
-        // anytime we iterate through Producers is an opportunity to clean up
-        // unneeded links
-        if (unlinkIfNeeded(producer, consumer)) {
-            continue
-        }
+extension Consumer {
+    /**
+    * Determine if a any of a Consumers dependencies have actually changed.
+    */
+    public func anyProducersHaveChanged() -> Bool {
+        for (producer, lastSeenVersion) in self.producers {
+            // anytime we iterate through Producers is an opportunity to clean up
+            // unneeded links
+            if (unlinkIfNeeded(producer, self)) {
+                continue
+            }
 
-        if (producer.valueVersion != lastSeenVersion) {
-            return true
+            if (producer.valueVersion != lastSeenVersion) {
+                return true
+            }
+            /**
+            * just because the valueVersion matches doesn't guarantee that a
+            * Computed value hasn't changed. Recomputing that value isn't wasteful,
+            * as we would need to do it anyways if we find any producers have
+            * changed. (Remember also that resolved values are cached)
+            */
+            producer.resolveValue()
+            // only once we've "fetched" a dependencies value can we be sure if it
+            // has changed or not
+            if (producer.valueVersion != lastSeenVersion) {
+                return true
+            }
         }
-        /**
-         * just because the valueVersion matches doesn't guarantee that a
-         * Computed value hasn't changed. Recomputing that value isn't wasteful,
-         * as we would need to do it anyways if we find any producers have
-         * changed. (Remember also that resolved values are cached)
-         */
-        producer.resolveValue()
-        // only once we've "fetched" a dependencies value can we be sure if it
-        // has changed or not
-        if (producer.valueVersion != lastSeenVersion) {
-            return true
-        }
+        return false
     }
-    return false
 }
 
 /**

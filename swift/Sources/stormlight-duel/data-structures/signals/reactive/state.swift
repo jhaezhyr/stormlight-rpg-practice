@@ -5,7 +5,7 @@
  */
 public class State<T>: WritableSignal {
     private let node: StateNode<T>
-    init(initialValue: T, equals?: EqualsFn<T>) {
+    init(initialValue: T, equals: EqualsFn<T>) {
         self.node = StateNode(initialValue, equals)
     }
 
@@ -13,8 +13,8 @@ public class State<T>: WritableSignal {
      * @see {@link Signal.get}
      */
     public func get() -> T {
-        updateWatched(self.node)
-        recordAccess(self.node)
+        self.node.updateWatched()
+        self.node.recordAccess()
         return self.node.value
     }
 
@@ -22,9 +22,9 @@ public class State<T>: WritableSignal {
      * @see {@link WritableSignal.set}
      */
     public func set(_ newValue: T) -> () {
-        if (setIfWouldChange(self.node, newValue)) {
+        if (self.node.setIfWouldChange(newValue)) {
             self.node.valueVersion += 1
-            notifyConsumers(self.node)
+            self.node.notifyConsumers()
         }
     }
 
@@ -34,7 +34,7 @@ public class State<T>: WritableSignal {
     public func mutate(_ mutatorFn: (_ prevValue: T) -> ()) -> () {
         mutatorFn(self.node.value)
         self.node.valueVersion += 1
-        notifyConsumers(self.node)
+        self.node.notifyConsumers()
     }
 
     /**
@@ -61,8 +61,8 @@ class StateNode<T>: Producer {
     public let equals: EqualsFn<T>
 
     init(
-        value: T,
-        equals: EqualsFn<T>,
+        _ value: T,
+        _ equals: EqualsFn<T>,
     ) {}
 
     public func resolveValue() -> () {} // no-op
