@@ -1,10 +1,10 @@
 struct CompleteDictionary<Key: Hashable & CaseIterable & Sendable, Value: Sendable>: Sendable {
     private var core: [Key: Value]
-    public init(from dictionary: Dictionary<Key, Value>) {
+    public init(from dictionary: [Key: Value]) {
         core = dictionary
         var missingCases = [Key]()
         for key in Key.allCases {
-            guard let _ = core[key] else {
+            guard core[key] != nil else {
                 missingCases.append(key)
                 continue
             }
@@ -47,8 +47,12 @@ extension CompleteDictionary: Collection {
         CompleteDictionary<Key, T>(from: core.mapValues(transform))
     }
 
-    func mapLabeledValues<T: Sendable>(transform: (_ key: Key, _ value: Value) -> T) -> CompleteDictionary<Key, T> {
-        CompleteDictionary<Key, T>(from: Dictionary(uniqueKeysWithValues: core.map({ key, value in (key, transform(key, value)) })))
+    func mapLabeledValues<T: Sendable>(transform: (_ key: Key, _ value: Value) -> T)
+        -> CompleteDictionary<Key, T>
+    {
+        CompleteDictionary<Key, T>(
+            from: Dictionary(
+                uniqueKeysWithValues: core.map({ key, value in (key, transform(key, value)) })))
     }
 }
 
@@ -59,7 +63,7 @@ extension CompleteDictionary: ExpressibleByDictionaryLiteral {
 }
 
 extension Dictionary {
-    func mapLabeledValues<T: Sendable>(transform: (_ key: Key, _ value: Value) -> T) -> Dictionary<Key, T> {
-        Dictionary<Key, T>(uniqueKeysWithValues: self.map({ key, value in (key, transform(key, value)) }))
+    func mapLabeledValues<T: Sendable>(transform: (_ key: Key, _ value: Value) -> T) -> [Key: T] {
+        [Key: T](uniqueKeysWithValues: self.map({ key, value in (key, transform(key, value)) }))
     }
 }

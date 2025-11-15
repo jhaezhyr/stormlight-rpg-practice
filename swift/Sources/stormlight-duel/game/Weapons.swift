@@ -80,4 +80,3 @@ struct Indirect: WeaponTrait {}
 struct Quickdraw: WeaponTrait {}
 struct Dangerous: WeaponTrait {}
 struct Discreet: WeaponTrait {}
-

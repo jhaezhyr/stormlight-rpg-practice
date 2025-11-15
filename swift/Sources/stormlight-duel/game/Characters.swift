@@ -13,16 +13,16 @@ enum AttributeName: Hashable, CaseIterable {
     case presence
 
     static let statToRealm: CompleteDictionary<AttributeName, Realm> = [
-        .strength : .physical,
-        .speed : .physical,
-        .intellect : .cognitive,
-        .awareness : .cognitive,
-        .willpower : .spiritual,
-        .presence : .spiritual,
+        .strength: .physical,
+        .speed: .physical,
+        .intellect: .cognitive,
+        .awareness: .cognitive,
+        .willpower: .spiritual,
+        .presence: .spiritual,
     ]
 
     static let realmToAttributes: CompleteDictionary<Realm, Set<AttributeName>> = {
-        var result: [Realm : Set<AttributeName>] = [:]
+        var result: [Realm: Set<AttributeName>] = [:]
         for (attribute, realm) in statToRealm {
             result[realm, default: Set<AttributeName>()].insert(attribute)
         }
@@ -56,13 +56,18 @@ enum CoreSkillName: Hashable, CaseIterable {
         .intellect: [.crafting, .deduction, .lore, .medicine],
         .willpower: [.discipline, .intimidation],
         .awareness: [.insight, .perception, .survival],
-        .presence: [.deception, .leadership, .persuasion]
+        .presence: [.deception, .leadership, .persuasion],
     ]
 
     static let skillToAttribute: CompleteDictionary<CoreSkillName, AttributeName> = {
-        CompleteDictionary(from: statToSkill.reduce([CoreSkillName: AttributeName]()) { (initial, x) in
-            initial.merging(x.1.map { y in (y, x.0) }, uniquingKeysWith: { x, y in fatalError("Core skill associated with multiple attributes: \(x) and \(y)") })
-        })
+        CompleteDictionary(
+            from: statToSkill.reduce([CoreSkillName: AttributeName]()) { (initial, x) in
+                initial.merging(
+                    x.1.map { y in (y, x.0) },
+                    uniquingKeysWith: { x, y in
+                        fatalError("Core skill associated with multiple attributes: \(x) and \(y)")
+                    })
+            })
     }()
 }
 
@@ -123,9 +128,9 @@ struct PathProgress {}
 protocol Character {
     var attributes: CompleteDictionary<AttributeName, Int> { get }
     var ranksInCoreSkills: CompleteDictionary<CoreSkillName, Int> { get }
-    var modifiersForCoreSkills: CompleteDictionary<CoreSkillName, Int> { get } // Derived
-    var ranksInOtherSkills: Dictionary<SkillName, Int> { get }
-    var modifiersForOtherSkills: Dictionary<SkillName, Int> { get }
+    var modifiersForCoreSkills: CompleteDictionary<CoreSkillName, Int> { get }  // Derived
+    var ranksInOtherSkills: [SkillName: Int] { get }
+    var modifiersForOtherSkills: [SkillName: Int] { get }
     var defenses: CompleteDictionary<Realm, Int> { get }
     var health: Resource { get }
     var focus: Resource { get }
@@ -141,7 +146,7 @@ protocol FullCharacter: Character {
     var expertises: Set<Expertise> { get }
     var equipment: [Item] { get }
     var money: Money { get }
-    var paths: [PathName : PathProgress] { get }
+    var paths: [PathName: PathProgress] { get }
     var level: Int { get }
     var tier: Int { get }
     var maximumSkillRank: Int { get }
@@ -153,14 +158,14 @@ struct PlayerCharacter: FullCharacter {
     var expertises: Set<Expertise>
     var equipment: [any Item]
     var money: Money
-    var paths: [PathName : PathProgress]
+    var paths: [PathName: PathProgress]
 
     var level: Int
 
     var attributes: CompleteDictionary<AttributeName, Int>
 
     var ranksInCoreSkills: CompleteDictionary<CoreSkillName, Int>
-    var ranksInOtherSkills: Dictionary<SkillName, Int>
+    var ranksInOtherSkills: [SkillName: Int]
 
     var health: Resource
     var focus: Resource
@@ -171,48 +176,57 @@ struct PlayerCharacter: FullCharacter {
 
 extension Character {
     var modifiersForCoreSkills: CompleteDictionary<CoreSkillName, Int> {
-        ranksInCoreSkills.mapLabeledValues { skill, rank in rank + attributes[CoreSkillName.skillToAttribute[skill]] }
+        ranksInCoreSkills.mapLabeledValues { skill, rank in
+            rank + attributes[CoreSkillName.skillToAttribute[skill]]
+        }
     }
-    var modifiersForOtherSkills: Dictionary<SkillName, Int> {
-        ranksInOtherSkills.mapLabeledValues { skill, rank in rank } // TODO
+    var modifiersForOtherSkills: [SkillName: Int] {
+        ranksInOtherSkills.mapLabeledValues { skill, rank in rank }  // TODO
     }
-    var defenses: CompleteDictionary<Realm, Int> { 
-        CompleteDictionary<Realm, Int>(from: Dictionary<Realm, Int>(uniqueKeysWithValues:
-            Realm.allCases.map { realm in
-                (realm, AttributeName.realmToAttributes.reduce(10) { (partialDefense, x) in
-                    partialDefense + x.1.map { attribute -> Int in self.attributes[attribute] }.reduce(0, +)
-                })
-            }
-        ))
+    var defenses: CompleteDictionary<Realm, Int> {
+        CompleteDictionary<Realm, Int>(
+            from: [Realm: Int](
+                uniqueKeysWithValues:
+                    Realm.allCases.map { realm in
+                        (
+                            realm,
+                            AttributeName.realmToAttributes.reduce(10) { (partialDefense, x) in
+                                partialDefense
+                                    + x.1.map { attribute -> Int in self.attributes[attribute] }
+                                    .reduce(0, +)
+                            }
+                        )
+                    }
+            ))
     }
     var movementRate: Distance {
         switch attributes[.speed] {
-            case ...0: 20
-            case 1...2: 25
-            case 3...4: 30
-            case 5...6: 40
-            case 7...8: 60
-            default: 90
+        case ...0: 20
+        case 1...2: 25
+        case 3...4: 30
+        case 5...6: 40
+        case 7...8: 60
+        default: 90
         }
     }
     var recoveryDie: NumberDie {
         switch attributes[.willpower] {
-            case ...0: .d4
-            case 1...2: .d6
-            case 3...4: .d8
-            case 5...6: .d10
-            case 7...8: .d12
-            default: .d20
+        case ...0: .d4
+        case 1...2: .d6
+        case 3...4: .d8
+        case 5...6: .d10
+        case 7...8: .d12
+        default: .d20
         }
     }
     var sensesRange: Distance {
         switch attributes[.awareness] {
-            case ...0: 5
-            case 1...2: 10
-            case 3...4: 20
-            case 5...6: 50
-            case 7...8: 100
-            default: Int.max
+        case ...0: 5
+        case 1...2: 10
+        case 3...4: 20
+        case 5...6: 50
+        case 7...8: 100
+        default: Int.max
         }
     }
 }
@@ -220,11 +234,11 @@ extension Character {
 extension FullCharacter {
     var tier: Int {
         switch level {
-            case ...5: 1
-            case ...10: 2
-            case ...15: 3
-            case ...20: 4
-            default: 5
+        case ...5: 1
+        case ...10: 2
+        case ...15: 3
+        case ...20: 4
+        default: 5
         }
     }
     var maximumSkillRank: Int {
@@ -238,3 +252,5 @@ extension FullCharacter {
 // - Without some level of caching, this could be really expensive.
 //
 // Another option is to make things less declarative and more imperative. I don't want to have to think about this if I don't have to.
+
+// What's the frontend for this thing? I really don't want to be the only person using it, so I think an actual websocket-backed frontend is in order here, with self Swift code running as a backend.
