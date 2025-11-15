@@ -2,8 +2,9 @@ extension Consumer {
     /**
     * Determine if a any of a Consumers dependencies have actually changed.
     */
-    public func anyProducersHaveChanged() -> Bool {
-        for (producer, lastSeenVersion) in self.producers {
+    public func anyProducersHaveChanged() throws -> Bool {
+        for (producerRef, lastSeenVersion) in self.producers {
+            let producer = producerRef.ref
             // anytime we iterate through Producers is an opportunity to clean up
             // unneeded links
             if unlinkIfNeeded(producer, self) {
@@ -19,7 +20,7 @@ extension Consumer {
             * as we would need to do it anyways if we find any producers have
             * changed. (Remember also that resolved values are cached)
             */
-            producer.resolveValue()
+            _ = try producer.resolveValue()
             // only once we've "fetched" a dependencies value can we be sure if it
             // has changed or not
             if producer.valueVersion != lastSeenVersion {
@@ -37,12 +38,56 @@ extension Consumer {
 ///
 /// @returns `true` if the link was broken, else `false`
 public func unlinkIfNeeded(_ producer: any Producer, _ consumer: any Consumer) -> Bool {
-    let lastComputeVersion = producer.watched[consumer] ?? producer.unwatched[consumer.weakRef]
+    let lastComputeVersion =
+        producer.watched[AnyConsumerRef(consumer)]
+        ?? producer.unwatched[AnyConsumerWeakRef(consumer)]
     if consumer.computeVersion == lastComputeVersion {
         return false
     }
-    consumer.producers.delete(producer)
-    producer.watched.delete(consumer)
-    producer.unwatched.delete(consumer.weakRef)
+    consumer.producers.removeValue(forKey: AnyProducerRef(producer))
+    producer.watched.removeValue(forKey: AnyConsumerRef(consumer))
+    producer.unwatched.removeValue(forKey: AnyConsumerWeakRef(consumer))
     return true
+}
+
+// We need these type-erased references to use as keys in dictionaries
+// until Swift allows existentials to conform to their own protocols.
+public struct AnyConsumerRef: Hashable {
+    public let ref: any Consumer
+
+    init(_ ref: any Consumer) {
+        self.ref = ref
+    }
+
+    public static func == (lhs: AnyConsumerRef, rhs: AnyConsumerRef) -> Bool {
+        return lhs.ref === rhs.ref
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(ObjectIdentifier(ref))
+    }
+}
+
+public struct AnyConsumerWeakRef: Hashable {
+    public weak var ref: (any Consumer)?
+
+    init(_ ref: (any Consumer)?) {
+        self.ref = ref
+    }
+
+    public static func == (lhs: AnyConsumerWeakRef, rhs: AnyConsumerWeakRef) -> Bool {
+        if let lh = lhs.ref, let rh = rhs.ref {
+            return lh === rh
+        } else {
+            return lhs.ref == nil && rhs.ref == nil
+        }
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        if let ref = self.ref {
+            hasher.combine(ObjectIdentifier(ref))
+        } else {
+            hasher.combine(1)
+        }
+    }
 }

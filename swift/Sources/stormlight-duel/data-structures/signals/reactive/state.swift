@@ -3,7 +3,7 @@
 /// recompute their values.
 public class State<T>: WritableSignal {
     private let node: StateNode<T>
-    init(initialValue: T, equals: EqualsFn<T>) {
+    init(_ initialValue: T, _ equals: @escaping EqualsFn<T>) {
         self.node = StateNode(initialValue, equals)
     }
 
@@ -51,15 +51,18 @@ public class State<T>: WritableSignal {
 class StateNode<T>: Producer {
     public var valueVersion = 0
     public var isWatched = false
-    public var watched = [any Consumer: Int]()
-    public var unwatched = [WeakRef<any Consumer>: Int]()
+    public var watched = [AnyConsumerRef: Int]()
+    public var unwatched = [AnyConsumerWeakRef: Int]()
     public var value: T
     public let equals: EqualsFn<T>
 
     init(
         _ value: T,
-        _ equals: EqualsFn<T>,
-    ) {}
+        _ equals: @escaping EqualsFn<T>,
+    ) {
+        self.value = value
+        self.equals = equals
+    }
 
     public func resolveValue() {}  // no-op
 }

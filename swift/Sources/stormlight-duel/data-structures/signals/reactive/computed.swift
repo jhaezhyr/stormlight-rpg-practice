@@ -3,9 +3,9 @@
 ///
 /// Produces it's value via the `get()` method, with a guarantee that it's
 /// value will be up to date with changes to transitive dependencies.
-public class Computed<T>: ReadonlySignal<T> {
+public class Computed<T>: Signal {
     private let node: ComputedNode<T>
-    init(_ compute: @escaping () -> T, _ equals: EqualsFn<T>) {
+    init(_ compute: @escaping () -> T, _ equals: @escaping EqualsFn<T>) {
         self.node = ComputedNode(compute, equals)
     }
 
@@ -14,18 +14,18 @@ public class Computed<T>: ReadonlySignal<T> {
      */
     public func get() throws -> T {
         self.node.updateWatched()
-        try self.node.resolveValue()
+        let returnValue = try self.node.resolveValue()
         self.node.recordAccess()
         /**
          * Creating a Computed Signal that doesn't depend on other Signals
          * is wasteful. It would be simpler to just compute a function.
          */
-        if self.node.producers.size == 0 {
+        if self.node.producers.isEmpty {
             print(
                 "WARNING: Computed created without any Signal dependencies note that self means the value will never be computed again.",
             )
         }
-        return self.node.value
+        return returnValue
     }
 }
 
@@ -34,12 +34,7 @@ public class Computed<T>: ReadonlySignal<T> {
 /// expose these public members to users of the Signal framework, they are
 /// isolated to Node classes that are not exported.
 final class ComputedNode<T>: Producer, Consumer {
-    enum Value {
-        case value(T)
-        case computing
-        case unset
-    }
-    public var value: Value
+    public var value: ProducerValue<T>
     public var valueVersion = 0
     public var computeVersion = 0
     public var stale = true
@@ -47,25 +42,28 @@ final class ComputedNode<T>: Producer, Consumer {
     public var weakRef: WeakRef<ComputedNode<T>> {
         WeakRef(self)
     }
-    public var producers = [any Producer: Int]()
-    public var watched = [any Consumer: Int]()
-    public var unwatched = [WeakRef<any Consumer>: Int]()
+    public var producers = [AnyProducerRef: Int]()
+    public var watched = [AnyConsumerRef: Int]()
+    public var unwatched = [AnyConsumerWeakRef: Int]()
     private let compute: () throws -> T
     public let equals: EqualsFn<T>
 
     init(
         _ compute: @escaping () throws -> T,
-        _ equals: EqualsFn<T>,
+        _ equals: @escaping EqualsFn<T>,
     ) {
         self.compute = compute
+        self.value = .unset
+        self.equals = equals
     }
 
-    public func resolveValue() throws {
+    public func resolveValue() throws -> T {
+        let returnValue: T
         switch self.value {
         case .computing:
             throw SignalCircularDependencyError()
         case .unset,
-            .value(_) where self.stale && self.anyProducersHaveChanged():
+            .value(_) where try self.stale && self.anyProducersHaveChanged():
             self.computeVersion += 1
             let oldValue = self.value
             let newValue: T
@@ -90,9 +88,10 @@ final class ComputedNode<T>: Producer, Consumer {
             if self.setIfWouldChange(newValue) {
                 self.valueVersion += 1
             }
-        case .value(_):
-            // The vlue is up to date. Do nothing.
-            break
+            returnValue = newValue
+        case .value(let x):
+            // The value is up to date. Do nothing.
+            returnValue = x
         }
         /**
          * Regardless of what happens in self function, successful completion
@@ -100,6 +99,7 @@ final class ComputedNode<T>: Producer, Consumer {
          * dependency marks self Signal as "stale" again.
          */
         self.stale = false
+        return returnValue
     }
 
     public func invalidate() throws {
@@ -110,6 +110,6 @@ final class ComputedNode<T>: Producer, Consumer {
             return
         }
         self.stale = true
-        self.notifyConsumers()
+        try self.notifyConsumers()
     }
 }

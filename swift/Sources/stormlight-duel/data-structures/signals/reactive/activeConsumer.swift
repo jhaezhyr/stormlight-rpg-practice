@@ -52,13 +52,13 @@ extension Producer {
             return
         }
 
-        newActiveConsumer.producers[self] = self.valueVersion
+        newActiveConsumer.producers[AnyProducerRef(self)] = self.valueVersion
         let computeVersion = newActiveConsumer.computeVersion
         if self.isWatched {
-            self.watched[newActiveConsumer] = computeVersion
-            self.unwatched.remove(newActiveConsumer.weakRef)
+            self.watched[AnyConsumerRef(newActiveConsumer)] = computeVersion
+            self.unwatched.removeValue(forKey: AnyConsumerWeakRef(newActiveConsumer))
         } else {
-            self.unwatched[newActiveConsumer.weakRef] = computeVersion
+            self.unwatched[AnyConsumerWeakRef(newActiveConsumer)] = computeVersion
             // deletion is not necessary, because unwatching only happens
             // (eagerly) when an Effect is disposed
         }

@@ -5,10 +5,11 @@ public class Effect {
     private let unenqueue: (_ node: EffectNode) -> Void
 
     init(
-        _ effect: () -> Void,
-        _ enqueue: (_ node: EffectNode) -> Void,
-        _ unenqueue: (_ node: EffectNode) -> Void,
+        _ effect: @escaping () -> Void,
+        _ enqueue: @escaping (_ node: EffectNode) -> Void,
+        _ unenqueue: @escaping (_ node: EffectNode) -> Void,
     ) {
+        self.unenqueue = unenqueue
         self.node = EffectNode(effect, enqueue)
         /**
          * Enqueueing on construction ensures that self Effect will initialize
@@ -27,13 +28,13 @@ public class Effect {
 /// and "Consumer" are implemented with interfaces and public values. To not
 /// expose these public members to users of the Signal framework, they are
 /// isolated to Node classes that are not exported.
-class EffectNode: Consumer {
+public final class EffectNode: Consumer {
     public var computeVersion = 0
-    public var producers: [any Producer: Int] = [any Producer: Int]()
+    public var producers = [AnyProducerRef: Int]()
 
     public var isWatched = true
     // Because isWatched is always true, self is never actually needed.
-    public var weakRef: WeakRef<any Consumer> {
+    public var weakRef: WeakRef<EffectNode> {
         WeakRef(self)
     }
 
@@ -42,15 +43,18 @@ class EffectNode: Consumer {
     public var enqueue: (_ me: EffectNode) -> Void
 
     init(
-        _ effectFn: () -> Void,
-        _ enqueue: (_ me: EffectNode) -> Void,
-    ) {}
+        _ effectFn: @escaping () -> Void,
+        _ enqueue: @escaping (_ me: EffectNode) -> Void,
+    ) {
+        self.effectFn = effectFn
+        self.enqueue = enqueue
+    }
 
-    public func run() {
+    public func run() throws {
         if self.disposed {
             return
         }
-        if self.computeVersion == 0 || self.anyProducersHaveChanged() {
+        if try self.computeVersion == 0 || self.anyProducersHaveChanged() {
             self.computeVersion += 1
             asActiveConsumer(self, self.effectFn)
             /**
@@ -58,7 +62,7 @@ class EffectNode: Consumer {
              * Effect as the activeConsumer, there is no reason to model self
              * function as an effect.
              */
-            if self.producers.size == 0 {
+            if self.producers.isEmpty {
                 print(
                     "WARN: Effect created without any Signal dependencies note that self means the effect will never run again.",
                 )
@@ -85,4 +89,4 @@ class EffectNode: Consumer {
 /// A global registry of queues for scheduling {@link Effect}s.
 ///
 /// @see {@link flushEffectQueue}
-public let EffectQueues = [String: Set<EffectNode>]()
+nonisolated(unsafe) public var EffectQueues = [String: Set<Ref<EffectNode>>]()

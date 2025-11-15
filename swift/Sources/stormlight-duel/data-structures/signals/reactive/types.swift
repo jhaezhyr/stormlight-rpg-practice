@@ -9,7 +9,8 @@ public protocol Signal {
 }
 
 /// A `Signal` that supports only the readonly `get()` operation.
-public typealias ReadonlySignal<A> = Signal where Self.T == A
+public typealias ReadonlySignal<T> = Computed<T>
+//public typealias ReadonlySignal<A> = Signal where Self.T == A
 
 /// A `Signal` with a setter and mutator methods.
 public protocol WritableSignal: Signal {
@@ -53,7 +54,7 @@ public protocol Producer: AnyObject, SignalNode {
     /**
      * The inner data cache that a `Producer` provides to it's `Consumer`s
      */
-    var value: T { get set }
+    var value: ProducerValue<T> { get set }
     /**
      * A monotonically increasing Int that only increments when the value
      * changes available for cheap comparison to track which `Producer`s are
@@ -67,11 +68,11 @@ public protocol Producer: AnyObject, SignalNode {
      * {@link Consumer.computeVersion}, indicating whether self `Producer`
      * participated in the last recompute, or if the link needs to be cleaned up.
      */
-    var watched: [any Consumer: Int] { get }
+    var watched: [AnyConsumerRef: Int] { get set }
     /**
      * As `watched` above, but for `Consumer`s that are in an unwatched state.
      */
-    var unwatched: [WeakRef<any Consumer>: Int] { get }
+    var unwatched: [AnyConsumerWeakRef: Int] { get set }
     /**
      * The notion of equality between potential `Signal` values of the same type.
      *
@@ -84,7 +85,13 @@ public protocol Producer: AnyObject, SignalNode {
      * `Producer` is settled and up to date with it's own transitive
      * dependencies. Also guarantees that `valueVersion` is up to date.
      */
-    func resolveValue() throws
+    func resolveValue() throws -> T
+}
+
+public enum ProducerValue<T> {
+    case value(T)
+    case computing
+    case unset
 }
 
 public protocol Consumer: AnyObject, SignalNode {
@@ -100,7 +107,7 @@ public protocol Consumer: AnyObject, SignalNode {
      * that was accessed by self `Consumer` used by
      * {@link anyProducersHaveChanged} to short-circuit recomputations
      */
-    var producers: [any Producer: Int] { get }
+    var producers: [AnyProducerRef: Int] { get set }
     /**
      * Used to track {@link Producer.unwatched} `Consumer`s without preventing
      * the `Consumer` from being garbage collected.

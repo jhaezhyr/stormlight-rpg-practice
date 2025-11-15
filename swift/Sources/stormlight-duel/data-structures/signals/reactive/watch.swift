@@ -10,21 +10,22 @@ extension Consumer {
         if !self.isWatched {
             return
         }
-        for (producer, _) in self.producers {
+        for (producerRef, _) in self.producers {
+            var producer = producerRef.ref  // `var` only necessary because of language bugs
             // anytime we iterate through Producers is an opportunity to clean up
             // unneeded links
             if unlinkIfNeeded(producer, self) {
                 return
             }
-            producer.unwatched[self.weakRef] = self.computeVersion
-            producer.watched.remove(self)
+            producer.unwatched[AnyConsumerWeakRef(self.weakRef.ref)] = self.computeVersion
+            producer.watched.removeValue(forKey: AnyConsumerRef(self))
             // Computed Signals are both Producers and Consumers
             if let producerAsConsumer = producer as? any Consumer {
                 producerAsConsumer.unwatchProducers()
             }
             // updating isWatched after recursion makes sure that the check at the
             // beginning of self function works
-            if producer.watched.size == 0 {
+            if producer.watched.isEmpty {
                 producer.isWatched = false
             }
         }
