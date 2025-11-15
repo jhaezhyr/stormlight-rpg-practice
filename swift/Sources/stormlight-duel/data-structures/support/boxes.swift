@@ -1,7 +1,5 @@
-/**
- * A version of ObjectIdentifier that doesn't do type erasure
- */
-public struct Ref<T: AnyObject>: Hashable { 
+/// A version of ObjectIdentifier that doesn't do type erasure
+public struct Ref<T: AnyObject>: Hashable {
     public let ref: T
     init(_ ref: T) {
         self.ref = ref
@@ -16,10 +14,8 @@ public struct Ref<T: AnyObject>: Hashable {
     }
 }
 
-/**
- * A version of ObjectIdentifier that doesn't do type erasure
- */
-public struct WeakRef<T: AnyObject>: Hashable { 
+/// A version of ObjectIdentifier that doesn't do type erasure
+public struct WeakRef<T: AnyObject>: Hashable {
     public weak var ref: T?
     init(_ ref: T) {
         self.ref = ref

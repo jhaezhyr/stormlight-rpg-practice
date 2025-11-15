@@ -1,22 +1,18 @@
-/**
- * This variable models the top of the callstack if a Producer is being
- * accessed as the result of a Consumer executing it's function, that Consumer
- * can be found on the callstack just below the Producer. By saving that
- * Consumer here before calling that function, the Producer can effectively
- * "peek" at whoever called it.
- *
- * @see asActiveConsumer
- */
+/// This variable models the top of the callstack if a Producer is being
+/// accessed as the result of a Consumer executing it's function, that Consumer
+/// can be found on the callstack just below the Producer. By saving that
+/// Consumer here before calling that function, the Producer can effectively
+/// "peek" at whoever called it.
+///
+/// @see asActiveConsumer
 nonisolated(unsafe) var activeConsumer: (any Consumer)? = nil
 
-/**
- * Save the previous `activeConsumer` (if any) in the callstack, and run a
- * provided function with the given `Consumer?` as the
- * `activeConsumer`.
- *
- * In practice self proves useful to abstract across several different use
- * cases.
- */
+/// Save the previous `activeConsumer` (if any) in the callstack, and run a
+/// provided function with the given `Consumer?` as the
+/// `activeConsumer`.
+///
+/// In practice self proves useful to abstract across several different use
+/// cases.
 public func asActiveConsumer<T>(
     _ consumer: (any Consumer)?,
     _ fn: () throws -> T,
@@ -39,12 +35,11 @@ extension Producer {
             return
         }
 
-        var producerAgain = self // Only necessary because of language bugs
+        var producerAgain = self  // Only necessary because of language bugs
         // Producers can be consumed by a variety of Signals, but it only takes
         // 1 Consumer that is watched to move the Producer to a watched state
         producerAgain.isWatched = self.isWatched || activeConsumer.isWatched
     }
-
 
     /**
     * When an activeConsumer depends on a Signal links are established in both
@@ -59,7 +54,7 @@ extension Producer {
 
         newActiveConsumer.producers[self] = self.valueVersion
         let computeVersion = newActiveConsumer.computeVersion
-        if (self.isWatched) {
+        if self.isWatched {
             self.watched[newActiveConsumer] = computeVersion
             self.unwatched.remove(newActiveConsumer.weakRef)
         } else {

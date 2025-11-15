@@ -1,29 +1,23 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Signal Types
 
-/**
- * A reactive wrapper around a value.
- */
+/// A reactive wrapper around a value.
 public protocol Signal {
     associatedtype T
     /** unwraps the inner value held by a `Signal` */
     func get() throws -> T
 }
 
-/**
- * A `Signal` that supports only the readonly `get()` operation.
- */
+/// A `Signal` that supports only the readonly `get()` operation.
 public typealias ReadonlySignal<A> = Signal where Self.T == A
 
-/**
- * A `Signal` with a setter and mutator methods.
- */
+/// A `Signal` with a setter and mutator methods.
 public protocol WritableSignal: Signal {
     /**
      * Guarantees that the inner value will match the provided `value`, and
      * any dependent Signals will be notified of the change (if necessary).
      */
-    func set(_ value: T) -> ()
+    func set(_ value: T)
     /**
      * Exposes the inner value to a provided function, allowing in-place
      * manipulation (e.g. for inner values that are data structures).
@@ -31,7 +25,7 @@ public protocol WritableSignal: Signal {
      * Guarantees that dependent Signals will be notified, and may recompute
      * on their next access.
      */
-    func mutate(_ mutatorFn: (_ prevValue: T) -> ()) -> ()
+    func mutate(_ mutatorFn: (_ prevValue: T) -> Void)
     /**
      * Exposes the inner value in a readonly state to the provided function,
      * allowing for the computation of a new value based on it's previous value.
@@ -39,7 +33,7 @@ public protocol WritableSignal: Signal {
      * If the new value is meaningfully changed, dependent Signals will be
      * notified, and may recompute on their next access.
      */
-    func update(updaterFn: (_ prevValue: T) -> T) -> ()
+    func update(updaterFn: (_ prevValue: T) -> T)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -51,10 +45,8 @@ public protocol SignalNode {
     var isWatched: Bool { get set }
 }
 
-/**
- * `Signal`s that are depended on by other `Signal`s "Produce" values to their
- * dependents.
- */
+/// `Signal`s that are depended on by other `Signal`s "Produce" values to their
+/// dependents.
 public protocol Producer: AnyObject, SignalNode {
     associatedtype T
 
@@ -75,11 +67,11 @@ public protocol Producer: AnyObject, SignalNode {
      * {@link Consumer.computeVersion}, indicating whether self `Producer`
      * participated in the last recompute, or if the link needs to be cleaned up.
      */
-    var watched: Dictionary<any Consumer, Int> { get }
+    var watched: [any Consumer: Int] { get }
     /**
      * As `watched` above, but for `Consumer`s that are in an unwatched state.
      */
-    var unwatched: Dictionary<WeakRef<any Consumer>, Int> { get }
+    var unwatched: [WeakRef<any Consumer>: Int] { get }
     /**
      * The notion of equality between potential `Signal` values of the same type.
      *
@@ -92,7 +84,7 @@ public protocol Producer: AnyObject, SignalNode {
      * `Producer` is settled and up to date with it's own transitive
      * dependencies. Also guarantees that `valueVersion` is up to date.
      */
-    func resolveValue() throws -> ()
+    func resolveValue() throws
 }
 
 public protocol Consumer: AnyObject, SignalNode {
@@ -108,7 +100,7 @@ public protocol Consumer: AnyObject, SignalNode {
      * that was accessed by self `Consumer` used by
      * {@link anyProducersHaveChanged} to short-circuit recomputations
      */
-    var producers: Dictionary<any Producer, Int> { get }
+    var producers: [any Producer: Int] { get }
     /**
      * Used to track {@link Producer.unwatched} `Consumer`s without preventing
      * the `Consumer` from being garbage collected.
@@ -117,7 +109,7 @@ public protocol Consumer: AnyObject, SignalNode {
     /**
      * every Consumer has a notion of being marked for future re-evaluation
      */
-    func invalidate() throws -> ()
+    func invalidate() throws
 }
 
 ////////////////////////////////////////////////////////////////////////////////

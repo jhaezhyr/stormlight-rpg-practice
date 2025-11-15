@@ -6,11 +6,11 @@ extension Consumer {
         for (producer, lastSeenVersion) in self.producers {
             // anytime we iterate through Producers is an opportunity to clean up
             // unneeded links
-            if (unlinkIfNeeded(producer, self)) {
+            if unlinkIfNeeded(producer, self) {
                 continue
             }
 
-            if (producer.valueVersion != lastSeenVersion) {
+            if producer.valueVersion != lastSeenVersion {
                 return true
             }
             /**
@@ -22,7 +22,7 @@ extension Consumer {
             producer.resolveValue()
             // only once we've "fetched" a dependencies value can we be sure if it
             // has changed or not
-            if (producer.valueVersion != lastSeenVersion) {
+            if producer.valueVersion != lastSeenVersion {
                 return true
             }
         }
@@ -30,18 +30,15 @@ extension Consumer {
     }
 }
 
-/**
- * Determine if a "link" between a `Producer` and `Consumer` is "active" e.g.
- * if the `Producer` participated in the last evaluation of the `Consumer`.
- *
- * If not, the link can be dropped to avoid wasteful or innaccurate calculation.
- *
- * @returns `true` if the link was broken, else `false`
- */
+/// Determine if a "link" between a `Producer` and `Consumer` is "active" e.g.
+/// if the `Producer` participated in the last evaluation of the `Consumer`.
+///
+/// If not, the link can be dropped to avoid wasteful or innaccurate calculation.
+///
+/// @returns `true` if the link was broken, else `false`
 public func unlinkIfNeeded(_ producer: any Producer, _ consumer: any Consumer) -> Bool {
-    let lastComputeVersion = producer.watched[consumer] ??
-        producer.unwatched[consumer.weakRef]
-    if (consumer.computeVersion == lastComputeVersion) {
+    let lastComputeVersion = producer.watched[consumer] ?? producer.unwatched[consumer.weakRef]
+    if consumer.computeVersion == lastComputeVersion {
         return false
     }
     consumer.producers.delete(producer)
