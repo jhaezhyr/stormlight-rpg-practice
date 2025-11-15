@@ -47,7 +47,7 @@ final class ComputedNode<T>: Producer, Consumer {
     public let equals: EqualsFn<T>
 
     init(
-        _ compute: @escaping () -> T,  // TODO make a version that throws
+        _ compute: @escaping () -> T,
         _ equals: @escaping EqualsFn<T>,
     ) {
         self.compute = compute
@@ -70,18 +70,12 @@ final class ComputedNode<T>: Producer, Consumer {
                     // restore value for ensuing comparison
                     self.value = oldValue
                 }
-                do {
-                    /**
-                    * This primes the condition at the top of self method
-                    * to detect cycles.
-                    */
-                    self.value = .computing
-                    newValue = try asActiveConsumer(self, self.compute)
-                } catch {
-                    // keep computeVersion in sync with SUCCESSFUL computation
-                    self.computeVersion -= 1
-                    //throw error
-                }
+                /**
+                * This primes the condition at the top of self method
+                * to detect cycles.
+                */
+                self.value = .computing
+                newValue = asActiveConsumer(self, self.compute)
             }
             if self.setIfWouldChange(newValue) {
                 self.valueVersion += 1

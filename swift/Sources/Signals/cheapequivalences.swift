@@ -3,7 +3,7 @@
 /// If you find yourself needing this function, consider some alternatives:
 ///   - If the error type is Equatable, consider using `lhs == rhs` directly.
 ///   - If you only care about success values, consider comparing (try? lhs.get()) == (try? rhs.get())
-public func areEqualSuccessesOrBothFailures<T: Equatable, E: Error>(
+public func areEqualIgnoringError<T: Equatable, E: Error>(
     _ lhs: Result<T, E>,
     _ rhs: Result<T, E>
 ) -> Bool {
@@ -20,8 +20,8 @@ public func areEqualSuccessesOrBothFailures<T: Equatable, E: Error>(
 /// A common way to compare Result values for equality, ignoring the specific errors,
 /// using reference equality for success values.
 ///
-/// See also `areEqualSuccessesOrBothFailures`
-public func areRefEqualSuccessesOrBothFailures<T: AnyObject, E: Error>(
+/// See also `areEqualIgnoringError`
+public func areRefEqualIgnoringError<T: AnyObject, E: Error>(
     _ lhs: Result<T, E>,
     _ rhs: Result<T, E>
 ) -> Bool {

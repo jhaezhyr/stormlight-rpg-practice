@@ -98,7 +98,7 @@ func testSignalsWithFailingCalculations() async throws {
                 }
                 return a.get() / divisor
             }
-        }, areEqualSuccessesOrBothFailures)
+        }, areEqualIgnoringError)
 
     #expect((try? division.get().get()) == nil)
 
