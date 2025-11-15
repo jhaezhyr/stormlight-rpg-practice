@@ -39,7 +39,7 @@ public protocol WritableSignal: Signal {
 
 ////////////////////////////////////////////////////////////////////////////////
 // Signal Node Types
-public protocol SignalNode {
+public protocol SignalNode: AnyObject {
     /**
      * whether or not a Signal is an Effect or transitive dependency of one
      */
@@ -48,7 +48,7 @@ public protocol SignalNode {
 
 /// `Signal`s that are depended on by other `Signal`s "Produce" values to their
 /// dependents.
-public protocol Producer: AnyObject, SignalNode {
+public protocol Producer: SignalNode {
     associatedtype T
 
     /**
@@ -93,8 +93,9 @@ public enum ProducerValue<T> {
     case computing
     case unset
 }
+extension ProducerValue: Sendable where T: Sendable {}
 
-public protocol Consumer: AnyObject, SignalNode {
+public protocol Consumer: SignalNode {
     /**
      * A monotonically increasing Int that only increments when a `Consumer`
      * fully re-evaluates (e.g. a `Computed` runs it's compute function, or an
@@ -112,7 +113,7 @@ public protocol Consumer: AnyObject, SignalNode {
      * Used to track {@link Producer.unwatched} `Consumer`s without preventing
      * the `Consumer` from being garbage collected.
      */
-    var weakRef: WeakRef<Self> { get }
+    var weakRef: AnyConsumerWeakRef { get }
     /**
      * every Consumer has a notion of being marked for future re-evaluation
      */

@@ -39,9 +39,7 @@ final class ComputedNode<T>: Producer, Consumer {
     public var computeVersion = 0
     public var stale = true
     public var isWatched = false
-    public var weakRef: WeakRef<ComputedNode<T>> {
-        WeakRef(self)
-    }
+    public var weakRef: AnyConsumerWeakRef { AnyConsumerWeakRef(self) }
     public var producers = [AnyProducerRef: Int]()
     public var watched = [AnyConsumerRef: Int]()
     public var unwatched = [AnyConsumerWeakRef: Int]()

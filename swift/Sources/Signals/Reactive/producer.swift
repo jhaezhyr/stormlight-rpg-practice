@@ -37,18 +37,17 @@ extension Producer {
             }
         }
 
-        for (weakRef, lastSeenVersion) in self.unwatched {
-            let consumer = weakRef.ref
+        for (consumerWeakRef, lastSeenVersion) in self.unwatched {
             /**
             * In self case, not only might a link be no longer needed, it might
             * also refer to a Consumer that has been garbage collected. In either
             * case we save time and memory by cleaning up the link.
             */
-            if let consumer, consumer.computeVersion == lastSeenVersion {
+            if let consumer = consumerWeakRef.ref, consumer.computeVersion == lastSeenVersion {
                 consumer.invalidate()
             } else {
-                self.unwatched.removeValue(forKey: weakRef)
-                consumer?.producers.removeValue(forKey: AnyProducerRef(self))
+                self.unwatched.removeValue(forKey: consumerWeakRef)
+                consumerWeakRef.ref?.producers.removeValue(forKey: AnyProducerRef(self))
             }
         }
     }
@@ -69,29 +68,5 @@ public struct AnyProducerRef: Hashable {
 
     public func hash(into hasher: inout Hasher) {
         hasher.combine(ObjectIdentifier(ref))
-    }
-}
-
-public struct AnyProducerWeakRef: Hashable {
-    public weak var ref: (any Producer)?
-
-    init(_ ref: (any Producer)?) {
-        self.ref = ref
-    }
-
-    public static func == (lhs: AnyProducerWeakRef, rhs: AnyProducerWeakRef) -> Bool {
-        if let lh = lhs.ref, let rh = rhs.ref {
-            return lh === rh
-        } else {
-            return lhs.ref == nil && rhs.ref == nil
-        }
-    }
-
-    public func hash(into hasher: inout Hasher) {
-        if let ref = self.ref {
-            hasher.combine(ObjectIdentifier(ref))
-        } else {
-            hasher.combine(1)
-        }
     }
 }

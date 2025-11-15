@@ -18,7 +18,7 @@ public class Effect {
         enqueue(self.node)
     }
 
-    public func dispose() {
+    deinit {
         self.node.dispose()
         self.unenqueue(self.node)
     }
@@ -34,9 +34,7 @@ public final class EffectNode: Consumer {
 
     public var isWatched = true
     // Because isWatched is always true, self is never actually needed.
-    public var weakRef: WeakRef<EffectNode> {
-        WeakRef(self)
-    }
+    public var weakRef: AnyConsumerWeakRef { AnyConsumerWeakRef(self) }
 
     private var disposed = false
     private var effectFn: () -> Void
@@ -89,4 +87,5 @@ public final class EffectNode: Consumer {
 /// A global registry of queues for scheduling {@link Effect}s.
 ///
 /// @see {@link flushEffectQueue}
+// @MainActor // But this makes it so every function needs to be @MainActor
 nonisolated(unsafe) public var EffectQueues = [String: Set<Ref<EffectNode>>]()

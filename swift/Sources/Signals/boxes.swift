@@ -17,23 +17,20 @@ public struct Ref<T: AnyObject>: Hashable {
 /// A version of ObjectIdentifier that doesn't do type erasure
 public struct WeakRef<T: AnyObject>: Hashable {
     public weak var ref: T?
+    // Once a weak ref goes dead, we still need to be able to identify what it used to point to.
+    private var uniqueId: Int
+
     init(_ ref: T) {
         self.ref = ref
+        self.uniqueId = ObjectIdentifier(ref).hashValue
     }
 
     public static func == (lhs: Self, rhs: Self) -> Bool {
-        if let lh = lhs.ref, let rh = rhs.ref {
-            return ObjectIdentifier(lh) == ObjectIdentifier(rh)
-        } else {
-            return lhs.ref == nil && rhs.ref == nil
-        }
+        return lhs.uniqueId == rhs.uniqueId
     }
 
     public func hash(into hasher: inout Hasher) {
-        if let ref = self.ref {
-            hasher.combine(ObjectIdentifier(ref))
-        } else {
-            hasher.combine(1)
-        }
+        // The hashing algorithm must remain stable even if the weak ref goes dead.
+        hasher.combine(uniqueId)
     }
 }

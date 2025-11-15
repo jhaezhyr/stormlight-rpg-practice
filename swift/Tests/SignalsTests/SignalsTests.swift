@@ -1,6 +1,9 @@
 import Signals
 import Testing
 
+// Huge issue. Signals are not Sendable, and therefore not thread-safe. They rely on activeConsumer internally, which is a global context variable. It could be made @TaskLocal, but that only solves half the issue. The other half is that no Task is gauranteed to stay on the same thread forever, so Signals themselves need to become Sendable.
+// In order to run all these tests concurrently and have them not fail, you'd have to remove all the nonisolated(unsafe) annotations in the Signals target.
+
 @Test("make sure signals work right")
 func testSignals() async throws {
     let a = state(1)
