@@ -5,7 +5,7 @@
 public protocol Signal {
     associatedtype T
     /** unwraps the inner value held by a `Signal` */
-    func get() throws -> T
+    func get() -> T
 }
 
 /// A `Signal` that supports only the readonly `get()` operation.
@@ -85,7 +85,7 @@ public protocol Producer: AnyObject, SignalNode {
      * `Producer` is settled and up to date with it's own transitive
      * dependencies. Also guarantees that `valueVersion` is up to date.
      */
-    func resolveValue() throws -> T
+    func resolveValue() -> T
 }
 
 public enum ProducerValue<T> {
@@ -116,7 +116,7 @@ public protocol Consumer: AnyObject, SignalNode {
     /**
      * every Consumer has a notion of being marked for future re-evaluation
      */
-    func invalidate() throws
+    func invalidate()
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -27,13 +27,13 @@ extension Producer {
     * Trigger every `Consumer` of the given `Producer` to potentially recompute on
     * the next evaluation of that `SignalNode `
     */
-    public func notifyConsumers() throws {
+    public func notifyConsumers() {
         for (consumerRef, _) in self.watched {
             let consumer = consumerRef.ref
             // anytime we iterate over links is an opportunity to clean up unneeded
             // links
             if !unlinkIfNeeded(self, consumer) {
-                try consumer.invalidate()
+                consumer.invalidate()
             }
         }
 
@@ -45,7 +45,7 @@ extension Producer {
             * case we save time and memory by cleaning up the link.
             */
             if let consumer, consumer.computeVersion == lastSeenVersion {
-                try consumer.invalidate()
+                consumer.invalidate()
             } else {
                 self.unwatched.removeValue(forKey: weakRef)
                 consumer?.producers.removeValue(forKey: AnyProducerRef(self))

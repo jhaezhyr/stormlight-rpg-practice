@@ -2,7 +2,7 @@ extension Consumer {
     /**
     * Determine if a any of a Consumers dependencies have actually changed.
     */
-    public func anyProducersHaveChanged() throws -> Bool {
+    public func anyProducersHaveChanged() -> Bool {
         for (producerRef, lastSeenVersion) in self.producers {
             let producer = producerRef.ref
             // anytime we iterate through Producers is an opportunity to clean up
@@ -20,7 +20,7 @@ extension Consumer {
             * as we would need to do it anyways if we find any producers have
             * changed. (Remember also that resolved values are cached)
             */
-            _ = try producer.resolveValue()
+            _ = producer.resolveValue()
             // only once we've "fetched" a dependencies value can we be sure if it
             // has changed or not
             if producer.valueVersion != lastSeenVersion {

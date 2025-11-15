@@ -12,9 +12,9 @@ public class Computed<T>: Signal {
     /**
      * @see {@link Signal.get}
      */
-    public func get() throws -> T {
+    public func get() -> T {
         self.node.updateWatched()
-        let returnValue = try self.node.resolveValue()
+        let returnValue = self.node.resolveValue()
         self.node.recordAccess()
         /**
          * Creating a Computed Signal that doesn't depend on other Signals
@@ -22,7 +22,7 @@ public class Computed<T>: Signal {
          */
         if self.node.producers.isEmpty {
             print(
-                "WARNING: Computed created without any Signal dependencies note that self means the value will never be computed again.",
+                "WARNING: Computed created without any Signal dependencies note that this means the value will never be computed again.",
             )
         }
         return returnValue
@@ -45,11 +45,11 @@ final class ComputedNode<T>: Producer, Consumer {
     public var producers = [AnyProducerRef: Int]()
     public var watched = [AnyConsumerRef: Int]()
     public var unwatched = [AnyConsumerWeakRef: Int]()
-    private let compute: () throws -> T
+    private let compute: () -> T
     public let equals: EqualsFn<T>
 
     init(
-        _ compute: @escaping () throws -> T,
+        _ compute: @escaping () -> T,  // TODO make a version that throws
         _ equals: @escaping EqualsFn<T>,
     ) {
         self.compute = compute
@@ -57,13 +57,13 @@ final class ComputedNode<T>: Producer, Consumer {
         self.equals = equals
     }
 
-    public func resolveValue() throws -> T {
+    public func resolveValue() -> T {
         let returnValue: T
         switch self.value {
         case .computing:
-            throw SignalCircularDependencyError()
+            fatalError("Signal changed while computing")
         case .unset,
-            .value(_) where try self.stale && self.anyProducersHaveChanged():
+            .value(_) where self.stale && self.anyProducersHaveChanged():
             self.computeVersion += 1
             let oldValue = self.value
             let newValue: T
@@ -82,7 +82,7 @@ final class ComputedNode<T>: Producer, Consumer {
                 } catch {
                     // keep computeVersion in sync with SUCCESSFUL computation
                     self.computeVersion -= 1
-                    throw error
+                    //throw error
                 }
             }
             if self.setIfWouldChange(newValue) {
@@ -102,14 +102,14 @@ final class ComputedNode<T>: Producer, Consumer {
         return returnValue
     }
 
-    public func invalidate() throws {
+    public func invalidate() {
         if case .computing = self.value {
-            throw SignalChangedWhileComputingError()
+            fatalError("Signal changed while computing")
         }
         if self.stale {
             return
         }
         self.stale = true
-        try self.notifyConsumers()
+        self.notifyConsumers()
     }
 }

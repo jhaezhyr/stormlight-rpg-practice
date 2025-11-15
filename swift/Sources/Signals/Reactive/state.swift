@@ -11,9 +11,12 @@ public class State<T>: WritableSignal {
      * @see {@link Signal.get}
      */
     public func get() -> T {
+        guard case let .value(returnValue) = self.node.value else {
+            fatalError("State value should always be set")
+        }
         self.node.updateWatched()
         self.node.recordAccess()
-        return self.node.value
+        return returnValue
     }
 
     /**
@@ -30,7 +33,10 @@ public class State<T>: WritableSignal {
      * @see {@link WritableSignal.mutate}
      */
     public func mutate(_ mutatorFn: (_ prevValue: T) -> Void) {
-        mutatorFn(self.node.value)
+        guard case .value(let currentValue) = self.node.value else {
+            fatalError("State value should always be set")
+        }
+        mutatorFn(currentValue)
         self.node.valueVersion += 1
         self.node.notifyConsumers()
     }
@@ -39,7 +45,10 @@ public class State<T>: WritableSignal {
      * @see {@link WritableSignal.update}
      */
     public func update(updaterFn: (_ prevValue: T) -> T) {
-        let newValue = updaterFn(self.node.value)
+        guard case let .value(currentValue) = self.node.value else {
+            fatalError("State value should always be set")
+        }
+        let newValue = updaterFn(currentValue)
         self.set(newValue)
     }
 }
@@ -53,16 +62,21 @@ class StateNode<T>: Producer {
     public var isWatched = false
     public var watched = [AnyConsumerRef: Int]()
     public var unwatched = [AnyConsumerWeakRef: Int]()
-    public var value: T
+    public var value: ProducerValue<T>
     public let equals: EqualsFn<T>
 
     init(
         _ value: T,
         _ equals: @escaping EqualsFn<T>,
     ) {
-        self.value = value
+        self.value = .value(value)
         self.equals = equals
     }
 
-    public func resolveValue() {}  // no-op
+    public func resolveValue() -> T {
+        guard case let .value(returnValue) = self.value else {
+            fatalError("State value should always be set")
+        }
+        return returnValue
+    }
 }

@@ -38,7 +38,7 @@ public final class EffectNode: Consumer {
         WeakRef(self)
     }
 
-    private var disposed = true
+    private var disposed = false
     private var effectFn: () -> Void
     public var enqueue: (_ me: EffectNode) -> Void
 
@@ -50,11 +50,11 @@ public final class EffectNode: Consumer {
         self.enqueue = enqueue
     }
 
-    public func run() throws {
+    public func run() {
         if self.disposed {
             return
         }
-        if try self.computeVersion == 0 || self.anyProducersHaveChanged() {
+        if self.computeVersion == 0 || self.anyProducersHaveChanged() {
             self.computeVersion += 1
             asActiveConsumer(self, self.effectFn)
             /**
