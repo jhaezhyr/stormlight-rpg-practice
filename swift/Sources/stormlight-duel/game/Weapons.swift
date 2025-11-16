@@ -1,26 +1,26 @@
-enum WeaponRange {
+public enum WeaponRange: Sendable, Hashable {
     case melee(extraReach: Distance? = nil)
     case ranged(short: Distance, long: Distance)
 }
 
-enum WeaponType {
+public enum WeaponType: CaseIterable, Sendable, Hashable {
     case lightWeaponry
     case heavyWeaponry
     case specialWeapons
 }
 
-enum WeaponsSkill {
+public enum WeaponsSkill: CaseIterable, Sendable, Hashable {
     case heavy
     case light
 }
 
-enum DamageType {
+public enum DamageType: CaseIterable, Sendable, Hashable {
     case keen
     case vital
     case impact
 }
 
-enum WeaponName: CaseIterable {
+public enum WeaponName: CaseIterable, Sendable, Hashable {
     case axe
     case crossbow
     case grandbow
@@ -50,7 +50,7 @@ enum WeaponName: CaseIterable {
     case improvisedWeapon
 }
 
-protocol Weapon: Item {
+public protocol Weapon: Item {
     var type: WeaponType { get }
     var weaponsSkill: WeaponsSkill { get }
     var range: WeaponRange { get }
@@ -59,24 +59,24 @@ protocol Weapon: Item {
     var traits: [(trait: any WeaponTrait, condition: TraitCondition)] { get }
 }
 
-protocol WeaponTrait {}
+public protocol WeaponTrait {}
 
-struct Thrown: WeaponTrait {}
-struct Offhand: WeaponTrait {}
-struct Loaded: WeaponTrait {
+public struct Thrown: WeaponTrait {}
+public struct Offhand: WeaponTrait {}
+public struct Loaded: WeaponTrait {
     var ammunition: Resource
 }
-struct TwoHanded: WeaponTrait {}
-struct Deadly: WeaponTrait {}
-struct CumbersomeWeapon: WeaponTrait {
+public struct TwoHanded: WeaponTrait {}
+public struct Deadly: WeaponTrait {}
+public struct CumbersomeWeapon: WeaponTrait {
     var minStrength: Int
 }
-struct Pierce: WeaponTrait {}
-struct Defensive: WeaponTrait {}
-struct UniqueWeapon: WeaponTrait {}
-struct Momentum: WeaponTrait {}
-struct Fragile: WeaponTrait {}
-struct Indirect: WeaponTrait {}
-struct Quickdraw: WeaponTrait {}
-struct Dangerous: WeaponTrait {}
-struct Discreet: WeaponTrait {}
+public struct Pierce: WeaponTrait {}
+public struct Defensive: WeaponTrait {}
+public struct UniqueWeapon: WeaponTrait {}
+public struct Momentum: WeaponTrait {}
+public struct Fragile: WeaponTrait {}
+public struct Indirect: WeaponTrait {}
+public struct Quickdraw: WeaponTrait {}
+public struct Dangerous: WeaponTrait {}
+public struct Discreet: WeaponTrait {}

@@ -1,0 +1,145 @@
+public protocol SelfListenerSelfHookForTestHolder {
+    var selfListenersSelfHooksForTests: [any SelfListenerSelfHookForTestProtocol] { get }
+    var allSelfListenersSelfHooksForTests: [any SelfListenerSelfHookForTestProtocol] { get }
+}
+extension SelfListenerSelfHookForTestHolder {
+    public var selfListenersSelfHooksForTests: [any SelfListenerSelfHookForTestProtocol] { [] }
+}
+public protocol SelfListenerSelfHookForTestHolderLeaf: SelfListenerSelfHookForTestHolder {
+}
+extension SelfListenerSelfHookForTestHolderLeaf {
+    public var allSelfListenersSelfHooksForTests: [any SelfListenerSelfHookForTestProtocol] {
+        selfListenersSelfHooksForTests
+    }
+}
+extension NonLeafGenericListenerHolder where Self: SelfListenerSelfHookForTestHolder {
+    public var allSelfListenersSelfHooksForTests: [any SelfListenerSelfHookForTestProtocol] {
+        selfListenersSelfHooksForTests
+            + childHolders.compactMap {
+                ($0 as? any SelfListenerSelfHookForTestHolder)?.allSelfListenersSelfHooksForTests
+            }.flatMap { $0 }
+    }
+}
+
+public protocol SelfListenerSelfHookForTestProtocol {
+    associatedtype Trigger: HookTriggerForSomeRpgCharacterAndTest
+    associatedtype C: RpgCharacter
+    associatedtype Test: RpgTestProtocol
+    var hook: Trigger { get }
+    var action: ActionForRpgCharacterAndTest<C, Test> { get }
+}
+extension SelfListenerSelfHookForTestProtocol {
+    func typeErasedAction(
+        _ game: Game, _ character: inout any RpgCharacter, _ test: inout any RpgTestProtocol
+    ) {
+        if var wrappedCharacter = character as? AnyRpgCharacter {
+            self.typeErasedAction(game, &wrappedCharacter.core, &test)
+            character = wrappedCharacter
+            return
+        }
+        // If we get here, we don't have a wrapped character.
+        if var wrappedTest = test as? AnyRpgTest {
+            self.typeErasedAction(game, &character, &wrappedTest.core)
+            test = wrappedTest
+            return
+        }
+        // If we get here, we don't have a wrapped test.
+        var characterToUse: C
+        let gottaUnwrapCharacterAgain: Bool
+        if C.self == AnyRpgCharacter.self {
+            // We WANT a wrapped character. Nice.
+            characterToUse = AnyRpgCharacter(character) as! C
+            gottaUnwrapCharacterAgain = true
+        } else {
+            guard let typeSafeCharacter = character as? C else {
+                fatalError(
+                    "You passed the wrong character type into the SelfListenerSelfHookProtocol")
+            }
+            characterToUse = typeSafeCharacter
+            gottaUnwrapCharacterAgain = false
+        }
+        var testToUse: Test
+        let gottaUnwrapTestAgain: Bool
+        if C.self == AnyRpgTest.self {
+            // We WANT a wrapped test.
+            testToUse = AnyRpgTest(test) as! Test
+            gottaUnwrapTestAgain = true
+        } else {
+            guard let typeSafeTest = test as? Test else {
+                fatalError(
+                    "You passed the wrong test type into the SelfListenerSelfHookProtocol")
+            }
+            testToUse = typeSafeTest
+            gottaUnwrapTestAgain = false
+        }
+
+        self.action(game, &characterToUse, &testToUse)
+
+        if gottaUnwrapCharacterAgain {
+            character = (characterToUse as! AnyRpgCharacter).core
+        } else {
+            character = characterToUse
+        }
+        if gottaUnwrapTestAgain {
+            test = (testToUse as! AnyRpgTest).core
+        } else {
+            test = testToUse
+        }
+    }
+}
+
+public struct SelfListenerSelfHookForTest<
+    Trigger: HookTriggerForSomeRpgCharacterAndTest, Character: RpgCharacter, Test: RpgTestProtocol
+>: SelfListenerSelfHookForTestProtocol {
+    public var hook: Trigger
+    public var action: ActionForRpgCharacterAndTest<Character, Test>
+    func asListener(
+        for characterRef: RpgCharacterRef, in testRef: RpgTestRef, ofTestType _: Test.Type
+    ) -> Listener<
+        HookTriggerForSpecificRpgCharacterAndTest<Trigger>
+    > {
+        let specificHook = HookTriggerForSpecificRpgCharacterAndTest(
+            hook, for: characterRef)
+        return listen(to: specificHook) { game in
+            guard var character = game.character(at: characterRef, as: Character.self) else {
+                return
+            }
+            guard var test = game.test(at: testRef, as: Test.self) else {
+                return
+            }
+            action(game, &character, &test)
+            game.updateCharacter(character)
+            game.updateTest(test, at: testRef)
+        }
+    }
+}
+
+func selfListen<
+    Trigger: HookTriggerForSomeRpgCharacterAndTest,
+    Character: RpgCharacter,
+    Test: RpgTestProtocol
+>(
+    toMyTests hook: Trigger,
+    as _: Character.Type,
+    testType _: Test.Type,
+    action: @escaping ActionForRpgCharacterAndTest<Character, Test>
+) -> SelfListenerSelfHookForTest<Trigger, Character, Test> {
+    SelfListenerSelfHookForTest(hook: hook, action: action)
+}
+
+public typealias ActionForRpgCharacterAndTest<Character: RpgCharacter, Test: RpgTestProtocol> = (
+    _ game: Game, _ character: inout Character, _ test: inout Test
+) -> Void
+
+public protocol HookTriggerForSomeRpgCharacterAndTest: Hashable, Sendable {}
+
+public struct HookTriggerForSpecificRpgCharacterAndTest<
+    T: HookTriggerForSomeRpgCharacterAndTest
+>: HookTrigger {
+    var characterRef: RpgCharacterRef
+    var hookType: T
+    init(_ hookType: T, for character: RpgCharacterRef) {
+        self.hookType = hookType
+        self.characterRef = character
+    }
+}

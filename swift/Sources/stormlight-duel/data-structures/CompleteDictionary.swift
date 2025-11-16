@@ -1,4 +1,5 @@
-struct CompleteDictionary<Key: Hashable & CaseIterable & Sendable, Value: Sendable>: Sendable {
+public struct CompleteDictionary<Key: Hashable & CaseIterable & Sendable, Value: Sendable>: Sendable
+{
     private var core: [Key: Value]
     public init(from dictionary: [Key: Value]) {
         core = dictionary
@@ -24,30 +25,32 @@ struct CompleteDictionary<Key: Hashable & CaseIterable & Sendable, Value: Sendab
 }
 
 extension CompleteDictionary: Collection {
-    typealias Element = (Key, Value)
-    typealias Index = [Key: Value].Index
-    var startIndex: Dictionary<Key, Value>.Index {
+    public typealias Element = (Key, Value)
+    public typealias Index = [Key: Value].Index
+    public var startIndex: Dictionary<Key, Value>.Index {
         core.startIndex
     }
-    var endIndex: Dictionary<Key, Value>.Index {
+    public var endIndex: Dictionary<Key, Value>.Index {
         core.endIndex
     }
 
-    func index(after i: Dictionary<Key, Value>.Index) -> Dictionary<Key, Value>.Index {
+    public func index(after i: Dictionary<Key, Value>.Index) -> Dictionary<Key, Value>.Index {
         return core.index(after: i)
     }
 
-    subscript(position: Dictionary<Key, Value>.Index) -> (Key, Value) {
+    public subscript(position: Dictionary<Key, Value>.Index) -> (Key, Value) {
         get {
             return core[position]
         }
     }
 
-    func mapValues<T: Sendable>(transform: (_ value: Value) -> T) -> CompleteDictionary<Key, T> {
+    public func mapValues<T: Sendable>(transform: (_ value: Value) -> T) -> CompleteDictionary<
+        Key, T
+    > {
         CompleteDictionary<Key, T>(from: core.mapValues(transform))
     }
 
-    func mapLabeledValues<T: Sendable>(transform: (_ key: Key, _ value: Value) -> T)
+    public func mapLabeledValues<T: Sendable>(transform: (_ key: Key, _ value: Value) -> T)
         -> CompleteDictionary<Key, T>
     {
         CompleteDictionary<Key, T>(
@@ -57,13 +60,15 @@ extension CompleteDictionary: Collection {
 }
 
 extension CompleteDictionary: ExpressibleByDictionaryLiteral {
-    init(dictionaryLiteral elements: (Key, Value)...) {
+    public init(dictionaryLiteral elements: (Key, Value)...) {
         self.init(from: Dictionary(uniqueKeysWithValues: elements))
     }
 }
 
 extension Dictionary {
-    func mapLabeledValues<T: Sendable>(transform: (_ key: Key, _ value: Value) -> T) -> [Key: T] {
+    public func mapLabeledValues<T: Sendable>(transform: (_ key: Key, _ value: Value) -> T) -> [Key:
+        T]
+    {
         [Key: T](uniqueKeysWithValues: self.map({ key, value in (key, transform(key, value)) }))
     }
 }

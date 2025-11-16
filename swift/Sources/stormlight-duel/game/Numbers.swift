@@ -1,4 +1,4 @@
-enum NumberDie: Int {
+public enum NumberDie: Int {
     case d4 = 4
     case d6 = 6
     case d8 = 8
@@ -8,25 +8,32 @@ enum NumberDie: Int {
     case d100 = 100
 }
 
-struct RandomDistribution {
+public enum PlotDieResult {
+    case opportunity
+    case complication2
+    case complication4
+    case none
+}
+
+public struct RandomDistribution {
     public var dice: [(die: NumberDie, count: Int)]
 }
 
 // Measured in ft
-typealias Distance = Int
+public typealias Distance = Int
 // Measured in diamond marks or mk
-typealias Money = Int
+public typealias Money = Int
 // Measured in lb
-typealias Weight = Int
+public typealias Weight = Int
 
-struct Resource: Comparable {
+public struct Resource: Comparable {
     public var value: Int
     public var maxValue: Int
     public mutating func restore(_ delta: Int) {
         value += max(min(delta, maxValue - value), 0)
     }
 
-    static func < (lhs: Resource, rhs: Resource) -> Bool {
+    public static func < (lhs: Resource, rhs: Resource) -> Bool {
         lhs.value < rhs.value
     }
 }

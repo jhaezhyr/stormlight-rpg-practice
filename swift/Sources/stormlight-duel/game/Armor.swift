@@ -1,12 +1,12 @@
-protocol Armor: Item {
+public protocol Armor: Item {
     var deflect: Int { get }
     var traits: [(trait: any ArmorTrait, condition: TraitCondition)] { get }
 }
 
-protocol ArmorTrait {}
+public protocol ArmorTrait {}
 
-struct CumbersomeArmor: ArmorTrait {
+public struct CumbersomeArmor: ArmorTrait {
     var minStrength: Int
 }
-struct Presentable: ArmorTrait {}
-struct UniqueArmor: ArmorTrait {}
+public struct Presentable: ArmorTrait {}
+public struct UniqueArmor: ArmorTrait {}

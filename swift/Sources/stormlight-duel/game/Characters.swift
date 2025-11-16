@@ -1,10 +1,11 @@
-enum Realm: Hashable, CaseIterable {
+public enum Realm: Hashable, CaseIterable, Sendable {
     case physical
     case cognitive
     case spiritual
+    case vital
 }
 
-enum AttributeName: Hashable, CaseIterable {
+public enum AttributeName: Hashable, CaseIterable, Sendable {
     case strength
     case speed
     case intellect
@@ -12,7 +13,7 @@ enum AttributeName: Hashable, CaseIterable {
     case willpower
     case presence
 
-    static let statToRealm: CompleteDictionary<AttributeName, Realm> = [
+    public static let statToRealm: CompleteDictionary<AttributeName, Realm> = [
         .strength: .physical,
         .speed: .physical,
         .intellect: .cognitive,
@@ -21,7 +22,7 @@ enum AttributeName: Hashable, CaseIterable {
         .presence: .spiritual,
     ]
 
-    static let realmToAttributes: CompleteDictionary<Realm, Set<AttributeName>> = {
+    public static let realmToAttributes: CompleteDictionary<Realm, Set<AttributeName>> = {
         var result: [Realm: Set<AttributeName>] = [:]
         for (attribute, realm) in statToRealm {
             result[realm, default: Set<AttributeName>()].insert(attribute)
@@ -30,7 +31,7 @@ enum AttributeName: Hashable, CaseIterable {
     }()
 }
 
-enum CoreSkillName: Hashable, CaseIterable {
+public enum CoreSkillName: Hashable, CaseIterable, Sendable {
     case agility
     case athletics
     case heavyWeaponry
@@ -50,7 +51,7 @@ enum CoreSkillName: Hashable, CaseIterable {
     case persuasion
     case survival
 
-    static let statToSkill: CompleteDictionary<AttributeName, Set<CoreSkillName>> = [
+    public static let statToSkill: CompleteDictionary<AttributeName, Set<CoreSkillName>> = [
         .strength: [.athletics, .heavyWeaponry],
         .speed: [.agility, .lightWeaponry, .stealth, .thievery],
         .intellect: [.crafting, .deduction, .lore, .medicine],
@@ -59,7 +60,7 @@ enum CoreSkillName: Hashable, CaseIterable {
         .presence: [.deception, .leadership, .persuasion],
     ]
 
-    static let skillToAttribute: CompleteDictionary<CoreSkillName, AttributeName> = {
+    public static let skillToAttribute: CompleteDictionary<CoreSkillName, AttributeName> = {
         CompleteDictionary(
             from: statToSkill.reduce([CoreSkillName: AttributeName]()) { (initial, x) in
                 initial.merging(
@@ -71,7 +72,7 @@ enum CoreSkillName: Hashable, CaseIterable {
     }()
 }
 
-enum SurgeName: Hashable, CaseIterable {
+public enum SurgeName: Hashable, CaseIterable {
     case division
     case abrasion
     case cohesion
@@ -84,22 +85,22 @@ enum SurgeName: Hashable, CaseIterable {
     case transformation
 }
 
-enum SkillName: Hashable {
+public enum SkillName: Hashable {
     case core(CoreSkillName)
     case surge(SurgeName)
 }
 
-enum CultureName: CaseIterable {
+public enum CultureName: CaseIterable {
     case alethi
     case natan
 }
 
-enum Expertise: Hashable {
+public enum Expertise: Hashable {
     case weapon(WeaponName)
     case culture(CultureName)
 }
 
-enum PathName: CaseIterable {
+public enum PathName: CaseIterable {
     // Heroic
     case warrior
     case agent
@@ -119,30 +120,45 @@ enum PathName: CaseIterable {
     case windrunner
 }
 
-enum CharacterSize {
+public enum CharacterSize {
     case tiny, small, normal, large, huge
 }
 
-struct PathProgress {}
+public struct RpgCharacterRef: Sendable, Hashable {
+    public var name: String
 
-protocol Character {
+    public init(name: String) {
+        self.name = name
+    }
+}
+
+public struct PathProgress {}
+
+public protocol RpgCharacter: AllTheListenersHolder, NonLeafGenericListenerHolder {
+    var name: String { get }
+
     var attributes: CompleteDictionary<AttributeName, Int> { get }
     var ranksInCoreSkills: CompleteDictionary<CoreSkillName, Int> { get }
     var modifiersForCoreSkills: CompleteDictionary<CoreSkillName, Int> { get }  // Derived
     var ranksInOtherSkills: [SkillName: Int] { get }
     var modifiersForOtherSkills: [SkillName: Int] { get }
     var defenses: CompleteDictionary<Realm, Int> { get }
-    var health: Resource { get }
-    var focus: Resource { get }
-    var investiture: Resource { get }
+    var health: Resource { get set }
+    var focus: Resource { get set }
+    var investiture: Resource { get set }
     var recoveryDie: NumberDie { get }
     var sensesRange: Distance { get }
-    var conditions: [Condition] { get }
+    var conditions: [any ConditionProtocol] { get set }
     var movementRate: Distance { get }
     var size: CharacterSize { get }
+    var deflect: Int { get }
 }
 
-protocol FullCharacter: Character {
+extension RpgCharacter {
+    public var childHolders: [Any] { conditions.map { $0 as Any } }
+}
+
+public protocol FullRpgCharacter: RpgCharacter {
     var expertises: Set<Expertise> { get }
     var equipment: [Item] { get }
     var money: Money { get }
@@ -152,38 +168,62 @@ protocol FullCharacter: Character {
     var maximumSkillRank: Int { get }
 }
 
-struct PlayerCharacter: FullCharacter {
-    let size: CharacterSize = .normal
-
-    var expertises: Set<Expertise>
-    var equipment: [any Item]
-    var money: Money
-    var paths: [PathName: PathProgress]
-
-    var level: Int
-
-    var attributes: CompleteDictionary<AttributeName, Int>
-
-    var ranksInCoreSkills: CompleteDictionary<CoreSkillName, Int>
-    var ranksInOtherSkills: [SkillName: Int]
-
-    var health: Resource
-    var focus: Resource
-    var investiture: Resource
-
-    var conditions: [Condition]
+extension FullRpgCharacter {
+    public var childHolders: [Any] {
+        conditions.map { $0 as Any } + equipment.map { $0 as Any }
+        // TODO something about path progress
+    }
 }
 
-extension Character {
-    var modifiersForCoreSkills: CompleteDictionary<CoreSkillName, Int> {
+public struct PlayerRpgCharacter: FullRpgCharacter {
+    public var name: String
+
+    public var size: CharacterSize { .normal }
+
+    public var expertises: Set<Expertise>
+    public var equipment: [any Item]
+    public var money: Money = 0
+    public var paths: [PathName: PathProgress] = [:]
+
+    public var level: Int = 1
+
+    public var attributes: CompleteDictionary<AttributeName, Int>
+
+    public var ranksInCoreSkills: CompleteDictionary<CoreSkillName, Int>
+    public var ranksInOtherSkills: [SkillName: Int]
+
+    public var health: Resource
+    public var focus: Resource
+    public var investiture: Resource
+
+    public var conditions: [any ConditionProtocol]
+}
+
+extension PlayerRpgCharacter {
+    public static func basicCharacter() -> PlayerRpgCharacter {
+        PlayerRpgCharacter(
+            name: "Baby son-Daddy", expertises: [], equipment: [],
+            attributes: [
+                .strength: 2, .speed: 1, .intellect: 2, .awareness: 2, .presence: 2, .willpower: 2,
+            ],
+            ranksInCoreSkills: .init(
+                from: .init(uniqueKeysWithValues: CoreSkillName.allCases.map { ($0, 0) })),
+            ranksInOtherSkills: [:], health: .init(value: 12, maxValue: 12),
+            focus: .init(value: 4, maxValue: 4),
+            investiture: .init(value: 0, maxValue: 0), conditions: [])
+    }
+}
+
+extension RpgCharacter {
+    public var modifiersForCoreSkills: CompleteDictionary<CoreSkillName, Int> {
         ranksInCoreSkills.mapLabeledValues { skill, rank in
             rank + attributes[CoreSkillName.skillToAttribute[skill]]
         }
     }
-    var modifiersForOtherSkills: [SkillName: Int] {
+    public var modifiersForOtherSkills: [SkillName: Int] {
         ranksInOtherSkills.mapLabeledValues { skill, rank in rank }  // TODO
     }
-    var defenses: CompleteDictionary<Realm, Int> {
+    public var defenses: CompleteDictionary<Realm, Int> {
         CompleteDictionary<Realm, Int>(
             from: [Realm: Int](
                 uniqueKeysWithValues:
@@ -199,7 +239,7 @@ extension Character {
                     }
             ))
     }
-    var movementRate: Distance {
+    public var movementRate: Distance {
         switch attributes[.speed] {
         case ...0: 20
         case 1...2: 25
@@ -209,7 +249,7 @@ extension Character {
         default: 90
         }
     }
-    var recoveryDie: NumberDie {
+    public var recoveryDie: NumberDie {
         switch attributes[.willpower] {
         case ...0: .d4
         case 1...2: .d6
@@ -219,7 +259,7 @@ extension Character {
         default: .d20
         }
     }
-    var sensesRange: Distance {
+    public var sensesRange: Distance {
         switch attributes[.awareness] {
         case ...0: 5
         case 1...2: 10
@@ -229,10 +269,14 @@ extension Character {
         default: Int.max
         }
     }
+
+    public var deflect: Int {
+        0
+    }
 }
 
-extension FullCharacter {
-    var tier: Int {
+extension FullRpgCharacter {
+    public var tier: Int {
         switch level {
         case ...5: 1
         case ...10: 2
@@ -241,8 +285,15 @@ extension FullCharacter {
         default: 5
         }
     }
-    var maximumSkillRank: Int {
+    public var maximumSkillRank: Int {
         max(5, tier + 1)
+    }
+}
+
+extension RpgCharacter {
+    public mutating func takeDamage(_ damage: Damage) {
+        let damageReduction = damage.realm == .vital ? 0 : deflect
+        health.value = max(0, health.value - max(0, damage.amount - damageReduction))
     }
 }
 

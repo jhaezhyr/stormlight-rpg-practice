@@ -2,7 +2,7 @@
 // https://docs.swift.org/swift-book
 
 @main
-struct MyCLI {
+public struct MyCLI {
     static func main() {
         print("Hello, world!")
     }
