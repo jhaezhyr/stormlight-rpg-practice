@@ -36,4 +36,9 @@ public struct Resource: Comparable {
     public static func < (lhs: Resource, rhs: Resource) -> Bool {
         lhs.value < rhs.value
     }
+
+    public init(value: Int? = nil, maxValue: Int) {
+        self.value = value ?? maxValue
+        self.maxValue = maxValue
+    }
 }

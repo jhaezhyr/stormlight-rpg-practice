@@ -1,0 +1,33 @@
+{
+  "originHash" : "a6f7b384374ab3cc4105517a7063f85359660222831d4934191800e52224cf26",
+  "pins" : [
+    {
+      "identity" : "terminal-ansi",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/juri/terminal-ansi",
+      "state" : {
+        "revision" : "4a56c05d18cd7cb0ad85fcc0bd1b616f45c8a067",
+        "version" : "0.3.0"
+      }
+    },
+    {
+      "identity" : "terminal-styles",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/juri/terminal-styles.git",
+      "state" : {
+        "revision" : "9e9e6d6f17e1fbc8df0f5d4f6f5cbf25af270615",
+        "version" : "0.3.0"
+      }
+    },
+    {
+      "identity" : "terminal-widgets",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/juri/terminal-widgets.git",
+      "state" : {
+        "revision" : "21f334582ce89e0388cb44bdbd734348e2b98b27",
+        "version" : "0.1.0"
+      }
+    }
+  ],
+  "version" : 3
+}

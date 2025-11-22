@@ -14,6 +14,9 @@ public struct CompleteDictionary<Key: Hashable & CaseIterable & Sendable, Value:
             fatalError("CompleteDictionary incomplete. Missing keys: \(missingCases)")
         }
     }
+    public init(valueFn: (_ k: Key) -> Value) {
+        core = Dictionary(uniqueKeysWithValues: Key.allCases.map { ($0, valueFn($0)) })
+    }
     public subscript(key: Key) -> Value {
         get {
             return core[key]!

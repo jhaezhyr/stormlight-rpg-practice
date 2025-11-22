@@ -109,7 +109,7 @@ public struct SelfListenerSelfHookForTest<
             }
             action(game, &character, &test)
             game.updateCharacter(character)
-            game.updateTest(test, at: testRef)
+            game.updateTest(test)
         }
     }
 }

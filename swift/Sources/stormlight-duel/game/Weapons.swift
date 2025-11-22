@@ -7,6 +7,16 @@ public enum WeaponType: CaseIterable, Sendable, Hashable {
     case lightWeaponry
     case heavyWeaponry
     case specialWeapons
+
+    var skill: SkillName {
+        let coreSkill: CoreSkillName =
+            switch self {
+            case .lightWeaponry: .lightWeaponry
+            case .heavyWeaponry: .heavyWeaponry
+            case .specialWeapons: .lightWeaponry  // TODO i don't know
+            }
+        return .core(coreSkill)
+    }
 }
 
 public enum WeaponsSkill: CaseIterable, Sendable, Hashable {
@@ -52,11 +62,19 @@ public enum WeaponName: CaseIterable, Sendable, Hashable {
 
 public protocol Weapon: Item {
     var type: WeaponType { get }
+    var weaponName: WeaponName { get }
     var weaponsSkill: WeaponsSkill { get }
     var range: WeaponRange { get }
     var damage: RandomDistribution { get }
     var damageType: DamageType { get }
     var traits: [(trait: any WeaponTrait, condition: TraitCondition)] { get }
+}
+
+public struct ItemRef: Hashable, Sendable {
+    public var name: String
+    public init(of item: any Weapon) {
+        name = item.name
+    }
 }
 
 public protocol WeaponTrait {}

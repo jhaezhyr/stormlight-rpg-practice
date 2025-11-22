@@ -105,7 +105,7 @@ public enum PathName: CaseIterable {
     case warrior
     case agent
     case envoy
-    case unter
+    case hunter
     case leader
     case scholar
     // Radiant
@@ -130,11 +130,15 @@ public struct RpgCharacterRef: Sendable, Hashable {
     public init(name: String) {
         self.name = name
     }
+
+    public init(of character: any RpgCharacter) {
+        self.name = character.name
+    }
 }
 
 public struct PathProgress {}
 
-public protocol RpgCharacter: AllTheListenersHolder, NonLeafGenericListenerHolder {
+public protocol RpgCharacter: AllTheListenersHolder, NonLeafGenericListenerHolder, Keyed {
     var name: String { get }
 
     var attributes: CompleteDictionary<AttributeName, Int> { get }
@@ -152,15 +156,33 @@ public protocol RpgCharacter: AllTheListenersHolder, NonLeafGenericListenerHolde
     var movementRate: Distance { get }
     var size: CharacterSize { get }
     var deflect: Int { get }
+
+    var brain: any RpgCharacterBrain { get }
+
+    var equipment: KeyedSet<ReadyableItem> { get set }
+
+    var combatState: RpgCharacterCombatState? { get set }
 }
 
 extension RpgCharacter {
-    public var childHolders: [Any] { conditions.map { $0 as Any } }
+    public var primaryKey: RpgCharacterRef {
+        RpgCharacterRef(name: name)
+    }
+
+    public var childHolders: [Any] {
+        conditions.map { $0 as Any } + equipment.map { $0 as Any }
+        // TODO something about path progress
+    }
+
+    var modifiers: [SkillName: Int] {
+        [SkillName: Int].init(
+            uniqueKeysWithValues: modifiersForCoreSkills.map { (cs, v) in (SkillName.core(cs), v) }
+                + modifiersForOtherSkills.map { (os, v) in (os, v) })
+    }
 }
 
 public protocol FullRpgCharacter: RpgCharacter {
     var expertises: Set<Expertise> { get }
-    var equipment: [Item] { get }
     var money: Money { get }
     var paths: [PathName: PathProgress] { get }
     var level: Int { get }
@@ -168,10 +190,13 @@ public protocol FullRpgCharacter: RpgCharacter {
     var maximumSkillRank: Int { get }
 }
 
-extension FullRpgCharacter {
-    public var childHolders: [Any] {
-        conditions.map { $0 as Any } + equipment.map { $0 as Any }
-        // TODO something about path progress
+public struct ReadyableItem {
+    var core: any Item
+    var isReady: Bool
+}
+extension ReadyableItem: Keyed {
+    public var primaryKey: String {
+        core.primaryKey
     }
 }
 
@@ -181,7 +206,7 @@ public struct PlayerRpgCharacter: FullRpgCharacter {
     public var size: CharacterSize { .normal }
 
     public var expertises: Set<Expertise>
-    public var equipment: [any Item]
+    public var equipment: KeyedSet<ReadyableItem>
     public var money: Money = 0
     public var paths: [PathName: PathProgress] = [:]
 
@@ -197,6 +222,44 @@ public struct PlayerRpgCharacter: FullRpgCharacter {
     public var investiture: Resource
 
     public var conditions: [any ConditionProtocol]
+
+    public var brain: any RpgCharacterBrain
+
+    public var combatState: RpgCharacterCombatState?
+
+    public init(
+        name: String,
+        expertises: Set<Expertise>,
+        equipment: KeyedSet<ReadyableItem>,
+        money: Money = 0,
+        paths: [PathName: PathProgress] = [:],
+        level: Int = 1,
+        attributes: CompleteDictionary<AttributeName, Int>,
+        ranksInCoreSkills: CompleteDictionary<CoreSkillName, Int>,
+        ranksInOtherSkills: [SkillName: Int],
+        health: Resource,
+        focus: Resource,
+        investiture: Resource,
+        conditions: [any ConditionProtocol],
+        brain: any RpgCharacterBrain,
+        combatState: RpgCharacterCombatState? = nil,
+    ) {
+        self.name = name
+        self.expertises = expertises
+        self.equipment = equipment
+        self.money = money
+        self.paths = paths
+        self.level = level
+        self.attributes = attributes
+        self.ranksInCoreSkills = ranksInCoreSkills
+        self.ranksInOtherSkills = ranksInOtherSkills
+        self.health = health
+        self.focus = focus
+        self.investiture = investiture
+        self.conditions = conditions
+        self.brain = brain
+        self.combatState = combatState
+    }
 }
 
 extension PlayerRpgCharacter {
@@ -210,7 +273,8 @@ extension PlayerRpgCharacter {
                 from: .init(uniqueKeysWithValues: CoreSkillName.allCases.map { ($0, 0) })),
             ranksInOtherSkills: [:], health: .init(value: 12, maxValue: 12),
             focus: .init(value: 4, maxValue: 4),
-            investiture: .init(value: 0, maxValue: 0), conditions: [])
+            investiture: .init(value: 0, maxValue: 0), conditions: [],
+            brain: RpgCharacterDummyBrain())
     }
 }
 
@@ -292,7 +356,7 @@ extension FullRpgCharacter {
 
 extension RpgCharacter {
     public mutating func takeDamage(_ damage: Damage) {
-        let damageReduction = damage.realm == .vital ? 0 : deflect
+        let damageReduction = damage.type == .vital ? 0 : deflect
         health.value = max(0, health.value - max(0, damage.amount - damageReduction))
     }
 }

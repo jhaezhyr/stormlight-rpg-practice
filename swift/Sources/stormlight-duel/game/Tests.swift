@@ -3,7 +3,9 @@
 /// A head-to-head test is presented to each character as a separate test structure.
 ///
 /// In an attack, there will also be damage rolls. Those rolls are not part of the test structure. However, the advantages, disadvantages, opportunities, and complications from the test can affect those rolls.
-public protocol RpgTestProtocol {
+public protocol RpgTestProtocol: Keyed {
+    var id: Int { get }
+
     var skill: SkillName { get set }
     var advantages: Int { get set }
     var disadvantages: Int { get set }
@@ -14,17 +16,23 @@ public protocol RpgTestProtocol {
 
     var success: Bool? { get }
 }
+extension RpgTestProtocol {
+    public var primaryKey: RpgTestRef {
+        RpgTestRef(id: id)
+    }
+}
 
 public struct RpgSimpleTest: RpgTestProtocol {
+    public var id: Int = RpgTestRef.next().id
     public var skill: SkillName
-    public var advantages: Int
-    public var disadvantages: Int
-    public var testRolls: [RpgTestRoll]
     public var difficulty: Int
-    public var opportunities: Int
-    public var complications: Int
+    public var advantages: Int = 0
+    public var disadvantages: Int = 0
+    public var testRolls: [RpgTestRoll] = []
+    public var opportunities: Int = 0
+    public var complications: Int = 0
 
-    public var success: Bool?
+    public var success: Bool? = nil
 }
 
 /// Use this in places where `any RpgTestProtocol` doesn't work.
@@ -33,6 +41,7 @@ public struct AnyRpgTest: RpgTestProtocol {
     public init(_ test: any RpgTestProtocol) {
         self.core = test
     }
+    public var id: Int { core.id }
     public var skill: SkillName {
         get { core.skill }
         set { core.skill = newValue }
@@ -67,7 +76,13 @@ public struct AnyRpgTest: RpgTestProtocol {
 }
 
 public struct RpgTestRef: Sendable, Hashable {
-    var id: Int
+    public var id: Int
+
+    public static func next() -> RpgTestRef {
+        last += 1
+        return RpgTestRef(id: last)
+    }
+    nonisolated(unsafe) private static var last: Int = 0
 }
 
 enum TestHookType: Sendable, HookTriggerForSomeRpgCharacterAndTest {
