@@ -61,9 +61,13 @@ public struct Combat {
                         character.combatState!.turnSpeed.actionsPerTurn
                     game.naiveDispatch(CombatPhase.startOfTurn, for: RpgCharacterRef(of: character))
                     actions: while true {
+                        if isOver(in: game) {
+                            break rounds
+                        }
+
                         let choice = character.brain.decide(type: CombatChoice.self)
                         guard case .action(let action) = choice else {
-                            continue actions
+                            break actions
                         }
                         if character.combatState!.actionsRemaining >= action.actionCost
                             && character.focus.value >= action.focusCost
@@ -73,10 +77,6 @@ public struct Combat {
                             character.focus.value -= action.focusCost
                             character.combatState!.actionsRemaining -= action.actionCost
                             action.action(by: character, in: game)
-                        }
-
-                        if isOver(in: game) {
-                            break rounds
                         }
                     }
                     game.naiveDispatch(CombatPhase.endOfTurn, for: RpgCharacterRef(of: character))
