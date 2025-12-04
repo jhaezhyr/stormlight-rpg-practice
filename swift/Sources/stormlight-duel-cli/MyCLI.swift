@@ -36,6 +36,6 @@ public struct MyCLI {
         var game = Game(characters: [player1, player2])
 
         let combat = Combat()
-        combat.run(in: &game)
+        combat.run(in: game)
     }
 }

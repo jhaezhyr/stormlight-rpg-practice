@@ -37,7 +37,7 @@ public struct Combat {
     public init() {
     }
 
-    public func run(in game: inout Game) {
+    public func run(in game: Game) {
         // Let everyone start the combat.
         for ref in game.characters.keys {
             let turnSpeed = game.characters[ref]!.brain.decide(options: TurnSpeed.allCases)
@@ -72,7 +72,7 @@ public struct Combat {
                         {
                             character.focus.value -= action.focusCost
                             character.combatState!.actionsRemaining -= action.actionCost
-                            action.action(by: character, in: &game)
+                            action.action(by: character, in: game)
                         }
 
                         if isOver(in: game) {
@@ -103,7 +103,7 @@ public protocol CombatAction {
     var actionCost: Int { get }
     var focusCost: Int { get }
     func canTakeAction(by character: any RpgCharacter, in game: Game) -> Bool
-    func action(by character: any RpgCharacter, in game: inout Game)
+    func action(by character: any RpgCharacter, in game: Game)
 }
 extension CombatAction {
     public func canTakeAction(by character: any RpgCharacter, in game: Game) -> Bool { true }
@@ -116,7 +116,7 @@ extension CombatAction {
 public struct Move: CombatAction {
     public var distanceToward: Distance
     public var actionCost: Int { 1 }
-    public func action(by character: any RpgCharacter, in game: inout Game) {
+    public func action(by character: any RpgCharacter, in game: Game) {
         print("I moved")
     }
 
@@ -146,7 +146,7 @@ public struct Strike: CombatAction {
         return readyableItem.isReady
     }
 
-    public func action(by character: any RpgCharacter, in game: inout Game) {
+    public func action(by character: any RpgCharacter, in game: Game) {
         guard
             let readyableItem = character.equipment[weaponToStrikeWith.name],
             let weapon = readyableItem.core as? any Weapon

@@ -35,6 +35,6 @@ func listen<Trigger: HookTrigger>(to trigger: Trigger, action: @escaping Action)
     Listener(hook: trigger, action: action)
 }
 
-public typealias Action = (_ game: inout Game) -> Void
+public typealias Action = (_ game: Game) -> Void
 
 public protocol HookTrigger: Hashable, Sendable {}

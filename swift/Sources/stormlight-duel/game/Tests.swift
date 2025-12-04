@@ -3,7 +3,7 @@
 /// A head-to-head test is presented to each character as a separate test structure.
 ///
 /// In an attack, there will also be damage rolls. Those rolls are not part of the test structure. However, the advantages, disadvantages, opportunities, and complications from the test can affect those rolls.
-public protocol RpgTestProtocol: Keyed {
+public protocol RpgTestProtocol: AnyObject, Keyed {
     var id: Int { get }
 
     var skill: SkillName { get set }
@@ -22,7 +22,7 @@ extension RpgTestProtocol {
     }
 }
 
-public struct RpgSimpleTest: RpgTestProtocol {
+public class RpgSimpleTest: RpgTestProtocol {
     public var id: Int = RpgTestRef.next().id
     public var skill: SkillName
     public var difficulty: Int
@@ -33,10 +33,30 @@ public struct RpgSimpleTest: RpgTestProtocol {
     public var complications: Int = 0
 
     public var success: Bool? = nil
+
+    public init(
+        skill: SkillName,
+        difficulty: Int,
+        advantages: Int? = nil,
+        disadvantages: Int? = nil,
+        testRolls: [RpgTestRoll]? = nil,
+        opportunities: Int? = nil,
+        complications: Int? = nil,
+        success: Bool? = nil,
+    ) {
+        self.skill = skill
+        self.difficulty = difficulty
+        if let advantages { self.advantages = advantages }
+        if let disadvantages { self.disadvantages = disadvantages }
+        if let testRolls { self.testRolls = testRolls }
+        if let opportunities { self.opportunities = opportunities }
+        if let complications { self.complications = complications }
+        if let success { self.success = success }
+    }
 }
 
 /// Use this in places where `any RpgTestProtocol` doesn't work.
-public struct AnyRpgTest: RpgTestProtocol {
+public class AnyRpgTest: RpgTestProtocol {
     public var core: any RpgTestProtocol
     public init(_ test: any RpgTestProtocol) {
         self.core = test

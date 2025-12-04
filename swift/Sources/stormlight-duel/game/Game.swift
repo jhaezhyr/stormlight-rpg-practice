@@ -1,6 +1,10 @@
 /// Cannot hold one itself recursively. `AnyRpgCharacter(AnyRpgCharacter(someChar)).core === someChar`
-public struct AnyRpgCharacter: RpgCharacter {
+public class AnyRpgCharacter: RpgCharacter {
     public var name: String { core.name }
+    public var game: Game! {
+        get { core.game }
+        set { core.game = newValue }
+    }
     public var attributes: CompleteDictionary<AttributeName, Int> { core.attributes }
     public var ranksInCoreSkills: CompleteDictionary<CoreSkillName, Int> { core.ranksInCoreSkills }
     public var ranksInOtherSkills: [SkillName: Int] { core.ranksInOtherSkills }
@@ -34,7 +38,7 @@ public struct AnyRpgCharacter: RpgCharacter {
     private init(notUnwrapping character: any RpgCharacter) {
         self.core = character
     }
-    public init(_ character: any RpgCharacter) {
+    public convenience init(_ character: any RpgCharacter) {
         if let character = character as? AnyRpgCharacter {
             self.init(character)
         } else {
@@ -43,7 +47,7 @@ public struct AnyRpgCharacter: RpgCharacter {
     }
 }
 
-public struct Game {
+public class Game {
     public var characters: KeyedSet<AnyRpgCharacter>
     public var tests: KeyedSet<AnyRpgTest> = []
 
@@ -51,6 +55,9 @@ public struct Game {
 
     public init(characters: [any RpgCharacter]) {
         self.characters = KeyedSet(characters.map(AnyRpgCharacter.init))
+        for character in characters {
+            character.game = self
+        }
     }
 }
 
@@ -60,7 +67,7 @@ extension Game {
     /// Unwrap and update the given character in the game state.
     ///
     //// If the character is wrapped in an AnyRpgCharacter, will unwrap and update the underlying character as many times as necessary to get to a concrete one.
-    public mutating func updateAnyCharacter(_ character: any RpgCharacter) {
+    public func updateAnyCharacter(_ character: any RpgCharacter) {
         characters.upsert(AnyRpgCharacter(character))
     }
 
@@ -78,17 +85,17 @@ extension Game {
     }
 
     /// Update the given character in the game state.
-    public mutating func updateCharacter<Character: RpgCharacter>(_ character: Character) {
+    public func updateCharacter<Character: RpgCharacter>(_ character: Character) {
         updateAnyCharacter(character)
     }
 }
 
 extension Game {
-    public mutating func updateAnyTest(_ test: any RpgTestProtocol) {
+    public func updateAnyTest(_ test: any RpgTestProtocol) {
         tests.upsert(AnyRpgTest(test))
     }
 
-    public mutating func updateTest<Test: RpgTestProtocol>(_ test: Test) {
+    public func updateTest<Test: RpgTestProtocol>(_ test: Test) {
         updateAnyTest(test)
     }
 
@@ -107,15 +114,15 @@ extension Game: NonLeafGenericListenerHolder, AllTheListenersHolder {
     }
 
     /// Why is it called naive? Because it only talks to the listeners that want something exactly like this. No narrow character mutation. If there was an event sent that included something for a character, none of the SelfListeners will be notified.
-    public mutating func naiveDispatch<T: HookTrigger>(_ hookTrigger: T) {
+    public func naiveDispatch<T: HookTrigger>(_ hookTrigger: T) {
         for listener in allListeners {
             if listener.hook as? T == hookTrigger {
-                listener.action(&self)
+                listener.action(self)
             }
         }
     }
 
-    public mutating func naiveDispatch<T: HookTrigger>(
+    public func naiveDispatch<T: HookTrigger>(
         _ hookTrigger: T, for characterRef: RpgCharacterRef
     ) {
         for listener in self.allSelfListeners {
@@ -129,7 +136,7 @@ extension Game: NonLeafGenericListenerHolder, AllTheListenersHolder {
         }
     }
 
-    public mutating func naiveDispatch<T: HookTriggerForSomeRpgCharacter>(
+    public func naiveDispatch<T: HookTriggerForSomeRpgCharacter>(
         _ hookTrigger: T, for characterRef: RpgCharacterRef
     ) {
         for listener in self.allSelfListenersSelfHooks {
@@ -143,7 +150,7 @@ extension Game: NonLeafGenericListenerHolder, AllTheListenersHolder {
         }
     }
 
-    public mutating func naiveDispatch<T: HookTriggerForSomeRpgCharacterAndTest>(
+    public func naiveDispatch<T: HookTriggerForSomeRpgCharacterAndTest>(
         _ hookTrigger: T, for characterRef: RpgCharacterRef, attempting testRef: RpgTestRef
     ) {
         for listener in self.allSelfListenersSelfHooksForTests {

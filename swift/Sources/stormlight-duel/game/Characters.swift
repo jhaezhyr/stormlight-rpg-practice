@@ -138,8 +138,11 @@ public struct RpgCharacterRef: Sendable, Hashable {
 
 public struct PathProgress {}
 
-public protocol RpgCharacter: AllTheListenersHolder, NonLeafGenericListenerHolder, Keyed {
+public protocol RpgCharacter: AnyObject, AllTheListenersHolder, NonLeafGenericListenerHolder, Keyed
+{
     var name: String { get }
+
+    var game: Game! { get set }
 
     var attributes: CompleteDictionary<AttributeName, Int> { get }
     var ranksInCoreSkills: CompleteDictionary<CoreSkillName, Int> { get }
@@ -200,8 +203,10 @@ extension ReadyableItem: Keyed {
     }
 }
 
-public struct PlayerRpgCharacter: FullRpgCharacter {
+public class PlayerRpgCharacter: FullRpgCharacter {
     public var name: String
+
+    public unowned var game: Game!
 
     public var size: CharacterSize { .normal }
 
@@ -259,6 +264,8 @@ public struct PlayerRpgCharacter: FullRpgCharacter {
         self.conditions = conditions
         self.brain = brain
         self.combatState = combatState
+
+        self.brain.character = self
     }
 }
 
@@ -355,7 +362,7 @@ extension FullRpgCharacter {
 }
 
 extension RpgCharacter {
-    public mutating func takeDamage(_ damage: Damage) {
+    public func takeDamage(_ damage: Damage) {
         let damageReduction = damage.type == .vital ? 0 : deflect
         health.value = max(0, health.value - max(0, damage.amount - damageReduction))
     }
