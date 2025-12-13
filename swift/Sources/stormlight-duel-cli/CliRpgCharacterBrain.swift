@@ -33,8 +33,11 @@ struct CliRpgCharacterBrain: RpgCharacterBrain {
         printForCharacter(
             "You have \(character.combatState!.actionsRemaining) actions. What is your combat choice?"
         )
-        for action in allParseableCombatActions {
+        let parseableActionsICanTake = allParseableCombatActions.filter { _ in
             // TODO Only show actions I can possibly take, even before we know the details.
+            true
+        }
+        for action in parseableActionsICanTake {
             print(">", action.helpText)
         }
         print("> (e)nd")
@@ -42,9 +45,6 @@ struct CliRpgCharacterBrain: RpgCharacterBrain {
         let args: [Any] = line.split(separator: " ")
         for action in allParseableCombatActions {
             if let action = action.init(args: args) {
-                guard let character else {
-                    fatalError("WHY IS THERE NO CHARACTER")
-                }
                 if action.canTakeAction(by: character, in: character.game) {
                     printForCharacter("Your action is \(action)")
                     return .action(action)
