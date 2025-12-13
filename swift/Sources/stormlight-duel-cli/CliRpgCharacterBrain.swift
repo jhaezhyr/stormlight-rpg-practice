@@ -4,6 +4,9 @@ import stormlight_duel
 struct CliRpgCharacterBrain: RpgCharacterBrain {
     unowned var character: (any RpgCharacter)!
     func decide<C>(options: C) -> C.Element where C: Collection {
+        if let option = options.first, options.count == 1 {
+            return option
+        }
         printForCharacter("Make a choice between the following \(options.count) options:")
         for (i, x) in options.enumerated() {
             print(">", i, x)
