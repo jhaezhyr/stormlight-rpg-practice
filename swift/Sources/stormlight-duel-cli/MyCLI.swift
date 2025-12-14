@@ -10,7 +10,7 @@ public struct MyCLI {
         let player1 = PlayerRpgCharacter(
             name: "Kal",
             expertises: [],
-            equipment: [],
+            equipment: [ReadyableItem(basicWeapons[.axe]!(), isReady: true)],
             attributes: .init { _ in 2 },
             ranksInCoreSkills: .init { _ in 0 },
             ranksInOtherSkills: [:],
@@ -23,7 +23,7 @@ public struct MyCLI {
         let player2 = PlayerRpgCharacter(
             name: "Shallan",
             expertises: [],
-            equipment: [],
+            equipment: [ReadyableItem(basicWeapons[.knife]!(), isReady: true)],
             attributes: .init { _ in 2 },
             ranksInCoreSkills: .init { _ in 0 },
             ranksInOtherSkills: [:],
@@ -33,7 +33,7 @@ public struct MyCLI {
             conditions: [],
             brain: CliRpgCharacterBrain()
         )
-        var game = Game(characters: [player1, player2])
+        var game = Game(characters: [player1, player2], broadcaster: CliBroadcaster())
 
         let combat = Combat()
         combat.run(in: game)

@@ -2,7 +2,6 @@ public enum Realm: Hashable, CaseIterable, Sendable {
     case physical
     case cognitive
     case spiritual
-    case vital
 }
 
 public enum AttributeName: Hashable, CaseIterable, Sendable {
@@ -194,11 +193,15 @@ public protocol FullRpgCharacter: RpgCharacter {
 }
 
 public struct ReadyableItem {
-    var core: any Item
-    var isReady: Bool
+    public var core: any Item
+    public var isReady: Bool
+    public init(_ core: any Item, isReady: Bool) {
+        self.core = core
+        self.isReady = isReady
+    }
 }
 extension ReadyableItem: Keyed {
-    public var primaryKey: String {
+    public var primaryKey: ItemRef {
         core.primaryKey
     }
 }

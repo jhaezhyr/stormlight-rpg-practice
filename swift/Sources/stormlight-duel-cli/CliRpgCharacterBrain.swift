@@ -33,34 +33,52 @@ struct CliRpgCharacterBrain: RpgCharacterBrain {
         printForCharacter(
             "You have \(character.combatState!.actionsRemaining) actions. What is your combat choice?"
         )
-        let parseableActionsICanTake = allParseableCombatActions.filter { _ in
-            // TODO Only show actions I can possibly take, even before we know the details.
-            true
+        let actionsICanTake = allCombatActions.filter {
+            $0.canMaybeTakeAction(by: character, in: character.game)
         }
-        for action in parseableActionsICanTake {
-            print(">", action.helpText)
+        for action in actionsICanTake {
+            if let action = action as? (CliArgsConvertibleType & CombatAction).Type {
+                print(">", action.helpText)
+            } else {
+                print(">", action.actionName, "(coming soon)")
+            }
         }
         print("> (e)nd")
         let line = readLine()!.trimmingCharacters(in: .whitespacesAndNewlines)
         let args: [Any] = line.split(separator: " ")
-        for action in allParseableCombatActions {
-            if let action = action.init(args: args) {
-                if action.canTakeAction(by: character, in: character.game) {
-                    printForCharacter("Your action is \(action)")
-                    return .action(action)
+        do {
+            for action in actionsICanTake {
+                if let parseAction = (action as? (CliArgsConvertibleType & CombatAction).Type)?
+                    .init,
+                    let action = try parseAction(args, self.character)
+                {
+                    if action.canTakeAction(by: character, in: character.game) {
+                        printForCharacter("Your action is \(action)")
+                        return .action(action)
+                    }
                 }
             }
+            if ["e", "end", "end turn"].contains(line) {
+                printForCharacter("I guess your turn is over")
+                return .endTurn
+            }
+            printForCharacter("No, try again.")
+        } catch {
+            printForCharacter(error.description)
         }
-        if ["e", "end", "end turn"].contains(line) {
-            printForCharacter("I guess your turn is over")
-            return .endTurn
-        }
-        printForCharacter("No, try again.")
         return decideCombatChoice()
     }
 
     private func printForCharacter(_ thing: Any) {
-        print("\(character.name):", thing)
+        character.game.broadcaster.tell("\(thing)", to: character.primaryKey)
+    }
+}
+
+struct CliParseError: Error {
+    var description: Substring
+
+    init(_ description: Substring) {
+        self.description = description
     }
 }
 
@@ -68,12 +86,23 @@ struct CliRpgCharacterBrain: RpgCharacterBrain {
 /// - move 15 back
 /// - strike
 protocol CliArgsConvertibleType {
-    init?(args: [Any])
+    /// If it returns nil, it means it's not even trying to be this type.
+    /// If it throws, it means it is trying to be this type, but it's wrong.
+    init?(args: [Any], context: any RpgCharacter) throws(CliParseError)
     static var helpText: Substring { get }
 }
 
-extension Move: CliArgsConvertibleType {
-    init?(args: [Any]) {
+protocol CliArgsContextFreeConvertibleType: CliArgsConvertibleType {
+    init?(args: [Any]) throws(CliParseError)
+}
+extension CliArgsContextFreeConvertibleType {
+    init?(args: [Any], context: any RpgCharacter) throws(CliParseError) {
+        try self.init(args: args)
+    }
+}
+
+extension Move: CliArgsContextFreeConvertibleType {
+    init?(args: [Any]) throws(CliParseError) {
         if let alreadyParsedMove = args.first as? Move, args.count == 1 {
             self = alreadyParsedMove
             return
@@ -84,7 +113,6 @@ extension Move: CliArgsConvertibleType {
             let firstArgAsString = firstArg as? Substring,
             firstArgAsString == "m" || firstArgAsString == "move"
         else {
-            print("\"\(args.first, default: "")\" is not an m")
             return nil
         }
         var distance: Distance?
@@ -92,7 +120,7 @@ extension Move: CliArgsConvertibleType {
         for arg in remaining {
             let isBackwardText: Set<Substring> = ["backward", "back", "b", "away", "from"]
             let isForwardText: Set<Substring> = ["forward", "toward", "to"]
-            if let distanceArg = Distance(args: [arg]), distance == nil {
+            if let distanceArg = try Distance(args: [arg]), distance == nil {
                 distance = distanceArg
             } else if let string = arg as? Substring, isBackwardText.contains(string),
                 directionIsForward == nil
@@ -103,7 +131,8 @@ extension Move: CliArgsConvertibleType {
             {
                 directionIsForward = true
             } else {
-                print("not a distance or direction")
+                throw CliParseError(
+                    "\(arg) cannot be assigned to `distance` or to `directionIsForward`.")
                 return nil
             }
         }
@@ -115,24 +144,134 @@ extension Move: CliArgsConvertibleType {
     static var helpText: Substring { "(m)ove [\(Distance.helpText)] [forward|backward]" }
 }
 
+extension Strike: CliArgsConvertibleType {
+    init?(args: [Any], context: any RpgCharacter) throws(CliParseError) {
+        if let alreadyParsedStrike = args.first as? Strike, args.count == 1 {
+            self = alreadyParsedStrike
+            return
+        }
+        var remaining = args[...]
+        guard
+            let firstArg = remaining.popFirst(),
+            let firstArgAsString = firstArg as? Substring,
+            firstArgAsString == "k" || firstArgAsString == "strike"
+        else {
+            return nil
+        }
+        var target: RpgCharacterRef?
+        var weaponToStrikeWith: ItemRef?
+        for arg in remaining {
+            if let targetArg = try RpgCharacterRef(args: [arg], context: context), target == nil {
+                target = targetArg
+            } else if let weaponArg = try WeaponName(args: [arg], context: context),
+                weaponToStrikeWith == nil
+            {
+                let weaponToStrikeWithCandidates = context.equipment.filter {
+                    ($0.core as? any Weapon)?.weaponName == weaponArg
+                }
+                if weaponToStrikeWithCandidates.count == 0 {
+                    throw CliParseError("\(arg) is not a weapon that \(context.name) has")
+                } else if weaponToStrikeWithCandidates.count > 1 {
+                    let readyWeaponCandidates = weaponToStrikeWithCandidates.filter { $0.isReady }
+                    if readyWeaponCandidates.count != 1 {
+                        throw CliParseError(
+                            "\(arg) is a weapon that \(context.name) has two or more of, and \(readyWeaponCandidates.count) are ready"
+                        )
+                    } else {
+                        weaponToStrikeWith = readyWeaponCandidates[0].primaryKey
+                    }
+                } else {
+                    weaponToStrikeWith = weaponToStrikeWithCandidates[0].primaryKey
+                }
+            } else {
+                throw CliParseError("\(arg) not a target or weapon name")
+            }
+        }
+        // What if the target wasn't provided?
+        let realTarget: RpgCharacterRef = try
+            ({ (x: ()) throws(CliParseError) in
+                if let target {
+                    return target
+                } else {
+                    let characters = context.game.characters
+                    let viableTargets = characters.filter {
+                        $0.primaryKey != context.primaryKey && $0.health.value > 0
+                    }
+                    if viableTargets.count != 1 {
+                        throw CliParseError(
+                            "It seems \(context.name) has \(viableTargets.count) available targets: \(viableTargets)"
+                        )
+                    }
+                    return viableTargets[0].primaryKey
+                }
+            })(())
+        let realWeapon: ItemRef = try
+            ({ (x: ()) throws(CliParseError) in
+                if let weaponToStrikeWith {
+                    return weaponToStrikeWith
+                } else {
+                    let equipment = context.equipment
+                    let viableWeapons = equipment.filter { $0.isReady && $0.core is Weapon }
+                    if viableWeapons.count != 1 {
+                        throw CliParseError(
+                            "It seems \(context.name) has \(viableWeapons.count) ready weapons: \(viableWeapons)"
+                        )
+                    }
+                    return viableWeapons[0].primaryKey
+                }
+            })(())
+        self.init(realTarget, with: realWeapon)
+    }
+
+    public static var helpText: Substring { "stri(k)e [target] [weapon]" }
+}
+
 // TODO Make distance a wrapper around a number
-extension Distance: CliArgsConvertibleType {
-    init?(args: [Any]) {
-        if let alreadyParsedDistance = args.first as? Distance, args.count == 1 {
-            self = alreadyParsedDistance
+extension Int: CliArgsContextFreeConvertibleType {
+    init?(args: [Any]) throws(CliParseError) {
+        if let alreadyParsedNumber = args.first as? Distance, args.count == 1 {
+            self = alreadyParsedNumber
             return
         }
         if let string = args.first as? Substring, let int = Int(string) {
             self = int
             return
         }
-        print("not a direction")
-        return nil
+        throw CliParseError("\(args) is not a number")
     }
 
     static var helpText: Substring { "###" }
 }
 
-nonisolated(unsafe) let allParseableCombatActions = allCombatActions.compactMap {
-    $0 as? (CliArgsConvertibleType & CombatAction).Type
+extension RpgCharacterRef: CliArgsContextFreeConvertibleType {
+    init?(args: [Any]) throws(CliParseError) {
+        if let alreadyParsedName = args.first as? RpgCharacterRef, args.count == 1 {
+            self = alreadyParsedName
+            return
+        }
+        if let string = args.first as? Substring {
+            self = RpgCharacterRef(name: String(string))
+            return
+        }
+        throw CliParseError("\(args) is not a name")
+    }
+    static var helpText: Substring { "<character>" }
+}
+
+extension WeaponName: CliArgsContextFreeConvertibleType {
+    init?(args: [Any]) throws(CliParseError) {
+        if let alreadyParsedName = args.first as? WeaponName, args.count == 1 {
+            self = alreadyParsedName
+            return
+        }
+        if let string = args.first as? Substring,
+            let weaponName = WeaponName(rawValue: String(string))
+        {
+            self = weaponName
+            return
+        }
+        throw CliParseError("\(args) is not a weapon name")
+
+    }
+    static var helpText: Substring { "<weapon>" }
 }

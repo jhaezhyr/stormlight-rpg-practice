@@ -1,4 +1,4 @@
-public enum NumberDie: Int {
+public enum NumberDie: Int, Sendable {
     case d4 = 4
     case d6 = 6
     case d8 = 8
@@ -15,7 +15,7 @@ public enum PlotDieResult {
     case none
 }
 
-public struct RandomDistribution {
+public struct RandomDistribution: Sendable {
     public var dice: [(die: NumberDie, count: Int)]
 }
 
@@ -26,7 +26,7 @@ public typealias Money = Int
 // Measured in lb
 public typealias Weight = Int
 
-public struct Resource: Comparable {
+public struct Resource: Sendable, Comparable {
     public var value: Int
     public var maxValue: Int
     public mutating func restore(_ delta: Int) {

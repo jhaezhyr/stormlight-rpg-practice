@@ -52,9 +52,11 @@ public class Game {
     public var tests: KeyedSet<AnyRpgTest> = []
 
     public var rng: any RandomNumberGenerator = SystemRandomNumberGenerator()
+    public var broadcaster: any Broadcaster
 
-    public init(characters: [any RpgCharacter]) {
+    public init(characters: [any RpgCharacter], broadcaster: Broadcaster) {
         self.characters = KeyedSet(characters.map(AnyRpgCharacter.init))
+        self.broadcaster = broadcaster
         for character in characters {
             character.game = self
         }
