@@ -32,59 +32,42 @@ extension SelfListenerSelfHookForTestProtocol {
     func typeErasedAction(
         _ game: Game, _ character: inout any RpgCharacter, _ test: inout any RpgTestProtocol
     ) {
-        if var wrappedCharacter = character as? AnyRpgCharacter {
+        if let wrappedCharacter = character as? AnyRpgCharacter {
             self.typeErasedAction(game, &wrappedCharacter.core, &test)
             character = wrappedCharacter
             return
         }
         // If we get here, we don't have a wrapped character.
-        if var wrappedTest = test as? AnyRpgTest {
+        if let wrappedTest = test as? AnyRpgTest {
             self.typeErasedAction(game, &character, &wrappedTest.core)
             test = wrappedTest
             return
         }
         // If we get here, we don't have a wrapped test.
-        var characterToUse: C
-        let gottaUnwrapCharacterAgain: Bool
+        let characterToUse: C
         if C.self == AnyRpgCharacter.self {
             // We WANT a wrapped character. Nice.
             characterToUse = AnyRpgCharacter(character) as! C
-            gottaUnwrapCharacterAgain = true
         } else {
             guard let typeSafeCharacter = character as? C else {
                 fatalError(
                     "You passed the wrong character type into the SelfListenerSelfHookProtocol")
             }
             characterToUse = typeSafeCharacter
-            gottaUnwrapCharacterAgain = false
         }
-        var testToUse: Test
-        let gottaUnwrapTestAgain: Bool
+        let testToUse: Test
         if C.self == AnyRpgTest.self {
             // We WANT a wrapped test.
             testToUse = AnyRpgTest(test) as! Test
-            gottaUnwrapTestAgain = true
         } else {
             guard let typeSafeTest = test as? Test else {
                 fatalError(
                     "You passed the wrong test type into the SelfListenerSelfHookProtocol")
             }
             testToUse = typeSafeTest
-            gottaUnwrapTestAgain = false
         }
 
-        self.action(game, &characterToUse, &testToUse)
-
-        if gottaUnwrapCharacterAgain {
-            character = (characterToUse as! AnyRpgCharacter).core
-        } else {
-            character = characterToUse
-        }
-        if gottaUnwrapTestAgain {
-            test = (testToUse as! AnyRpgTest).core
-        } else {
-            test = testToUse
-        }
+        self.action(game, characterToUse, testToUse)
     }
 }
 
@@ -101,15 +84,13 @@ public struct SelfListenerSelfHookForTest<
         let specificHook = HookTriggerForSpecificRpgCharacterAndTest(
             hook, for: characterRef)
         return listen(to: specificHook) { game in
-            guard var character = game.character(at: characterRef, as: Character.self) else {
+            guard let character = game.character(at: characterRef, as: Character.self) else {
                 return
             }
-            guard var test = game.test(at: testRef, as: Test.self) else {
+            guard let test = game.test(at: testRef, as: Test.self) else {
                 return
             }
-            action(game, &character, &test)
-            game.updateCharacter(character)
-            game.updateTest(test)
+            action(game, character, test)
         }
     }
 }
@@ -128,7 +109,7 @@ func selfListen<
 }
 
 public typealias ActionForRpgCharacterAndTest<Character: RpgCharacter, Test: RpgTestProtocol> = (
-    _ game: Game, _ character: inout Character, _ test: inout Test
+    _ game: Game, _ character: Character, _ test: Test
 ) -> Void
 
 public protocol HookTriggerForSomeRpgCharacterAndTest: Hashable, Sendable {}

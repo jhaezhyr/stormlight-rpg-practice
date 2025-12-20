@@ -129,11 +129,10 @@ extension Game: NonLeafGenericListenerHolder, AllTheListenersHolder {
     ) {
         for listener in self.allSelfListeners {
             if listener.hook as? T == hookTrigger {
-                guard var char = self.anyCharacter(at: characterRef) else {
+                guard let char = self.anyCharacter(at: characterRef) else {
                     fatalError("Bad character reference")
                 }
-                listener.typeErasedAction(self, &char)
-                self.updateAnyCharacter(char)
+                listener.typeErasedAction(self, char)
             }
         }
     }
@@ -143,11 +142,10 @@ extension Game: NonLeafGenericListenerHolder, AllTheListenersHolder {
     ) {
         for listener in self.allSelfListenersSelfHooks {
             if listener.hook as? T == hookTrigger {
-                guard var char = self.anyCharacter(at: characterRef) else {
+                guard let char = self.anyCharacter(at: characterRef) else {
                     fatalError("Bad character reference")
                 }
-                listener.typeErasedAction(self, &char)
-                self.updateAnyCharacter(char)
+                listener.typeErasedAction(self, char)
             }
         }
     }
@@ -157,14 +155,13 @@ extension Game: NonLeafGenericListenerHolder, AllTheListenersHolder {
     ) {
         for listener in self.allSelfListenersSelfHooksForTests {
             if listener.hook as? T == hookTrigger {
-                guard var char = self.anyCharacter(at: characterRef) else {
+                guard let char = self.anyCharacter(at: characterRef) else {
                     fatalError("Bad character reference")
                 }
-                guard var test = self.anyTest(at: testRef) else {
+                guard let test = self.anyTest(at: testRef) else {
                     fatalError("Bad test reference")
                 }
-                listener.typeErasedAction(self, &char, &test)
-                self.updateAnyCharacter(char)
+                listener.typeErasedAction(self, char, test)
             }
         }
     }

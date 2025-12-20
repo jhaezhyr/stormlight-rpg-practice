@@ -214,14 +214,8 @@ public struct Strike: CombatAction {
         else {
             return
         }
-        var myCharacter: any RpgCharacter {
-            get { game.anyCharacter(at: character.primaryKey)! }
-            set { game.updateAnyCharacter(newValue) }
-        }
-        var targetCharacter: any RpgCharacter {
-            get { game.anyCharacter(at: target)! }
-            set { game.updateAnyCharacter(newValue) }
-        }
+        let myCharacter: any RpgCharacter = game.anyCharacter(at: character.primaryKey)!
+        let targetCharacter: any RpgCharacter = game.anyCharacter(at: target)!
         let meRef = RpgCharacterRef(of: character)
         // Run the damage test
         let weaponSkill = weapon.type.skill

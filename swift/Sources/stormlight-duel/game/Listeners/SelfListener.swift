@@ -28,34 +28,25 @@ public protocol SelfListenerProtocol {
 }
 extension SelfListenerProtocol {
     func typeErasedAction(_ game: Game, _ character: inout any RpgCharacter) {
-        if var wrappedCharacter = character as? AnyRpgCharacter {
+        if let wrappedCharacter = character as? AnyRpgCharacter {
             self.typeErasedAction(game, &wrappedCharacter.core)
             character = wrappedCharacter
             return
         }
         // If we get here, we don't have a wrapped character.
-        var characterToUse: C
-        let gottaUnwrapAgain: Bool
+        let characterToUse: C
         if C.self == AnyRpgCharacter.self {
             // We WANT a wrapped character. Nice.
             characterToUse = AnyRpgCharacter(character) as! C
-            gottaUnwrapAgain = true
         } else {
             guard let typeSafeCharacter = character as? C else {
                 fatalError(
                     "You passed the wrong character type into the SelfListenerSelfHookProtocol")
             }
             characterToUse = typeSafeCharacter
-            gottaUnwrapAgain = false
         }
 
-        self.action(game, &characterToUse)
-
-        if gottaUnwrapAgain {
-            character = (characterToUse as! AnyRpgCharacter).core
-        } else {
-            character = characterToUse
-        }
+        self.action(game, characterToUse)
     }
 }
 
@@ -69,11 +60,10 @@ public struct SelfListener<Trigger: HookTrigger, Character: RpgCharacter>: SelfL
     public var action: ActionForRpgCharacter<Character>
     func asListener(for characterRef: RpgCharacterRef) -> Listener<Trigger> {
         listen(to: hook) { game in
-            guard var character = game.character(at: characterRef, as: Character.self) else {
+            guard let character = game.character(at: characterRef, as: Character.self) else {
                 return
             }
-            action(game, &character)
-            game.updateCharacter(character)
+            action(game, character)
         }
     }
 }
@@ -86,7 +76,7 @@ func selfListen<Trigger: HookTrigger, Character: RpgCharacter>(
 }
 
 public typealias ActionForRpgCharacter<Character: RpgCharacter> = (
-    _ game: Game, _ character: inout Character
+    _ game: Game, _ character: Character
 ) -> Void
 
 public protocol HookTriggerForSomeRpgCharacter: Hashable, Sendable {}

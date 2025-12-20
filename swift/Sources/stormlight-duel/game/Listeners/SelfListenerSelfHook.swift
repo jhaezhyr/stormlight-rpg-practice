@@ -28,35 +28,25 @@ public protocol SelfListenerSelfHookProtocol {
     var action: ActionForRpgCharacter<C> { get }
 }
 extension SelfListenerSelfHookProtocol {
-    func typeErasedAction(_ game: Game, _ character: inout any RpgCharacter) {
-        if var wrappedCharacter = character as? AnyRpgCharacter {
-            self.typeErasedAction(game, &wrappedCharacter.core)
-            character = wrappedCharacter
+    func typeErasedAction(_ game: Game, _ character: any RpgCharacter) {
+        if let wrappedCharacter = character as? AnyRpgCharacter {
+            self.typeErasedAction(game, wrappedCharacter.core)
             return
         }
         // If we get here, we don't have a wrapped character.
-        var characterToUse: C
-        let gottaUnwrapAgain: Bool
+        let characterToUse: C
         if C.self == AnyRpgCharacter.self {
             // We WANT a wrapped character. Nice.
             characterToUse = AnyRpgCharacter(character) as! C
-            gottaUnwrapAgain = true
         } else {
             guard let typeSafeCharacter = character as? C else {
                 fatalError(
                     "You passed the wrong character type into the SelfListenerSelfHookProtocol")
             }
             characterToUse = typeSafeCharacter
-            gottaUnwrapAgain = false
         }
 
-        self.action(game, &characterToUse)
-
-        if gottaUnwrapAgain {
-            character = (characterToUse as! AnyRpgCharacter).core
-        } else {
-            character = characterToUse
-        }
+        self.action(game, characterToUse)
     }
 }
 
@@ -72,11 +62,10 @@ public struct SelfListenerSelfHook<
     > {
         let specificHook = HookTriggerForSpecificRpgCharacter(hook, for: characterRef)
         return listen(to: specificHook) { game in
-            guard var character = game.character(at: characterRef, as: Character.self) else {
+            guard let character = game.character(at: characterRef, as: Character.self) else {
                 return
             }
-            action(game, &character)
-            game.updateCharacter(character)
+            action(game, character)
         }
     }
 }

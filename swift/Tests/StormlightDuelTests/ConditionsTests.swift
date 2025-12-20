@@ -3,16 +3,15 @@ import stormlight_duel
 
 @Test("afflicted does damage every turn")
 func afflicted() async throws {
-    var playerToPlayWith = PlayerRpgCharacter.basicCharacter()
+    let playerToPlayWith = PlayerRpgCharacter.basicCharacter()
     playerToPlayWith.conditions.append(
         DurationCondition(type: Afflicted(damagePerTurn: Damage(2, realm: .vital)), duration: 3)
     )
     let playerRef = RpgCharacterRef(name: playerToPlayWith.name)
     var game = Game(characters: [playerToPlayWith])
+    let player = game.character(at: playerRef, as: PlayerRpgCharacter.self)!
     // Simulate the end of this character's turn
-    var playerHealth: Int {
-        game.character(at: playerRef, as: PlayerRpgCharacter.self)!.health.value
-    }
+    var playerHealth: Int { player.health.value }
     #expect(playerHealth == 12)
     game.naiveDispatch(CombatPhase.endOfTurn, for: playerRef)
     #expect(playerHealth == 10)
