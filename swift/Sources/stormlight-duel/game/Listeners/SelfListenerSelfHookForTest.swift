@@ -25,6 +25,7 @@ public protocol SelfListenerSelfHookForTestProtocol {
     associatedtype Trigger: HookTriggerForSomeRpgCharacterAndTest
     associatedtype C: RpgCharacter
     associatedtype Test: RpgTestProtocol
+    var id: ListenerId { get }
     var hook: Trigger { get }
     var action: ActionForRpgCharacterAndTest<C, Test> { get }
 }
@@ -72,6 +73,7 @@ extension SelfListenerSelfHookForTestProtocol {
 public struct SelfListenerSelfHookForTest<
     Trigger: HookTriggerForSomeRpgCharacterAndTest, Character: RpgCharacter, Test: RpgTestProtocol
 >: SelfListenerSelfHookForTestProtocol {
+    public var id: ListenerId = nextListenerId()
     public var hook: Trigger
     public var action: ActionForRpgCharacterAndTest<Character, Test>
     func asListener(
@@ -81,7 +83,7 @@ public struct SelfListenerSelfHookForTest<
     > {
         let specificHook = HookTriggerForSpecificRpgCharacterAndTest(
             hook, for: characterRef)
-        return listen(to: specificHook) { game in
+        return Listener(id: id, hook: specificHook) { game in
             guard let character = game.character(at: characterRef, as: Character.self) else {
                 return
             }

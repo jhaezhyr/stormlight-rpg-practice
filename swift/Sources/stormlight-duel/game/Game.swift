@@ -117,52 +117,62 @@ extension Game: NonLeafGenericListenerHolder, AllTheListenersHolder {
 
     /// Why is it called naive? Because it only talks to the listeners that want something exactly like this. No narrow character mutation. If there was an event sent that included something for a character, none of the SelfListeners will be notified.
     public func naiveDispatch<T: HookTrigger>(_ hookTrigger: T) {
-        for listener in allListeners {
-            if listener.hook as? T == hookTrigger {
-                listener.action(self)
-            }
+        var listenersRun: Set<ListenerId> = []
+        while let listenerLeftToTry = allListeners.filter({
+            $0.hook as? T == hookTrigger && !listenersRun.contains($0.id)
+        }).first {
+            // Getting this every time means we can add new listeners in response to listeners.
+            listenerLeftToTry.action(self)
+            listenersRun.insert(listenerLeftToTry.id)
         }
     }
 
     public func naiveDispatch<T: HookTrigger>(
         _ hookTrigger: T, for characterRef: RpgCharacterRef
     ) {
-        for listener in self.allSelfListeners {
-            if listener.hook as? T == hookTrigger {
-                guard let char = self.anyCharacter(at: characterRef) else {
-                    fatalError("Bad character reference")
-                }
-                listener.typeErasedAction(self, char)
+        var listenersRun: Set<ListenerId> = []
+        while let listenerLeftToTry = allSelfListeners.filter({
+            $0.hook as? T == hookTrigger && !listenersRun.contains($0.id)
+        }).first {
+            guard let char = self.anyCharacter(at: characterRef) else {
+                fatalError("Bad character reference")
             }
+            listenerLeftToTry.typeErasedAction(self, char)
+            listenersRun.insert(listenerLeftToTry.id)
         }
     }
 
     public func naiveDispatch<T: HookTriggerForSomeRpgCharacter>(
         _ hookTrigger: T, for characterRef: RpgCharacterRef
     ) {
-        for listener in self.allSelfListenersSelfHooks {
-            if listener.hook as? T == hookTrigger {
-                guard let char = self.anyCharacter(at: characterRef) else {
-                    fatalError("Bad character reference")
-                }
-                listener.typeErasedAction(self, char)
+        var listenersRun: Set<ListenerId> = []
+        while let listenerLeftToTry = allSelfListenersSelfHooks.filter({
+            $0.hook as? T == hookTrigger && !listenersRun.contains($0.id)
+        }).first {
+            guard let char = self.anyCharacter(at: characterRef) else {
+                fatalError("Bad character reference")
             }
+            listenerLeftToTry.typeErasedAction(self, char)
+            listenersRun.insert(listenerLeftToTry.id)
+
         }
     }
 
     public func naiveDispatch<T: HookTriggerForSomeRpgCharacterAndTest>(
         _ hookTrigger: T, for characterRef: RpgCharacterRef, attempting testRef: RpgTestRef
     ) {
-        for listener in self.allSelfListenersSelfHooksForTests {
-            if listener.hook as? T == hookTrigger {
-                guard let char = self.anyCharacter(at: characterRef) else {
-                    fatalError("Bad character reference")
-                }
-                guard let test = self.anyTest(at: testRef) else {
-                    fatalError("Bad test reference")
-                }
-                listener.typeErasedAction(self, char, test)
+        var listenersRun: Set<ListenerId> = []
+        while let listenerLeftToTry = allSelfListenersSelfHooksForTests.filter({
+            $0.hook as? T == hookTrigger && !listenersRun.contains($0.id)
+        }).first {
+            guard let char = self.anyCharacter(at: characterRef) else {
+                fatalError("Bad character reference")
             }
+            guard let test = self.anyTest(at: testRef) else {
+                fatalError("Bad test reference")
+            }
+            listenerLeftToTry.typeErasedAction(self, char, test)
+            listenersRun.insert(listenerLeftToTry.id)
         }
     }
 }

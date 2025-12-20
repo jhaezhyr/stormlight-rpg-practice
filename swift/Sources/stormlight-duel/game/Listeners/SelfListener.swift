@@ -23,6 +23,7 @@ extension NonLeafGenericListenerHolder where Self: SelfListenerHolder {
 public protocol SelfListenerProtocol {
     associatedtype Trigger: HookTrigger
     associatedtype C: RpgCharacter
+    var id: ListenerId { get }
     var hook: Trigger { get }
     var action: ActionForRpgCharacter<C> { get }
 }
@@ -55,10 +56,11 @@ extension SelfListenerProtocol {
 ///
 /// Gotcha! All modifications to the character must be done on the inout parameter passed to the action closure. After the action is performed, the updated character is saved back to the game state.
 public struct SelfListener<Trigger: HookTrigger, Character: RpgCharacter>: SelfListenerProtocol {
+    public var id: ListenerId = nextListenerId()
     public var hook: Trigger
     public var action: ActionForRpgCharacter<Character>
     func asListener(for characterRef: RpgCharacterRef) -> Listener<Trigger> {
-        listen(to: hook) { game in
+        Listener(id: id, hook: hook) { game in
             guard let character = game.character(at: characterRef, as: Character.self) else {
                 return
             }

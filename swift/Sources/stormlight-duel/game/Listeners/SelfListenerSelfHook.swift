@@ -24,6 +24,7 @@ extension NonLeafGenericListenerHolder where Self: SelfListenerSelfHookHolder {
 public protocol SelfListenerSelfHookProtocol {
     associatedtype Trigger: HookTriggerForSomeRpgCharacter
     associatedtype C: RpgCharacter
+    var id: ListenerId { get }
     var hook: Trigger { get }
     var action: ActionForRpgCharacter<C> { get }
 }
@@ -55,13 +56,14 @@ public struct SelfListenerSelfHook<
 >:
     SelfListenerSelfHookProtocol
 {
+    public var id: ListenerId = nextListenerId()
     public var hook: Trigger
     public var action: ActionForRpgCharacter<Character>
     func asListener(for characterRef: RpgCharacterRef) -> Listener<
         HookTriggerForSpecificRpgCharacter<Trigger>
     > {
         let specificHook = HookTriggerForSpecificRpgCharacter(hook, for: characterRef)
-        return listen(to: specificHook) { game in
+        return Listener(id: id, hook: specificHook) { game in
             guard let character = game.character(at: characterRef, as: Character.self) else {
                 return
             }

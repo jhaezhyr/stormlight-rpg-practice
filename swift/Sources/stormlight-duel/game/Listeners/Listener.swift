@@ -21,11 +21,13 @@ extension NonLeafGenericListenerHolder where Self: ListenerHolder {
 
 public protocol ListenerProtocol {
     associatedtype Trigger: HookTrigger
+    var id: ListenerId { get }
     var hook: Trigger { get }
     var action: Action { get }
 }
 
 public struct Listener<Trigger: HookTrigger>: ListenerProtocol {
+    public var id: ListenerId = nextListenerId()
     public var hook: Trigger
     public var action: Action
 }
@@ -38,3 +40,10 @@ func listen<Trigger: HookTrigger>(to trigger: Trigger, action: @escaping Action)
 public typealias Action = (_ game: Game) -> Void
 
 public protocol HookTrigger: Hashable, Sendable {}
+
+public typealias ListenerId = Int
+private nonisolated(unsafe) var nextListenerIdValue: ListenerId = 0
+public func nextListenerId() -> ListenerId {
+    nextListenerIdValue += 1
+    return nextListenerIdValue
+}
