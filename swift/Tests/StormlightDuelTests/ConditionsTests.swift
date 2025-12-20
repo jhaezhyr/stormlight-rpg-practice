@@ -8,7 +8,7 @@ func afflicted() async throws {
         DurationCondition(type: Afflicted(damagePerTurn: Damage(2, realm: .vital)), duration: 3)
     )
     let playerRef = RpgCharacterRef(name: playerToPlayWith.name)
-    var game = Game(characters: [playerToPlayWith])
+    let game = Game(characters: [playerToPlayWith], broadcaster: SilentBroadcaster())
     let player = game.character(at: playerRef, as: PlayerRpgCharacter.self)!
     // Simulate the end of this character's turn
     var playerHealth: Int { player.health.value }

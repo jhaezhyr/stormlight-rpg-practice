@@ -27,10 +27,9 @@ public protocol SelfListenerProtocol {
     var action: ActionForRpgCharacter<C> { get }
 }
 extension SelfListenerProtocol {
-    func typeErasedAction(_ game: Game, _ character: inout any RpgCharacter) {
+    func typeErasedAction(_ game: Game, _ character: any RpgCharacter) {
         if let wrappedCharacter = character as? AnyRpgCharacter {
-            self.typeErasedAction(game, &wrappedCharacter.core)
-            character = wrappedCharacter
+            self.typeErasedAction(game, wrappedCharacter.core)
             return
         }
         // If we get here, we don't have a wrapped character.

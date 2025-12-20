@@ -30,17 +30,15 @@ public protocol SelfListenerSelfHookForTestProtocol {
 }
 extension SelfListenerSelfHookForTestProtocol {
     func typeErasedAction(
-        _ game: Game, _ character: inout any RpgCharacter, _ test: inout any RpgTestProtocol
+        _ game: Game, _ character: any RpgCharacter, _ test: any RpgTestProtocol
     ) {
         if let wrappedCharacter = character as? AnyRpgCharacter {
-            self.typeErasedAction(game, &wrappedCharacter.core, &test)
-            character = wrappedCharacter
+            self.typeErasedAction(game, wrappedCharacter.core, test)
             return
         }
         // If we get here, we don't have a wrapped character.
         if let wrappedTest = test as? AnyRpgTest {
-            self.typeErasedAction(game, &character, &wrappedTest.core)
-            test = wrappedTest
+            self.typeErasedAction(game, character, wrappedTest.core)
             return
         }
         // If we get here, we don't have a wrapped test.
