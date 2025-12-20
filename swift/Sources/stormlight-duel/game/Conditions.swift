@@ -5,13 +5,13 @@ public protocol ConditionProtocol: ListenerHolder, SelfListenerHolder, SelfListe
 }
 extension ConditionProtocol {
     public var allListeners: [any ListenerProtocol] {
-        listeners + type.listeners
+        type.listeners + listeners
     }
     public var allSelfListeners: [any SelfListenerProtocol] {
-        selfListeners + type.selfListeners
+        type.selfListeners + selfListeners
     }
     public var allSelfListenersSelfHooks: [any SelfListenerSelfHookProtocol] {
-        selfListenersSelfHooks + type.selfListenersSelfHooks
+        type.selfListenersSelfHooks + selfListenersSelfHooks
     }
 }
 
@@ -46,11 +46,12 @@ public struct DurationCondition<C: ConditionType>: Equatable, ConditionProtocol 
                     }),
                     var me = meUntyped as? Self
                 else {
-                    return
+                    fatalError(
+                        "Why is this condition happening to a character without this condition?")
                 }
                 // TODO 99% of this function is boilerplate. However, we're not ready to pin ourselves down to one access mechanism for conditions yet.
                 me.durationRemainingInTurns -= 1
-                if durationRemainingInTurns <= 0 {
+                if me.durationRemainingInTurns <= 0 {
                     character.conditions.remove(at: myIndex)
                 } else {
                     character.conditions[myIndex] = me
