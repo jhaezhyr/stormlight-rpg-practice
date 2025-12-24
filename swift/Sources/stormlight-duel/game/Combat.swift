@@ -48,14 +48,9 @@ public struct Combat {
             // Give each character in this speed a turn
             speeds: for speed in TurnSpeed.allCases {
                 // TODO allow characters to lower their speed mid-round somehow
-                charactersThisTurn: for unmodifiedCharacter in game.characters.filter({ c in
+                charactersThisTurn: for character in game.characters.filter({ c in
                     c.combatState!.turnSpeed == speed
                 }) {
-                    let key = unmodifiedCharacter.primaryKey
-                    var character: any RpgCharacter {
-                        get { game.characters[key]!.core }
-                        set { game.characters[key]!.core = newValue }
-                    }
                     character.combatState!.reactionsRemaining = 1
                     character.combatState!.actionsRemaining =
                         character.combatState!.turnSpeed.actionsPerTurn
