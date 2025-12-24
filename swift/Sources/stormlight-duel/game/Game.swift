@@ -20,7 +20,7 @@ public class AnyRpgCharacter: RpgCharacter {
         get { core.investiture }
         set { core.investiture = newValue }
     }
-    public var conditions: [any ConditionProtocol] {
+    public var conditions: KeyedSet<AnyCondition> {
         get { core.conditions }
         set { core.conditions = newValue }
     }

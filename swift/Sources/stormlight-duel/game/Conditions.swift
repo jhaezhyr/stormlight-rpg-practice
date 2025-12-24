@@ -1,101 +1,99 @@
-public protocol ConditionProtocol: ListenerHolder, SelfListenerHolder, SelfListenerSelfHookHolder {
-    associatedtype C: ConditionType
-    var type: C { get }
-    var id: Int { get }
-}
-extension ConditionProtocol {
-    public var allListeners: [any ListenerProtocol] {
-        type.listeners + listeners
-    }
-    public var allSelfListeners: [any SelfListenerProtocol] {
-        type.selfListeners + selfListeners
-    }
-    public var allSelfListenersSelfHooks: [any SelfListenerSelfHookProtocol] {
-        type.selfListenersSelfHooks + selfListenersSelfHooks
-    }
-}
-
-public struct AnyConditionType: ConditionType {
-    public var core: any ConditionType
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(core)
-    }
-    public static func == (lh: Self, rh: Self) -> Bool {
-        // FIXME
-        return false
-    }
-}
-
-public struct AnyCondition: ConditionProtocol {
-    public var core: any ConditionProtocol
-    public var type: AnyConditionType { AnyConditionType(core: core.type) }
-    public var id: Int { core.id }
-}
-
-public struct DurationCondition<C: ConditionType>: Equatable, ConditionProtocol {
-    public var type: C
-    public var id: Int
+public struct DurationCondition<C: Condition>: CompositeCondition {
+    public var core: C
     public var durationRemainingInTurns: Int
     public var selfListenersSelfHooks: [any SelfListenerSelfHookProtocol] {
         [
             selfListen(toMy: CombatPhase.endOfTurn, as: AnyRpgCharacter.self) { game, character in
-                guard
-                    let (myIndex, meUntyped) = character.conditions.enumerated().first(where: {
-                        (i, c) in
-                        c.id == self.id
-                    }),
-                    var me = meUntyped as? Self
-                else {
+                guard character.conditions.contains(self.id) else {
                     fatalError(
                         "Why is this condition happening to a character without this condition?")
                 }
-                // TODO 99% of this function is boilerplate. However, we're not ready to pin ourselves down to one access mechanism for conditions yet.
+                var me = self
                 me.durationRemainingInTurns -= 1
                 if me.durationRemainingInTurns <= 0 {
-                    character.conditions.remove(at: myIndex)
+                    character.conditions.remove(self.id)
                 } else {
-                    character.conditions[myIndex] = me
+                    character.conditions[self.id] = AnyCondition(me)
                 }
             }
         ]
     }
 
-    public init(type: C, duration: Int) {
-        self.type = type
+    public init(core: C, duration: Int) {
+        self.core = core
         self.durationRemainingInTurns = duration
-        self.id = Int.random(in: Int.min...Int.max)
     }
 
     // It's cool! But it doesn't allow us to observe the duration.
-    static func getDurationListener<Con: ConditionProtocol>(condition: Con) -> SelfListenerSelfHook<
+    static func getDurationListener<Con: Condition>(condition: Con)
+        -> SelfListenerSelfHook<
         CombatPhase, AnyRpgCharacter
-    > {
+        >
+    {
         return {
             var durationRemainingInTurns = 0
             return selfListen(toMy: CombatPhase.endOfTurn, as: AnyRpgCharacter.self) {
                 game, character in
-                guard
-                    let myIndex = character.conditions.firstIndex(where: { c in c.id == condition.id
-                    })
-                else {
+                guard character.conditions.contains(condition.id) else {
                     return
                 }
                 // TODO 50% of this function is boilerplate. However, we're not ready to pin ourselves down to one access mechanism for conditions yet.
                 durationRemainingInTurns -= 1
                 if durationRemainingInTurns <= 0 {
-                    character.conditions.remove(at: myIndex)
+                    character.conditions.remove(condition.id)
                 }
             }
         }()
     }
 }
 
-public protocol ConditionType: Hashable, ListenerHolderLeaf, SelfListenerHolderLeaf,
+private protocol CompositeCondition: Condition, NonLeafGenericListenerHolder, AllTheListenersHolder
+{
+    associatedtype C: Condition
+    var core: C { get }
+}
+extension CompositeCondition {
+    public var id: Int { core.id }
+    public var childHolders: [Any] { [core] }
+}
+
+private protocol LeafCondition: Condition, ListenerHolderLeaf, SelfListenerHolderLeaf,
     SelfListenerSelfHookHolderLeaf, SelfListenerSelfHookForTestHolderLeaf
 {
 }
 
-public struct Afflicted: ConditionType {
+public protocol Condition {
+    var id: Int { get }
+}
+
+/// Cannot hold one itself recursively. `AnyCondition(AnyCondition(someCondition)).core === someCondition`
+public struct AnyCondition: Condition {
+    public var core: any Condition
+    public var id: Int { core.id }
+    private init(notUnwrapping character: any Condition) {
+        self.core = character
+    }
+    public init(_ character: any Condition) {
+        if let character = character as? AnyCondition {
+            self.init(character)
+        } else {
+            self.init(notUnwrapping: character)
+        }
+    }
+}
+
+extension AnyCondition: Keyed {
+    public var primaryKey: Int { id }
+}
+
+nonisolated(unsafe) private var nextConditionId = 0
+private func getNextConditionId() -> Int {
+    nextConditionId += 1
+    return nextConditionId
+}
+
+public struct Afflicted: LeafCondition {
+    public var id: Int = getNextConditionId()
     public let damagePerTurn: Damage
     public init(damagePerTurn: Damage) {
         self.damagePerTurn = damagePerTurn
@@ -110,7 +108,8 @@ public struct Afflicted: ConditionType {
 
     // TODO This condition can have multiple equivalent stacks; need to handle that
 }
-public struct Determined: ConditionType {
+public struct Determined: LeafCondition {
+    public var id: Int = getNextConditionId()
     public var selfListenersSelfHooksForTests: [any SelfListenerSelfHookForTestProtocol] {
         [
             selfListen(
@@ -120,26 +119,48 @@ public struct Determined: ConditionType {
             ) {
                 game, character, test in
                 test.advantages += 1
-                character.conditions.removeAll { c in c.type as? Self == self }
+                character.conditions.remove(self.id)
             }
         ]
     }
 }
 
-public struct Disoriented: ConditionType {}
-public struct Empowered: ConditionType {}
-public struct Enhanced: ConditionType {
+public struct Disoriented: LeafCondition {
+    public var id: Int = getNextConditionId()
+}
+public struct Empowered: LeafCondition {
+    public var id: Int = getNextConditionId()
+}
+public struct Enhanced: LeafCondition {
+    public var id: Int = getNextConditionId()
     public var stat: AttributeName
     public var amount: Int
 }
-public struct Exhausted: ConditionType {
+public struct Exhausted: LeafCondition {
+    public var id: Int = getNextConditionId()
     public var amount: Int
 }
-public struct Focused: ConditionType {}
-public struct Immobilized: ConditionType {}
-public struct Prone: ConditionType {}
-public struct Restrained: ConditionType {}
-public struct Slowed: ConditionType {}
-public struct Stunned: ConditionType {}
-public struct Surprised: ConditionType {}
-public struct Unconscious: ConditionType {}
+public struct Focused: LeafCondition {
+    public var id: Int = getNextConditionId()
+}
+public struct Immobilized: LeafCondition {
+    public var id: Int = getNextConditionId()
+}
+public struct Prone: LeafCondition {
+    public var id: Int = getNextConditionId()
+}
+public struct Restrained: LeafCondition {
+    public var id: Int = getNextConditionId()
+}
+public struct Slowed: LeafCondition {
+    public var id: Int = getNextConditionId()
+}
+public struct Stunned: LeafCondition {
+    public var id: Int = getNextConditionId()
+}
+public struct Surprised: LeafCondition {
+    public var id: Int = getNextConditionId()
+}
+public struct Unconscious: LeafCondition {
+    public var id: Int = getNextConditionId()
+}

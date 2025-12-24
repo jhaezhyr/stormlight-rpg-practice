@@ -71,7 +71,7 @@ public struct Combat {
                                 "\(someCharacter.primaryKey == character.primaryKey ? "Your" : "\(someCharacter.name)'s") stats:\n"
                                     + "  Health: \(someCharacter.health.value)/\(character.health.maxValue)\n"
                                     + "  Focus: \(someCharacter.focus.value)/\(character.focus.value)\n"
-                                    + "  Conditions: \(someCharacter.conditions.map { "\($0.type)" }.joined(separator: ","))",
+                                    + "  Conditions: \(someCharacter.conditions.map { "\($0.core)" }.joined(separator: ","))",
                                 to: character.primaryKey)
                         }
 

@@ -154,7 +154,7 @@ public protocol RpgCharacter: AnyObject, AllTheListenersHolder, NonLeafGenericLi
     var investiture: Resource { get set }
     var recoveryDie: NumberDie { get }
     var sensesRange: Distance { get }
-    var conditions: [any ConditionProtocol] { get set }
+    var conditions: KeyedSet<AnyCondition> { get set }
     var movementRate: Distance { get }
     var size: CharacterSize { get }
     var deflect: Int { get }
@@ -229,7 +229,7 @@ public class PlayerRpgCharacter: FullRpgCharacter {
     public var focus: Resource
     public var investiture: Resource
 
-    public var conditions: [any ConditionProtocol]
+    public var conditions: KeyedSet<AnyCondition>
 
     public var brain: any RpgCharacterBrain
 
@@ -248,7 +248,7 @@ public class PlayerRpgCharacter: FullRpgCharacter {
         health: Resource,
         focus: Resource,
         investiture: Resource,
-        conditions: [any ConditionProtocol],
+        conditions: KeyedSet<AnyCondition>,
         brain: any RpgCharacterBrain,
         combatState: RpgCharacterCombatState? = nil,
     ) {
