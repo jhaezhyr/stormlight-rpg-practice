@@ -5,7 +5,6 @@
 /// "peek" at whoever called it.
 ///
 /// @see asActiveConsumer
-//@TaskLocal // Except this requires (any Consumer)? to be Sendable, which is not possible
 nonisolated(unsafe) var activeConsumer: (any Consumer)? = nil
 
 /// Save the previous `activeConsumer` (if any) in the callstack, and run a
@@ -19,6 +18,7 @@ public func asActiveConsumer<T>(
     _ fn: () throws -> T,
 ) rethrows -> T {
     let prev = activeConsumer
+    activeConsumer = consumer
     defer {
         activeConsumer = prev
     }
@@ -35,9 +35,10 @@ extension Producer {
             return
         }
 
+        var producerAgain = self  // Only necessary because of language bugs
         // Producers can be consumed by a variety of Signals, but it only takes
         // 1 Consumer that is watched to move the Producer to a watched state
-        self.isWatched = self.isWatched || activeConsumer.isWatched
+        producerAgain.isWatched = self.isWatched || activeConsumer.isWatched
     }
 
     /**
@@ -61,5 +62,7 @@ extension Producer {
             // deletion is not necessary, because unwatching only happens
             // (eagerly) when an Effect is disposed
         }
+
+        activeConsumer = newActiveConsumer
     }
 }

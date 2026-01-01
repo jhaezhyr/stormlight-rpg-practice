@@ -11,13 +11,13 @@ extension Consumer {
             return
         }
         for (producerRef, _) in self.producers {
-            let producer = producerRef.ref
+            var producer = producerRef.ref  // `var` only necessary because of language bugs
             // anytime we iterate through Producers is an opportunity to clean up
             // unneeded links
             if unlinkIfNeeded(producer, self) {
                 return
             }
-            producer.unwatched[AnyConsumerWeakRef(self)] = self.computeVersion
+            producer.unwatched[AnyConsumerWeakRef(self.weakRef.ref)] = self.computeVersion
             producer.watched.removeValue(forKey: AnyConsumerRef(self))
             // Computed Signals are both Producers and Consumers
             if let producerAsConsumer = producer as? any Consumer {

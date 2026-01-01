@@ -76,7 +76,6 @@ public func effect(
 ///
 /// @param namespace (optional) the identifier of a specific queue to flush.
 ///        If not specified, then all queues are flushed.
-// @MainActor // But this makes it so every function needs to be @MainActor
 public func flushEffectQueue(namespace: String? = nil) {
     if let namespace {
         let effects = EffectQueues[namespace, default: []]

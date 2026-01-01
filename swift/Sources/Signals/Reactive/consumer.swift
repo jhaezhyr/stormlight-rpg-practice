@@ -70,20 +70,24 @@ public struct AnyConsumerRef: Hashable {
 
 public struct AnyConsumerWeakRef: Hashable {
     public weak var ref: (any Consumer)?
-    // Once a weak ref goes dead, we still need to be able to identify what it used to point to.
-    private var uniqueId: Int
 
-    init(_ ref: any Consumer) {
+    init(_ ref: (any Consumer)?) {
         self.ref = ref
-        self.uniqueId = ObjectIdentifier(ref).hashValue
     }
 
     public static func == (lhs: AnyConsumerWeakRef, rhs: AnyConsumerWeakRef) -> Bool {
-        return lhs.uniqueId == rhs.uniqueId
+        if let lh = lhs.ref, let rh = rhs.ref {
+            return lh === rh
+        } else {
+            return lhs.ref == nil && rhs.ref == nil
+        }
     }
 
     public func hash(into hasher: inout Hasher) {
-        // The hashing algorithm must remain stable even if the weak ref goes dead.
-        hasher.combine(uniqueId)
+        if let ref = self.ref {
+            hasher.combine(ObjectIdentifier(ref))
+        } else {
+            hasher.combine(1)
+        }
     }
 }
