@@ -4,8 +4,10 @@ import stormlight_duel
 @Test("afflicted does damage every turn")
 func afflicted() async throws {
     let playerToPlayWith = PlayerRpgCharacter.basicCharacter()
-    playerToPlayWith.conditions.append(
-        DurationCondition(type: Afflicted(damagePerTurn: Damage(2, realm: .vital)), duration: 3)
+    playerToPlayWith.conditions.upsert(
+        AnyCondition(
+            DurationCondition(core: Afflicted(damagePerTurn: Damage(2, realm: .vital)), duration: 3)
+        )
     )
     let playerRef = RpgCharacterRef(name: playerToPlayWith.name)
     let game = Game(characters: [playerToPlayWith], broadcaster: SilentBroadcaster())
