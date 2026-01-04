@@ -5,7 +5,14 @@
 /// "peek" at whoever called it.
 ///
 /// @see asActiveConsumer
-nonisolated(unsafe) var activeConsumer: (any Consumer)? = nil
+@TaskLocal
+private var activeConsumer: ActiveConsumer? = nil
+
+// This doesn't actually need to be Sendable. For right now, we're claiming that Tasks which care about the activeConsumer
+// (i.e. traversing the calculation dependency graph) will never cross actor boundaries.
+private struct ActiveConsumer: @unchecked Sendable {
+    var core: any Consumer
+}
 
 /// Save the previous `activeConsumer` (if any) in the callstack, and run a
 /// provided function with the given `Consumer?` as the
@@ -17,12 +24,11 @@ public func asActiveConsumer<T>(
     _ consumer: (any Consumer)?,
     _ fn: () throws -> T,
 ) rethrows -> T {
-    let prev = activeConsumer
-    activeConsumer = consumer
-    defer {
-        activeConsumer = prev
-    }
-    return try fn()
+    return try $activeConsumer.withValue(
+        consumer.map { ActiveConsumer(core: $0) },
+        operation: {
+            return try fn()
+        })
 }
 
 extension Producer {
@@ -31,7 +37,7 @@ extension Producer {
     * dependencies are moved to a watched state.
     */
     public func updateWatched() {
-        guard let activeConsumer else {
+        guard let activeConsumer = activeConsumer?.core else {
             return
         }
 
@@ -48,7 +54,7 @@ extension Producer {
     * @see {@link notifyConsumers} and {@link anyProducersHaveChanged}
     */
     public func recordAccess() {
-        guard let newActiveConsumer = activeConsumer else {
+        guard let newActiveConsumer = activeConsumer?.core else {
             return
         }
 
@@ -62,7 +68,5 @@ extension Producer {
             // deletion is not necessary, because unwatching only happens
             // (eagerly) when an Effect is disposed
         }
-
-        activeConsumer = newActiveConsumer
     }
 }
