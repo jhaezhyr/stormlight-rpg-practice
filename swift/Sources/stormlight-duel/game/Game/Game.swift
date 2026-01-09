@@ -1,5 +1,3 @@
-import Signals
-
 public class Game {
     public var characters: KeyedSet<AnyRpgCharacter>
     public var tests: KeyedSet<AnyRpgTest> = []
@@ -10,9 +8,6 @@ public class Game {
     public init(characters: [any RpgCharacter], broadcaster: Broadcaster) {
         self.characters = KeyedSet(characters.map(AnyRpgCharacter.init))
         self.broadcaster = broadcaster
-        for character in characters {
-            character.game = self
-        }
     }
 }
 
