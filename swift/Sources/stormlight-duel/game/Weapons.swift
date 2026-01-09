@@ -105,7 +105,7 @@ public struct Quickdraw: WeaponTrait {}
 public struct Dangerous: WeaponTrait {}
 public struct Discreet: WeaponTrait {}
 
-public struct BasicWeapon: Weapon, Sendable {
+public struct BasicWeapon: Weapon, Sendable, ItemSnapshot {
     public var weaponName: WeaponName
     public var type: WeaponType
     public var weaponsSkill: WeaponsSkill
@@ -127,6 +127,7 @@ public struct BasicWeapon: Weapon, Sendable {
         traits: [(trait: any WeaponTrait, condition: TraitCondition)],
         price: Money?,
         weight: Weight,
+        in gameSession: isolated GameSession
     ) {
         self.weaponName = weaponName
         self.type = type
@@ -137,62 +138,62 @@ public struct BasicWeapon: Weapon, Sendable {
         self.traits = traits
         self.price = price
         self.weight = weight
-        name = "\(self.weaponName) \(BasicWeapon.getNewWeaponId())"
-    }
-
-    nonisolated(unsafe) private static var nextWeaponId = 1
-    private static func getNewWeaponId() -> Int {
-        nextWeaponId += 1
-        return nextWeaponId - 1
+        let id = gameSession.nextId()
+        name = "\(self.weaponName) \(id)"
     }
 }
 
-nonisolated(unsafe) public let basicWeapons: [WeaponName: () -> BasicWeapon] = [
-    .axe: {
-        BasicWeapon(
-            weaponName: .axe,
-            type: .heavyWeaponry,
-            weaponsSkill: .heavy,
-            range: .melee(),
-            damage: .init(dice: [(.d6, 1)]),
-            damageType: .keen,
-            traits: [(Thrown(short: 20, long: 60), .always), (Offhand(), .expert)],
-            price: 20,
-            weight: 2
-        )
-    },
-    .crossbow: {
-        BasicWeapon(
-            weaponName: .crossbow,
-            type: .heavyWeaponry,
-            weaponsSkill: .heavy,
-            range: .ranged(short: 100, long: 400),
-            damage: .init(dice: [(.d8, 1)]),
-            damageType: .keen,
-            traits: [
-                (Loaded(ammunition: .init(value: 1, maxValue: 1)), .always),
-                (TwoHanded(), .always),
-                (Deadly(), .expert),
-            ],
-            price: 200,
-            weight: 7
-        )
-    },
-    .knife: {
-        BasicWeapon(
-            weaponName: .knife,
-            type: .lightWeaponry,
-            weaponsSkill: .light,
-            range: .melee(),
-            damage: .init(dice: [(.d4, 1)]),
-            damageType: .keen,
-            traits: [
-                (Discreet(), .always),
-                (Offhand(), .expert),
-                (Thrown(short: 20, long: 60), .expert),
-            ],
-            price: 8,
-            weight: 1
-        )
-    },
-]
+public let basicWeapons:
+    [WeaponName: @Sendable (_ gameSession: isolated GameSession) -> BasicWeapon] =
+        [
+            .axe: { gameSession in
+                BasicWeapon(
+                    weaponName: .axe,
+                    type: .heavyWeaponry,
+                    weaponsSkill: .heavy,
+                    range: .melee(),
+                    damage: .init(dice: [(.d6, 1)]),
+                    damageType: .keen,
+                    traits: [(Thrown(short: 20, long: 60), .always), (Offhand(), .expert)],
+                    price: 20,
+                    weight: 2,
+                    in: gameSession
+                )
+            },
+            .crossbow: { gameSession in
+                BasicWeapon(
+                    weaponName: .crossbow,
+                    type: .heavyWeaponry,
+                    weaponsSkill: .heavy,
+                    range: .ranged(short: 100, long: 400),
+                    damage: .init(dice: [(.d8, 1)]),
+                    damageType: .keen,
+                    traits: [
+                        (Loaded(ammunition: .init(value: 1, maxValue: 1)), .always),
+                        (TwoHanded(), .always),
+                        (Deadly(), .expert),
+                    ],
+                    price: 200,
+                    weight: 7,
+                    in: gameSession
+                )
+            },
+            .knife: { gameSession in
+                BasicWeapon(
+                    weaponName: .knife,
+                    type: .lightWeaponry,
+                    weaponsSkill: .light,
+                    range: .melee(),
+                    damage: .init(dice: [(.d4, 1)]),
+                    damageType: .keen,
+                    traits: [
+                        (Discreet(), .always),
+                        (Offhand(), .expert),
+                        (Thrown(short: 20, long: 60), .expert),
+                    ],
+                    price: 8,
+                    weight: 1,
+                    in: gameSession
+                )
+            },
+        ]

@@ -8,7 +8,7 @@ public enum NumberDie: Int, Sendable {
     case d100 = 100
 }
 
-public enum PlotDieResult {
+public enum PlotDieResult: Sendable {
     case opportunity
     case complication2
     case complication4

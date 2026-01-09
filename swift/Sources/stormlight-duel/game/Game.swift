@@ -1,51 +1,4 @@
-/// Cannot hold one itself recursively. `AnyRpgCharacter(AnyRpgCharacter(someChar)).core === someChar`
-public class AnyRpgCharacter: RpgCharacter {
-    public var name: String { core.name }
-    public var game: Game! {
-        get { core.game }
-        set { core.game = newValue }
-    }
-    public var attributes: CompleteDictionary<AttributeName, Int> { core.attributes }
-    public var ranksInCoreSkills: CompleteDictionary<CoreSkillName, Int> { core.ranksInCoreSkills }
-    public var ranksInOtherSkills: [SkillName: Int] { core.ranksInOtherSkills }
-    public var health: Resource {
-        get { core.health }
-        set { core.health = newValue }
-    }
-    public var focus: Resource {
-        get { core.focus }
-        set { core.focus = newValue }
-    }
-    public var investiture: Resource {
-        get { core.investiture }
-        set { core.investiture = newValue }
-    }
-    public var conditions: KeyedSet<AnyCondition> {
-        get { core.conditions }
-        set { core.conditions = newValue }
-    }
-    public var size: CharacterSize { core.size }
-    public var combatState: RpgCharacterCombatState? {
-        get { core.combatState }
-        set { core.combatState = newValue }
-    }
-    public var brain: any RpgCharacterBrain { core.brain }
-    public var equipment: KeyedSet<ReadyableItem> {
-        get { core.equipment }
-        set { core.equipment = newValue }
-    }
-    public var core: any RpgCharacter
-    private init(notUnwrapping character: any RpgCharacter) {
-        self.core = character
-    }
-    public convenience init(_ character: any RpgCharacter) {
-        if let character = character as? AnyRpgCharacter {
-            self.init(character)
-        } else {
-            self.init(notUnwrapping: character)
-        }
-    }
-}
+import Signals
 
 public class Game {
     public var characters: KeyedSet<AnyRpgCharacter>
@@ -80,7 +33,9 @@ extension Game {
     /// Get a character at the given reference, if it exists and is of the requested type.
     ///
     /// If you ask for a wrapped `AnyRpgCharacter`, it will unwrap any existing character found at the reference.
-    public func character<Character: RpgCharacter>(at ref: RpgCharacterRef, as type: Character.Type)
+    public func character<Character: RpgCharacter>(
+        at ref: RpgCharacterRef, as type: Character.Type
+    )
         -> Character?
     {
         characters[ref]?.core as? Character
@@ -93,19 +48,19 @@ extension Game {
 }
 
 extension Game {
-    public func updateAnyTest(_ test: any RpgTestProtocol) {
+    public func updateAnyTest(_ test: any RpgTest) {
         tests.upsert(AnyRpgTest(test))
     }
 
-    public func updateTest<Test: RpgTestProtocol>(_ test: Test) {
+    public func updateTest<Test: RpgTest>(_ test: Test) {
         updateAnyTest(test)
     }
 
-    public func anyTest(at ref: RpgTestRef) -> (any RpgTestProtocol)? {
+    public func anyTest(at ref: RpgTestRef) -> (any RpgTest)? {
         tests[ref]?.core
     }
 
-    public func test<Test: RpgTestProtocol>(at ref: RpgTestRef, as type: Test.Type) -> Test? {
+    public func test<Test: RpgTest>(at ref: RpgTestRef, as type: Test.Type) -> Test? {
         tests[ref]?.core as? Test
     }
 }
@@ -116,20 +71,22 @@ extension Game: NonLeafGenericListenerHolder, AllTheListenersHolder {
     }
 
     /// Why is it called naive? Because it only talks to the listeners that want something exactly like this. No narrow character mutation. If there was an event sent that included something for a character, none of the SelfListeners will be notified.
-    public func naiveDispatch<T: HookTrigger>(_ hookTrigger: T) {
+    public func naiveDispatch<T: HookTrigger>(
+        _ hookTrigger: T, in gameSession: isolated GameSession
+    ) async {
         var listenersRun: Set<ListenerId> = []
         while let listenerLeftToTry = allListeners.filter({
             $0.hook as? T == hookTrigger && !listenersRun.contains($0.id)
         }).first {
             // Getting this every time means we can add new listeners in response to listeners.
-            listenerLeftToTry.action(self)
+            await listenerLeftToTry.action(gameSession)
             listenersRun.insert(listenerLeftToTry.id)
         }
     }
 
     public func naiveDispatch<T: HookTrigger>(
-        _ hookTrigger: T, for characterRef: RpgCharacterRef
-    ) {
+        _ hookTrigger: T, for characterRef: RpgCharacterRef, in gameSession: isolated GameSession
+    ) async {
         var listenersRun: Set<ListenerId> = []
         while let listenerLeftToTry = allSelfListeners.filter({
             $0.hook as? T == hookTrigger && !listenersRun.contains($0.id)
@@ -137,14 +94,14 @@ extension Game: NonLeafGenericListenerHolder, AllTheListenersHolder {
             guard let char = self.anyCharacter(at: characterRef) else {
                 fatalError("Bad character reference")
             }
-            listenerLeftToTry.typeErasedAction(self, char)
+            await listenerLeftToTry.typeErasedAction(gameSession, char)
             listenersRun.insert(listenerLeftToTry.id)
         }
     }
 
     public func naiveDispatch<T: HookTriggerForSomeRpgCharacter>(
-        _ hookTrigger: T, for characterRef: RpgCharacterRef
-    ) {
+        _ hookTrigger: T, for characterRef: RpgCharacterRef, in gameSession: isolated GameSession
+    ) async {
         var listenersRun: Set<ListenerId> = []
         while let listenerLeftToTry = allSelfListenersSelfHooks.filter({
             $0.hook as? T == hookTrigger && !listenersRun.contains($0.id)
@@ -152,15 +109,16 @@ extension Game: NonLeafGenericListenerHolder, AllTheListenersHolder {
             guard let char = self.anyCharacter(at: characterRef) else {
                 fatalError("Bad character reference")
             }
-            listenerLeftToTry.typeErasedAction(self, char)
+            await listenerLeftToTry.typeErasedAction(gameSession, char)
             listenersRun.insert(listenerLeftToTry.id)
 
         }
     }
 
     public func naiveDispatch<T: HookTriggerForSomeRpgCharacterAndTest>(
-        _ hookTrigger: T, for characterRef: RpgCharacterRef, attempting testRef: RpgTestRef
-    ) {
+        _ hookTrigger: T, for characterRef: RpgCharacterRef, attempting testRef: RpgTestRef,
+        in gameSession: isolated GameSession
+    ) async {
         var listenersRun: Set<ListenerId> = []
         while let listenerLeftToTry = allSelfListenersSelfHooksForTests.filter({
             $0.hook as? T == hookTrigger && !listenersRun.contains($0.id)
@@ -171,7 +129,7 @@ extension Game: NonLeafGenericListenerHolder, AllTheListenersHolder {
             guard let test = self.anyTest(at: testRef) else {
                 fatalError("Bad test reference")
             }
-            listenerLeftToTry.typeErasedAction(self, char, test)
+            await listenerLeftToTry.typeErasedAction(gameSession, char, test)
             listenersRun.insert(listenerLeftToTry.id)
         }
     }

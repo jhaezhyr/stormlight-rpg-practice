@@ -2,8 +2,17 @@ import Foundation
 import stormlight_duel
 
 struct CliRpgCharacterBrain: RpgCharacterBrain {
-    unowned var character: (any RpgCharacter)!
-    func decide<C>(options: C) -> C.Element where C: Collection {
+    let broadcaster: CliBroadcaster
+    let characterRef: RpgCharacterRef
+
+    init(broadcaster: CliBroadcaster, characterRef: RpgCharacterRef) {
+        self.characterRef = characterRef
+        self.broadcaster = broadcaster
+    }
+
+    @MainActor
+    func decide<C: Sendable>(options: C, in gameSnapshot: GameSnapshot) -> C.Element
+    where C: Collection, C.Element: Sendable {
         if let option = options.first, options.count == 1 {
             return option
         }
@@ -19,22 +28,27 @@ struct CliRpgCharacterBrain: RpgCharacterBrain {
             return result
         }
         printForCharacter("No, try again.")
-        return decide(options: options)
+        return decide(options: options, in: gameSnapshot)
     }
 
-    func decide<T>(type: T.Type) -> T {
+    @MainActor
+    func decide<T>(type: T.Type, in gameSnapshot: GameSnapshot) -> T where T: Sendable {
         if T.self == CombatChoice.self {
-            return decideCombatChoice() as! T
+            return decideCombatChoice(in: gameSnapshot) as! T
         }
         fatalError("I don't know how to decide when asked for \(type)")
     }
 
-    private func decideCombatChoice() -> CombatChoice {
+    @MainActor
+    private func decideCombatChoice(in gameSnapshot: GameSnapshot) -> CombatChoice {
+        guard let character = gameSnapshot.characters[characterRef] else {
+            fatalError("Bad character ref \(characterRef)")
+        }
         printForCharacter(
             "You have \(character.combatState!.actionsRemaining) actions. What is your combat choice?"
         )
         let actionsICanTake = allCombatActions.filter {
-            $0.canMaybeTakeAction(by: character, in: character.game)
+            $0.canMaybeTakeAction(by: character.primaryKey, in: gameSnapshot)
         }
         for action in actionsICanTake {
             if let action = action as? (CliArgsConvertibleType & CombatAction).Type {
@@ -50,9 +64,10 @@ struct CliRpgCharacterBrain: RpgCharacterBrain {
             for action in actionsICanTake {
                 if let parseAction = (action as? (CliArgsConvertibleType & CombatAction).Type)?
                     .init,
-                    let action = try parseAction(args, self.character)
+                    let action = try parseAction(
+                        args, (game: gameSnapshot, characterRef: characterRef))
                 {
-                    if action.canTakeAction(by: character, in: character.game) {
+                    if action.canTakeAction(by: characterRef, in: gameSnapshot) {
                         printForCharacter("Your action is \(action)")
                         return .action(action)
                     }
@@ -66,11 +81,12 @@ struct CliRpgCharacterBrain: RpgCharacterBrain {
         } catch {
             printForCharacter(error.description)
         }
-        return decideCombatChoice()
+        return decideCombatChoice(in: gameSnapshot)
     }
 
+    @MainActor
     private func printForCharacter(_ thing: Any) {
-        character.game.broadcaster.tell("\(thing)", to: character.primaryKey)
+        broadcaster.tell("\(thing)", to: characterRef)
     }
 }
 
@@ -82,13 +98,15 @@ struct CliParseError: Error {
     }
 }
 
+typealias CliArgsConversionContext = (game: GameSnapshot, characterRef: RpgCharacterRef)
+
 /// The CLI input might look like this:
 /// - move 15 back
 /// - strike
 protocol CliArgsConvertibleType {
     /// If it returns nil, it means it's not even trying to be this type.
     /// If it throws, it means it is trying to be this type, but it's wrong.
-    init?(args: [Any], context: any RpgCharacter) throws(CliParseError)
+    init?(args: [Any], context: CliArgsConversionContext) throws(CliParseError)
     static var helpText: Substring { get }
 }
 
@@ -96,7 +114,7 @@ protocol CliArgsContextFreeConvertibleType: CliArgsConvertibleType {
     init?(args: [Any]) throws(CliParseError)
 }
 extension CliArgsContextFreeConvertibleType {
-    init?(args: [Any], context: any RpgCharacter) throws(CliParseError) {
+    init?(args: [Any], context: CliArgsConversionContext) throws(CliParseError) {
         try self.init(args: args)
     }
 }
@@ -133,7 +151,6 @@ extension Move: CliArgsContextFreeConvertibleType {
             } else {
                 throw CliParseError(
                     "\(arg) cannot be assigned to `distance` or to `directionIsForward`.")
-                return nil
             }
         }
         let finalDistance = distance ?? 5
@@ -145,7 +162,7 @@ extension Move: CliArgsContextFreeConvertibleType {
 }
 
 extension Strike: CliArgsConvertibleType {
-    init?(args: [Any], context: any RpgCharacter) throws(CliParseError) {
+    init?(args: [Any], context: CliArgsConversionContext) throws(CliParseError) {
         if let alreadyParsedStrike = args.first as? Strike, args.count == 1 {
             self = alreadyParsedStrike
             return
@@ -160,22 +177,25 @@ extension Strike: CliArgsConvertibleType {
         }
         var target: RpgCharacterRef?
         var weaponToStrikeWith: ItemRef?
+        guard let contextCharacter = context.game.characters[context.characterRef] else {
+            throw CliParseError("Bad character ref \(context.characterRef)")
+        }
         for arg in remaining {
             if let targetArg = try RpgCharacterRef(args: [arg], context: context), target == nil {
                 target = targetArg
             } else if let weaponArg = try WeaponName(args: [arg], context: context),
                 weaponToStrikeWith == nil
             {
-                let weaponToStrikeWithCandidates = context.equipment.filter {
+                let weaponToStrikeWithCandidates = contextCharacter.equipment.filter {
                     ($0.core as? any Weapon)?.weaponName == weaponArg
                 }
                 if weaponToStrikeWithCandidates.count == 0 {
-                    throw CliParseError("\(arg) is not a weapon that \(context.name) has")
+                    throw CliParseError("\(arg) is not a weapon that \(contextCharacter.name) has")
                 } else if weaponToStrikeWithCandidates.count > 1 {
                     let readyWeaponCandidates = weaponToStrikeWithCandidates.filter { $0.isReady }
                     if readyWeaponCandidates.count != 1 {
                         throw CliParseError(
-                            "\(arg) is a weapon that \(context.name) has two or more of, and \(readyWeaponCandidates.count) are ready"
+                            "\(arg) is a weapon that \(contextCharacter.name) has two or more of, and \(readyWeaponCandidates.count) are ready"
                         )
                     } else {
                         weaponToStrikeWith = readyWeaponCandidates[0].primaryKey
@@ -195,11 +215,11 @@ extension Strike: CliArgsConvertibleType {
                 } else {
                     let characters = context.game.characters
                     let viableTargets = characters.filter {
-                        $0.primaryKey != context.primaryKey && $0.health.value > 0
+                        $0.primaryKey != contextCharacter.primaryKey && $0.health.value > 0
                     }
                     if viableTargets.count != 1 {
                         throw CliParseError(
-                            "It seems \(context.name) has \(viableTargets.count) available targets: \(viableTargets)"
+                            "It seems \(contextCharacter.name) has \(viableTargets.count) available targets: \(viableTargets)"
                         )
                     }
                     return viableTargets[0].primaryKey
@@ -210,11 +230,11 @@ extension Strike: CliArgsConvertibleType {
                 if let weaponToStrikeWith {
                     return weaponToStrikeWith
                 } else {
-                    let equipment = context.equipment
-                    let viableWeapons = equipment.filter { $0.isReady && $0.core is Weapon }
+                    let equipment = contextCharacter.equipment
+                    let viableWeapons = equipment.filter { $0.isReady && $0.core is any Weapon }
                     if viableWeapons.count != 1 {
                         throw CliParseError(
-                            "It seems \(context.name) has \(viableWeapons.count) ready weapons: \(viableWeapons)"
+                            "It seems \(contextCharacter.name) has \(viableWeapons.count) ready weapons: \(viableWeapons)"
                         )
                     }
                     return viableWeapons[0].primaryKey

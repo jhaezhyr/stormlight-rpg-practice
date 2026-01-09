@@ -1,4 +1,4 @@
-public struct Damage: Equatable, Hashable {
+public struct Damage: Equatable, Hashable, Sendable {
     public var amount: Int
     public var type: DamageType
 
@@ -8,12 +8,12 @@ public struct Damage: Equatable, Hashable {
     }
 }
 
-public enum CombatPhase: HookTriggerForSomeRpgCharacter {
+public enum CombatPhase: HookTriggerForSomeRpgCharacter, Sendable {
     case startOfTurn
     case endOfTurn
 }
 
-public enum TurnSpeed: Hashable, CaseIterable {
+public enum TurnSpeed: Hashable, CaseIterable, Sendable {
     case fast, slow
 
     var actionsPerTurn: Int {
@@ -24,7 +24,7 @@ public enum TurnSpeed: Hashable, CaseIterable {
     }
 }
 
-public struct RpgCharacterCombatState {
+public struct RpgCharacterCombatState: Sendable {
     public var turnSpeed: TurnSpeed
     public var actionsRemaining: Int = 0
     public var weaponsUsed: Set<WeaponName> = []
@@ -33,14 +33,16 @@ public struct RpgCharacterCombatState {
     public var hasStrikeAdvantageOver: Set<RpgCharacterRef> = []
 }
 
-public struct Combat {
+public struct Combat: Scene {
     public init() {
     }
 
-    public func run(in game: Game) {
+    public func run(in gameSession: isolated GameSession = #isolation) async {
+        let game = gameSession.game
         // Let everyone start the combat.
         for ref in game.characters.keys {
-            let turnSpeed = game.characters[ref]!.brain.decide(options: TurnSpeed.allCases)
+            let turnSpeed = await game.characters[ref]!.brain.decide(
+                options: TurnSpeed.allCases, in: game.snapshot)
             game.characters[ref]!.combatState = RpgCharacterCombatState(
                 turnSpeed: turnSpeed, reactionsRemaining: 1)
         }
@@ -54,15 +56,17 @@ public struct Combat {
                     character.combatState!.reactionsRemaining = 1
                     character.combatState!.actionsRemaining =
                         character.combatState!.turnSpeed.actionsPerTurn
-                    game.broadcaster.tellAll("\nIt's \(character.name)'s turn")
-                    game.naiveDispatch(CombatPhase.startOfTurn, for: RpgCharacterRef(of: character))
+                    await game.broadcaster.tellAll("\nIt's \(character.name)'s turn")
+                    await game.naiveDispatch(
+                        CombatPhase.startOfTurn, for: RpgCharacterRef(of: character),
+                        in: gameSession)
                     actions: while true {
                         if isOver(in: game) {
                             break rounds
                         }
 
                         for someCharacter in game.characters {
-                            game.broadcaster.tell(
+                            await game.broadcaster.tell(
                                 "\(someCharacter.primaryKey == character.primaryKey ? "Your" : "\(someCharacter.name)'s") stats:\n"
                                     + "  Health: \(someCharacter.health.value)/\(character.health.maxValue)\n"
                                     + "  Focus: \(someCharacter.focus.value)/\(character.focus.value)\n"
@@ -70,30 +74,32 @@ public struct Combat {
                                 to: character.primaryKey)
                         }
 
-                        let choice = character.brain.decide(type: CombatChoice.self)
+                        let choice = await character.brain.decide(
+                            type: CombatChoice.self, in: game.snapshot)
                         guard case .action(let action) = choice else {
                             break actions
                         }
                         if character.combatState!.actionsRemaining >= action.actionCost
                             && character.focus.value >= action.focusCost
-                            && action.canTakeAction(by: character, in: game)
+                            && action.canTakeAction(by: character.primaryKey, in: game.snapshot)
                             && !character.combatState!.actionsTaken.contains(action.actionName)
                         {
                             character.focus.value -= action.focusCost
                             character.combatState!.actionsRemaining -= action.actionCost
-                            action.action(by: character, in: game)
+                            await action.action(by: character.primaryKey, in: gameSession)
                         }
                     }
-                    game.naiveDispatch(CombatPhase.endOfTurn, for: RpgCharacterRef(of: character))
+                    await game.naiveDispatch(
+                        CombatPhase.endOfTurn, for: character.primaryKey, in: gameSession)
                 }
             }
         }
 
         let winners = game.characters.filter { $0.health.value > 0 }
         if winners.count == 0 {
-            game.broadcaster.tellAll("You're all unconcious. Good job.")
+            await game.broadcaster.tellAll("You're all unconcious. Good job.")
         } else if winners.count == 1 {
-            game.broadcaster.tellAll(
+            await game.broadcaster.tellAll(
                 "\(winners.map { $0.core.name }.joined(separator: " and ")) won!")
         }
     }
@@ -103,14 +109,14 @@ public struct Combat {
     }
 }
 
-public enum CombatChoice {
+public enum CombatChoice: Sendable {
     case action(any CombatAction)
     case endTurn
 }
 
 public typealias CombatActionName = String
 
-public protocol CombatAction {
+public protocol CombatAction: Sendable {
     static var actionName: CombatActionName { get }
     static var reactionCost: Int { get }
     static var actionCost: Int { get }
@@ -119,12 +125,14 @@ public protocol CombatAction {
     var reactionCost: Int { get }
     var actionCost: Int { get }
     var focusCost: Int { get }
-    func canTakeAction(by character: any RpgCharacter, in game: Game) -> Bool
-    func action(by character: any RpgCharacter, in game: Game)
+    func canTakeAction(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot) -> Bool
+    func action(by characterRef: RpgCharacterRef, in gameSession: isolated GameSession) async
 }
 extension CombatAction {
-    public func canTakeAction(by character: any RpgCharacter, in game: Game) -> Bool {
-        canAffordAction(by: character, in: game)
+    public func canTakeAction(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot)
+        -> Bool
+    {
+        canAffordAction(by: characterRef, in: gameSnapshot)
     }
     public static var focusCost: Int { 0 }
     public static var reactionCost: Int { 0 }
@@ -134,7 +142,12 @@ extension CombatAction {
     public var reactionCost: Int { Self.reactionCost }
     public var actionCost: Int { Self.actionCost }
     public var focusCost: Int { Self.focusCost }
-    public func canAffordAction(by character: any RpgCharacter, in game: Game) -> Bool {
+    public func canAffordAction(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot)
+        -> Bool
+    {
+        guard let character = gameSnapshot.characters[characterRef] else {
+            fatalError("Bad character reference \(characterRef)")
+        }
         guard let combatState = character.combatState else {
             return false
         }
@@ -142,7 +155,12 @@ extension CombatAction {
             && combatState.reactionsRemaining >= reactionCost
 
     }
-    public static func canMaybeAffordAction(by character: any RpgCharacter, in game: Game) -> Bool {
+    public static func canMaybeAffordAction(
+        by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot
+    ) -> Bool {
+        guard let character = gameSnapshot.characters[characterRef] else {
+            fatalError("Bad character reference \(characterRef)")
+        }
         guard let combatState = character.combatState else {
             return false
         }
@@ -151,16 +169,18 @@ extension CombatAction {
     }
 }
 extension CombatAction {
-    public static func canMaybeTakeAction(by character: any RpgCharacter, in game: Game) -> Bool {
-        canMaybeAffordAction(by: character, in: game)
+    public static func canMaybeTakeAction(
+        by character: RpgCharacterRef, in gameSnapshot: GameSnapshot
+    ) -> Bool {
+        canMaybeAffordAction(by: character, in: gameSnapshot)
     }
 }
 
 public struct Move: CombatAction {
     public var distanceToward: Distance
     public static var actionCost: Int { 1 }
-    public func action(by character: any RpgCharacter, in game: Game) {
-        character.game.broadcaster.tellAll(
+    public func action(by character: RpgCharacterRef, in gameSession: isolated GameSession) async {
+        await gameSession.game.broadcaster.tellAll(
             "\(character.name) moved \(distanceToward) toward their opponent")
     }
 
@@ -179,7 +199,12 @@ public struct Strike: CombatAction {
         self.weaponToStrikeWith = weaponToStrikeWith
     }
 
-    public func canTakeAction(by character: any RpgCharacter, in game: Game) -> Bool {
+    public func canTakeAction(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot)
+        -> Bool
+    {
+        guard let character = gameSnapshot.characters[characterRef] else {
+            fatalError("Bad character reference \(characterRef)")
+        }
         guard
             let readyableItem = character.equipment[weaponToStrikeWith],
             readyableItem.core as? any Weapon != nil
@@ -187,8 +212,8 @@ public struct Strike: CombatAction {
             return false
         }
         guard
-            game.anyCharacter(at: target) != nil,
-            target != RpgCharacterRef(of: character)
+            gameSnapshot.characters[target] != nil,
+            target != characterRef
         else {
             return false
         }
@@ -196,7 +221,12 @@ public struct Strike: CombatAction {
         return readyableItem.isReady
     }
 
-    public func action(by character: any RpgCharacter, in game: Game) {
+    public func action(by characterRef: RpgCharacterRef, in gameSession: isolated GameSession) async
+    {
+        let game = gameSession.game
+        guard let character = game.characters[characterRef] else {
+            fatalError("Bad character reference \(characterRef)")
+        }
         guard
             let readyableItem = character.equipment[weaponToStrikeWith],
             let weapon = readyableItem.core as? any Weapon
@@ -215,11 +245,14 @@ public struct Strike: CombatAction {
         // Run the damage test
         let weaponSkill = weapon.type.skill
         let targetPhysicalDefense = targetCharacter.defenses[.physical]
-        let test = RpgSimpleTest(skill: weaponSkill, difficulty: targetPhysicalDefense)
+        let test = RpgSimpleTest(
+            skill: weaponSkill, difficulty: targetPhysicalDefense, in: gameSession)
         let testRef = test.primaryKey
         game.updateTest(test)
-        game.naiveDispatch(StrikePhase.aboutToAttemptStrike, for: meRef, attempting: testRef)
-        game.naiveDispatch(TestHookType.beforeRoll, for: meRef, attempting: testRef)
+        await game.naiveDispatch(
+            StrikePhase.aboutToAttemptStrike, for: meRef, attempting: testRef, in: gameSession)
+        await game.naiveDispatch(
+            TestHookType.beforeRoll, for: meRef, attempting: testRef, in: gameSession)
         // TODO We're ignoring advantage, opportunity, etc. and just rolling
         let attackRoll = Int.random(in: 1...20, using: &game.rng)
         if attackRoll == 1 {
@@ -237,32 +270,36 @@ public struct Strike: CombatAction {
             }
         let damageMinAmount = damageDice.reduce(0, { sum, die in sum + die.1 })
         let damageFullAmount = damageMinAmount + weaponModifier
-        game.naiveDispatch(TestHookType.beforeResolution, for: meRef, attempting: testRef)
-        game.broadcaster.tell(
+        await game.naiveDispatch(
+            TestHookType.beforeResolution, for: meRef, attempting: testRef, in: gameSession)
+        await game.broadcaster.tell(
             "You rolled a \(attackRoll) (\(attackRoll)+\(weaponModifier)) with \(damageFullAmount) (\(damageMinAmount)+\(weaponModifier)) in damage dice",
             to: character.primaryKey)
         let success = (attackNumber >= test.difficulty)
-        game.broadcaster.tell(
+        await game.broadcaster.tell(
             "The test to beat is \(test.difficulty) (\(targetCharacter.name)'s physical defense: \(targetPhysicalDefense))",
             to: character.primaryKey)
         test.success = success
         let damageToDo: Int
         let verbOfStrike: String
         if success {
-            game.broadcaster.tell(
+            await game.broadcaster.tell(
                 "You passed the test and hit!", to: character.primaryKey)
-            game.naiveDispatch(TestHookType.afterSuccess, for: meRef, attempting: testRef)
+            await game.naiveDispatch(
+                TestHookType.afterSuccess, for: meRef, attempting: testRef, in: gameSession)
             damageToDo = damageFullAmount
             verbOfStrike = "strikes"
         } else {
-            game.broadcaster.tell("You failed the attack test.", to: character.primaryKey)
-            game.naiveDispatch(TestHookType.afterFailure, for: meRef, attempting: testRef)
+            await game.broadcaster.tell("You failed the attack test.", to: character.primaryKey)
+            await game.naiveDispatch(
+                TestHookType.afterFailure, for: meRef, attempting: testRef, in: gameSession)
             if character.focus.value >= 1 {
-                game.broadcaster.tell(
+                await game.broadcaster.tell(
                     "You can graze for \(damageMinAmount). Focus: \(character.focus.value)/\(character.focus.maxValue)",
                     to: character.primaryKey)
                 let shouldGraze =
-                    character.brain.decide(options: GrazeChoice.allCases) == .shouldGraze
+                    await character.brain.decide(options: GrazeChoice.allCases, in: game.snapshot)
+                    == .shouldGraze
                 if shouldGraze {
                     myCharacter.focus.value -= 1
                     damageToDo = damageMinAmount
@@ -276,10 +313,12 @@ public struct Strike: CombatAction {
                 verbOfStrike = "misses"
             }
         }
-        game.naiveDispatch(StrikePhase.aboutToDealDamage, for: meRef, attempting: testRef)
+        await game.naiveDispatch(
+            StrikePhase.aboutToDealDamage, for: meRef, attempting: testRef, in: gameSession)
         targetCharacter.takeDamage(Damage(damageToDo, realm: weapon.damageType))
-        game.naiveDispatch(StrikePhase.dealtDamage, for: meRef, attempting: testRef)
-        game.broadcaster.tellAll(
+        await game.naiveDispatch(
+            StrikePhase.dealtDamage, for: meRef, attempting: testRef, in: gameSession)
+        await game.broadcaster.tellAll(
             "\(character.name) \(verbOfStrike) \(targetCharacter.name) and deals \(damageToDo) \(weapon.damageType.rawValue) damage."
         )
         // TODO Give lots of opportunities to resolve complications and opportunities, but those should all be spent by this point.
@@ -292,9 +331,9 @@ public enum StrikePhase: HookTriggerForSomeRpgCharacterAndTest {
     case dealtDamage
 }
 
-public enum GrazeChoice: Int, CaseIterable {
+public enum GrazeChoice: Int, CaseIterable, Sendable {
     case shouldGraze = 0
     case shouldNotGraze = 1
 }
 
-nonisolated(unsafe) public let allCombatActions: [CombatAction.Type] = [Strike.self, Move.self]
+public let allCombatActions: [CombatAction.Type] = [Strike.self, Move.self]

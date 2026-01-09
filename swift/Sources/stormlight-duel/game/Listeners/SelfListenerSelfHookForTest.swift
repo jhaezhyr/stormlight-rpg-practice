@@ -21,25 +21,25 @@ extension NonLeafGenericListenerHolder where Self: SelfListenerSelfHookForTestHo
     }
 }
 
-public protocol SelfListenerSelfHookForTestProtocol {
+public protocol SelfListenerSelfHookForTestProtocol: Sendable {
     associatedtype Trigger: HookTriggerForSomeRpgCharacterAndTest
     associatedtype C: RpgCharacter
-    associatedtype Test: RpgTestProtocol
+    associatedtype Test: RpgTest
     var id: ListenerId { get }
     var hook: Trigger { get }
     var action: ActionForRpgCharacterAndTest<C, Test> { get }
 }
 extension SelfListenerSelfHookForTestProtocol {
     func typeErasedAction(
-        _ game: Game, _ character: any RpgCharacter, _ test: any RpgTestProtocol
-    ) {
+        _ gameSession: isolated GameSession, _ character: any RpgCharacter, _ test: any RpgTest
+    ) async {
         if let wrappedCharacter = character as? AnyRpgCharacter {
-            self.typeErasedAction(game, wrappedCharacter.core, test)
+            await self.typeErasedAction(gameSession, wrappedCharacter.core, test)
             return
         }
         // If we get here, we don't have a wrapped character.
         if let wrappedTest = test as? AnyRpgTest {
-            self.typeErasedAction(game, character, wrappedTest.core)
+            await self.typeErasedAction(gameSession, character, wrappedTest.core)
             return
         }
         // If we get here, we don't have a wrapped test.
@@ -66,14 +66,16 @@ extension SelfListenerSelfHookForTestProtocol {
             testToUse = typeSafeTest
         }
 
-        self.action(game, characterToUse, testToUse)
+        await self.action(gameSession, characterToUse, testToUse)
     }
 }
 
 public struct SelfListenerSelfHookForTest<
-    Trigger: HookTriggerForSomeRpgCharacterAndTest, Character: RpgCharacter, Test: RpgTestProtocol
+    Trigger: HookTriggerForSomeRpgCharacterAndTest,
+    Character: RpgCharacter,
+    Test: RpgTest
 >: SelfListenerSelfHookForTestProtocol {
-    public var id: ListenerId = nextListenerId()
+    public var id: ListenerId
     public var hook: Trigger
     public var action: ActionForRpgCharacterAndTest<Character, Test>
     func asListener(
@@ -83,34 +85,38 @@ public struct SelfListenerSelfHookForTest<
     > {
         let specificHook = HookTriggerForSpecificRpgCharacterAndTest(
             hook, for: characterRef)
-        return Listener(id: id, hook: specificHook) { game in
-            guard let character = game.character(at: characterRef, as: Character.self) else {
+        return Listener(id: id, hook: specificHook) { gameSession in
+            guard let character = gameSession.game.character(at: characterRef, as: Character.self)
+            else {
                 return
             }
-            guard let test = game.test(at: testRef, as: Test.self) else {
+            guard let test = gameSession.game.test(at: testRef, as: Test.self) else {
                 return
             }
-            action(game, character, test)
+            await action(gameSession, character, test)
         }
     }
 }
 
-func selfListen<
-    Trigger: HookTriggerForSomeRpgCharacterAndTest,
-    Character: RpgCharacter,
-    Test: RpgTestProtocol
->(
-    toMyTests hook: Trigger,
-    as _: Character.Type,
-    testType _: Test.Type,
-    action: @escaping ActionForRpgCharacterAndTest<Character, Test>
-) -> SelfListenerSelfHookForTest<Trigger, Character, Test> {
-    SelfListenerSelfHookForTest(hook: hook, action: action)
+extension GameSession {
+    func selfListen<
+        Trigger: HookTriggerForSomeRpgCharacterAndTest,
+        Character: RpgCharacter,
+        Test: RpgTest
+    >(
+        toMyTests hook: Trigger,
+        as _: Character.Type,
+        testType _: Test.Type,
+        action: @escaping ActionForRpgCharacterAndTest<Character, Test>
+    ) -> SelfListenerSelfHookForTest<Trigger, Character, Test> {
+        SelfListenerSelfHookForTest(id: self.nextId(), hook: hook, action: action)
+    }
 }
 
-public typealias ActionForRpgCharacterAndTest<Character: RpgCharacter, Test: RpgTestProtocol> = (
-    _ game: Game, _ character: Character, _ test: Test
-) -> Void
+public typealias ActionForRpgCharacterAndTest<Character: RpgCharacter, Test: RpgTest> =
+    @Sendable (
+        _ game: isolated GameSession, _ character: Character, _ test: Test
+    ) async -> Void
 
 public protocol HookTriggerForSomeRpgCharacterAndTest: Hashable, Sendable {}
 
