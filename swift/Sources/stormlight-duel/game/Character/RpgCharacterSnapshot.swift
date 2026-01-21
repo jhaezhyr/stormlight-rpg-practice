@@ -1,6 +1,6 @@
 public protocol RpgCharacterSnapshot: RpgCharacterSharedProtocol, Sendable {
     var conditions: KeyedSet<AnyConditionSnapshot> { get }
-    var equipment: KeyedSet<ReadyableItemSnapshot> { get }
+    var equipment: KeyedSet<Readyable<AnyItemSnapshot>> { get }
 }
 
 public struct AnyRpgCharacterSnapshot: RpgCharacterSnapshot {
@@ -23,7 +23,7 @@ public struct AnyRpgCharacterSnapshot: RpgCharacterSnapshot {
     public var conditions: KeyedSet<AnyConditionSnapshot> { core.conditions }
     public var size: CharacterSize { core.size }
     public var combatState: RpgCharacterCombatState? { core.combatState }
-    public var equipment: KeyedSet<ReadyableItemSnapshot> { core.equipment }
+    public var equipment: KeyedSet<Readyable<AnyItemSnapshot>> { core.equipment }
     public var core: any RpgCharacterSnapshot
     private init(notUnwrapping characterSnapshot: any RpgCharacterSnapshot) {
         self.core = characterSnapshot

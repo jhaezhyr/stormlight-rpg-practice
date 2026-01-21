@@ -31,3 +31,21 @@ public protocol Item: ItemSharedProtocol {
 extension Item where Self: ItemSnapshot {
     public var snapshot: any ItemSnapshot { self }
 }
+
+public struct AnyItem: Item {
+    public let core: any Item
+
+    public var name: String { core.name }
+    public var price: Money? { core.price }
+    public var weight: Weight { core.weight }
+
+    public var snapshot: any ItemSnapshot { core.snapshot }
+
+    init(_ core: any Item) {
+        if let wrappedCore = core as? AnyItem {
+            self.core = wrappedCore.core
+        } else {
+            self.core = core
+        }
+    }
+}

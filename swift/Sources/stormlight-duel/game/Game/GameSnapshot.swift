@@ -1,5 +1,5 @@
 /// The immutable, sendable version of Game.
-public struct GameSnapshot: Sendable {
+public struct GameSnapshot: GameSharedProtocol, Sendable {
     public var characters: KeyedSet<AnyRpgCharacterSnapshot>
     public var tests: KeyedSet<AnyRpgTestSnapshot>
 }

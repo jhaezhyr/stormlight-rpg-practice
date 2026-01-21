@@ -14,7 +14,7 @@ public struct MyCLI {
         let player1 = PlayerRpgCharacter(
             name: "Kal",
             expertises: [],
-            equipment: [await ReadyableItem(basicWeapons[.axe]!(session), isReady: true)],
+            equipment: [await Readyable(basicWeapons[.axe]!(session), isReady: true)],
             attributes: .init { _ in 2 },
             ranksInCoreSkills: .init { _ in 0 },
             ranksInOtherSkills: [:],
@@ -30,7 +30,7 @@ public struct MyCLI {
         let player2 = PlayerRpgCharacter(
             name: "Shallan",
             expertises: [],
-            equipment: [await ReadyableItem(basicWeapons[.knife]!(session), isReady: true)],
+            equipment: [await Readyable(basicWeapons[.knife]!(session), isReady: true)],
             attributes: .init { _ in 2 },
             ranksInCoreSkills: .init { _ in 0 },
             ranksInOtherSkills: [:],

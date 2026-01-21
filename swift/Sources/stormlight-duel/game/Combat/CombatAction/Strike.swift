@@ -14,10 +14,11 @@ public struct Strike: CombatAction {
         guard let character = gameSnapshot.characters[characterRef] else {
             fatalError("Bad character reference \(characterRef)")
         }
-        guard
-            let readyableItem = character.equipment[weaponToStrikeWith],
-            readyableItem.core as? any Weapon != nil
+        guard let readyableItem = character.equipment[weaponToStrikeWith]
         else {
+            return false
+        }
+        guard let weapon = readyableItem.core.core as? any WeaponSnapshot else {
             return false
         }
         guard
@@ -26,8 +27,11 @@ public struct Strike: CombatAction {
         else {
             return false
         }
+        if !readyableItem.isReady {
+            return false
+        }
         // TODO check range
-        return readyableItem.isReady
+        return true
     }
 
     public func action(by characterRef: RpgCharacterRef, in gameSession: isolated GameSession) async

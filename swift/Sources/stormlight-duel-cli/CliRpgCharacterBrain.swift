@@ -231,7 +231,9 @@ extension Strike: CliArgsConvertibleType {
                     return weaponToStrikeWith
                 } else {
                     let equipment = contextCharacter.equipment
-                    let viableWeapons = equipment.filter { $0.isReady && $0.core is any Weapon }
+                    let viableWeapons = equipment.filter {
+                        $0.isReady && $0.core.core is any WeaponSnapshot
+                    }
                     if viableWeapons.count != 1 {
                         throw CliParseError(
                             "It seems \(contextCharacter.name) has \(viableWeapons.count) ready weapons: \(viableWeapons)"

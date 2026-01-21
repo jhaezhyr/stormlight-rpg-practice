@@ -1,4 +1,4 @@
-public protocol RpgTestSharedProtocol: Keyed {
+public protocol RpgTestSharedProtocol: Keyed where Key == RpgTestRef {
     var id: Int { get }
 
     var skill: SkillName { get }

@@ -1,12 +1,15 @@
-public protocol ConditionSharedProtocol {
+public protocol ConditionSharedProtocol: Keyed where Key == Int {
     var id: Int { get }
+}
+extension ConditionSharedProtocol {
+    public var primaryKey: Int { id }
 }
 
 public protocol Condition: ConditionSharedProtocol {
     var snapshot: any ConditionSnapshot { get }
 }
 extension Condition where Self: ConditionSnapshot {
-    public var snapshot: ConditionSnapshot { self }
+    public var snapshot: any ConditionSnapshot { self }
 }
 
 /// Cannot hold one itself recursively. `AnyCondition(AnyCondition(someCondition)).core === someCondition`
@@ -24,7 +27,4 @@ public struct AnyCondition: Condition {
             self.init(notUnwrapping: character)
         }
     }
-}
-extension AnyCondition: Keyed {
-    public var primaryKey: Int { id }
 }
