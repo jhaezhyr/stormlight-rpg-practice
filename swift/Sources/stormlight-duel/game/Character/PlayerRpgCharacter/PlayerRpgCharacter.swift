@@ -32,7 +32,7 @@ public class PlayerRpgCharacter: PlayerRpgCharacterProtocol {
     public var size: CharacterSize { .normal }
 
     public var expertises: Set<Expertise>
-    public var equipment: KeyedSet<ReadyableItem>
+    public var equipment: KeyedSet<Readyable<AnyItem>>
     public var money: Money = 0
     public var paths: [PathName: PathProgress] = [:]
 
@@ -79,7 +79,7 @@ public class PlayerRpgCharacter: PlayerRpgCharacterProtocol {
     public init(
         name: String,
         expertises: Set<Expertise>,
-        equipment: KeyedSet<ReadyableItem>,
+        equipment: KeyedSet<Readyable<AnyItem>>,
         money: Money = 0,
         paths: [PathName: PathProgress] = [:],
         level: Int = 1,

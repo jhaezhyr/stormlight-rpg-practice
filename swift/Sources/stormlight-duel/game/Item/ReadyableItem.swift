@@ -1,28 +1,25 @@
-public struct ReadyableItem {
-    public var core: any Item
+public struct Readyable<T: ItemSharedProtocol> {
+    public var core: T
     public var isReady: Bool
+    public init(_ core: T, isReady: Bool) {
+        self.core = core
+        self.isReady = isReady
+    }
+}
+extension Readyable: Keyed {
+    public var primaryKey: T.Key {
+        core.primaryKey
+    }
+}
+extension Readyable where T: Item {
+    public var snapshot: Readyable<AnyItemSnapshot> {
+        .init(.init(core.snapshot), isReady: isReady)
+    }
+}
+extension Readyable where T == AnyItem {
     public init(_ core: any Item, isReady: Bool) {
-        self.core = core
-        self.isReady = isReady
-    }
-    public var snapshot: ReadyableItemSnapshot { .init(core.snapshot, isReady: isReady) }
-}
-extension ReadyableItem: Keyed {
-    public var primaryKey: ItemRef {
-        core.primaryKey
+        self.init(AnyItem(core), isReady: isReady)
     }
 }
-
-public struct ReadyableItemSnapshot: Sendable {
-    public var core: any ItemSnapshot
-    public var isReady: Bool
-    public init(_ core: any ItemSnapshot, isReady: Bool) {
-        self.core = core
-        self.isReady = isReady
-    }
-}
-extension ReadyableItemSnapshot: Keyed {
-    public var primaryKey: ItemRef {
-        core.primaryKey
-    }
+extension Readyable: Sendable where T: Sendable {
 }

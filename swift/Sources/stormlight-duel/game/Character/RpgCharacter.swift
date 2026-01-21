@@ -10,7 +10,7 @@ public struct RpgCharacterRef: Sendable, Hashable {
     }
 }
 
-public protocol RpgCharacterSharedProtocol: Keyed {
+public protocol RpgCharacterSharedProtocol: Keyed where Key == RpgCharacterRef {
     var name: String { get }
     var attributes: CompleteDictionary<AttributeName, Int> { get }
     var ranksInCoreSkills: CompleteDictionary<CoreSkillName, Int> { get }
@@ -28,6 +28,11 @@ public protocol RpgCharacterSharedProtocol: Keyed {
     var deflect: Int { get }
 
     var combatState: RpgCharacterCombatState? { get }
+
+    associatedtype ConditionType: ConditionSharedProtocol
+    var conditions: KeyedSet<ConditionType> { get }
+    associatedtype ItemType: ItemSharedProtocol
+    var equipment: KeyedSet<Readyable<ItemType>> { get }
 }
 extension RpgCharacterSharedProtocol {
     public var primaryKey: RpgCharacterRef {
@@ -55,7 +60,7 @@ public protocol RpgCharacter: AnyObject,
     var focus: Resource { get set }
     var investiture: Resource { get set }
     var conditions: KeyedSet<AnyCondition> { get set }
-    var equipment: KeyedSet<ReadyableItem> { get set }
+    var equipment: KeyedSet<Readyable<AnyItem>> { get set }
 
     var combatState: RpgCharacterCombatState? { get set }
 }
@@ -83,10 +88,9 @@ extension RpgCharacter {
                     Realm.allCases.map { realm in
                         (
                             realm,
-                            AttributeName.realmToAttributes.reduce(10) { (partialDefense, x) in
-                                partialDefense
-                                    + x.1.map { attribute -> Int in self.attributes[attribute] }
-                                    .reduce(0, +)
+                            AttributeName.realmToAttributes[realm].reduce(10) {
+                                (partialDefense, attributeName) in
+                                partialDefense + self.attributes[attributeName]
                             }
                         )
                     }
@@ -173,7 +177,7 @@ public class AnyRpgCharacter: RpgCharacter {
         set { core.combatState = newValue }
     }
     public var brain: any RpgCharacterBrain { core.brain }
-    public var equipment: KeyedSet<ReadyableItem> {
+    public var equipment: KeyedSet<Readyable<AnyItem>> {
         get { core.equipment }
         set { core.equipment = newValue }
     }

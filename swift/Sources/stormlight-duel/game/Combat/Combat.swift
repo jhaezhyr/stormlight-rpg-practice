@@ -41,13 +41,16 @@ public struct Combat: Scene {
         let game = gameSession.game
         // Let everyone start the combat.
         for ref in game.characters.keys {
-            let turnSpeed = await game.characters[ref]!.brain.decide(
-                options: TurnSpeed.allCases, in: game.snapshot)
             game.characters[ref]!.combatState = RpgCharacterCombatState(
-                turnSpeed: turnSpeed, reactionsRemaining: 1)
+                turnSpeed: .fast, reactionsRemaining: 1)
         }
         rounds: while true {
             // Give each character in this speed a turn
+            for ref in game.characters.keys {
+                let turnSpeed = await game.characters[ref]!.brain.decide(
+                    options: TurnSpeed.allCases, in: game.snapshot)
+                game.characters[ref]!.combatState!.turnSpeed = turnSpeed
+            }
             speeds: for speed in TurnSpeed.allCases {
                 // TODO allow characters to lower their speed mid-round somehow
                 charactersThisTurn: for character in game.characters.filter({ c in
@@ -56,6 +59,7 @@ public struct Combat: Scene {
                     character.combatState!.reactionsRemaining = 1
                     character.combatState!.actionsRemaining =
                         character.combatState!.turnSpeed.actionsPerTurn
+                    character.combatState!.weaponsUsed = []
                     await game.broadcaster.tellAll("\nIt's \(character.name)'s turn")
                     await game.naiveDispatch(
                         CombatPhase.startOfTurn, for: RpgCharacterRef(of: character),
@@ -69,7 +73,7 @@ public struct Combat: Scene {
                             await game.broadcaster.tell(
                                 "\(someCharacter.primaryKey == character.primaryKey ? "Your" : "\(someCharacter.name)'s") stats:\n"
                                     + "  Health: \(someCharacter.health.value)/\(character.health.maxValue)\n"
-                                    + "  Focus: \(someCharacter.focus.value)/\(character.focus.value)\n"
+                                    + "  Focus: \(someCharacter.focus.value)/\(character.focus.maxValue)\n"
                                     + "  Conditions: \(someCharacter.conditions.map { "\($0.core)" }.joined(separator: ","))",
                                 to: character.primaryKey)
                         }
@@ -91,6 +95,7 @@ public struct Combat: Scene {
                     }
                     await game.naiveDispatch(
                         CombatPhase.endOfTurn, for: character.primaryKey, in: gameSession)
+                    character.combatState!.weaponsUsed = []
                 }
             }
         }

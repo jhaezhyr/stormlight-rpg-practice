@@ -14,10 +14,11 @@ public struct Strike: CombatAction {
         guard let character = gameSnapshot.characters[characterRef] else {
             fatalError("Bad character reference \(characterRef)")
         }
-        guard
-            let readyableItem = character.equipment[weaponToStrikeWith],
-            readyableItem.core as? any Weapon != nil
+        guard let readyableItem = character.equipment[weaponToStrikeWith]
         else {
+            return false
+        }
+        guard let weapon = readyableItem.core.core as? any WeaponSnapshot else {
             return false
         }
         guard
@@ -26,8 +27,17 @@ public struct Strike: CombatAction {
         else {
             return false
         }
+        if !readyableItem.isReady {
+            return false
+        }
+        if character.combatState!.weaponsUsed.contains(weapon.weaponName) {
+            return false
+        }
+        if !canAffordAction(by: characterRef, in: gameSnapshot) {
+            return false
+        }
         // TODO check range
-        return readyableItem.isReady
+        return true
     }
 
     public func action(by characterRef: RpgCharacterRef, in gameSession: isolated GameSession) async
@@ -38,7 +48,7 @@ public struct Strike: CombatAction {
         }
         guard
             let readyableItem = character.equipment[weaponToStrikeWith],
-            let weapon = readyableItem.core as? any Weapon
+            let weapon = readyableItem.core.core as? any WeaponSnapshot
         else {
             return
         }
@@ -130,6 +140,7 @@ public struct Strike: CombatAction {
         await game.broadcaster.tellAll(
             "\(character.name) \(verbOfStrike) \(targetCharacter.name) and deals \(damageToDo) \(weapon.damageType.rawValue) damage."
         )
+        character.combatState?.weaponsUsed.insert(weapon.weaponName)
         // TODO Give lots of opportunities to resolve complications and opportunities, but those should all be spent by this point.
     }
 }

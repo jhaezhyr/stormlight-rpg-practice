@@ -14,7 +14,7 @@ public struct MyCLI {
         let player1 = PlayerRpgCharacter(
             name: "Kal",
             expertises: [],
-            equipment: [await ReadyableItem(basicWeapons[.axe]!(session), isReady: true)],
+            equipment: [await Readyable(basicWeapons[.axe]!(session), isReady: true)],
             attributes: .init { _ in 2 },
             ranksInCoreSkills: .init { _ in 0 },
             ranksInOtherSkills: [:],
@@ -24,13 +24,12 @@ public struct MyCLI {
             conditions: [],
             brain: CliRpgCharacterBrain(
                 broadcaster: broadcaster,
-                characterRef: RpgCharacterRef(name: "Kal")
-            )
+                characterRef: RpgCharacterRef(name: "Kal"))
         )
         let player2 = PlayerRpgCharacter(
             name: "Shallan",
             expertises: [],
-            equipment: [await ReadyableItem(basicWeapons[.knife]!(session), isReady: true)],
+            equipment: [await Readyable(basicWeapons[.knife]!(session), isReady: true)],
             attributes: .init { _ in 2 },
             ranksInCoreSkills: .init { _ in 0 },
             ranksInOtherSkills: [:],
@@ -38,10 +37,7 @@ public struct MyCLI {
             focus: .init(maxValue: 4),
             investiture: .init(maxValue: 0),
             conditions: [],
-            brain: CliRpgCharacterBrain(
-                broadcaster: broadcaster,
-                characterRef: RpgCharacterRef(name: "Shallan")
-            )
+            brain: Level1CpuBrain(for: RpgCharacterRef(name: "Shallan"))
         )
         await session.provideGame(Game(characters: [player1, player2], broadcaster: broadcaster))
 

@@ -1,3 +1,10 @@
+public protocol GameSharedProtocol {
+    associatedtype CharacterType: RpgCharacterSharedProtocol
+    associatedtype TestType: RpgTestSharedProtocol
+    var characters: KeyedSet<CharacterType> { get }
+    var tests: KeyedSet<TestType> { get }
+}
+
 public class Game {
     public var characters: KeyedSet<AnyRpgCharacter>
     public var tests: KeyedSet<AnyRpgTest> = []
@@ -9,6 +16,10 @@ public class Game {
         self.characters = KeyedSet(characters.map(AnyRpgCharacter.init))
         self.broadcaster = broadcaster
     }
+}
+
+extension GameSharedProtocol {
+
 }
 
 extension Game {

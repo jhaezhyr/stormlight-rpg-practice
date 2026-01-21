@@ -1,5 +1,5 @@
 /// An item used in combat to do the Strike action.
-public protocol Weapon: Item {
+public protocol Weapon: Item, ItemSnapshot {
     var type: WeaponType { get }
     var weaponName: WeaponName { get }
     var weaponsSkill: WeaponsSkill { get }
@@ -8,6 +8,7 @@ public protocol Weapon: Item {
     var damageType: DamageType { get }
     var traits: [(trait: any WeaponTrait, condition: TraitCondition)] { get }
 }
+public typealias WeaponSnapshot = Weapon
 
 public enum WeaponRange: Sendable, Hashable {
     case melee(extraReach: Distance? = nil)

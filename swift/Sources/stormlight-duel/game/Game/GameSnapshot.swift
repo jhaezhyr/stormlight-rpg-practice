@@ -1,5 +1,5 @@
 /// The immutable, sendable version of Game.
-public struct GameSnapshot: Sendable {
+public struct GameSnapshot: GameSharedProtocol, Sendable {
     public var characters: KeyedSet<AnyRpgCharacterSnapshot>
     public var tests: KeyedSet<AnyRpgTestSnapshot>
 }
@@ -10,5 +10,11 @@ extension Game {
             characters: .init(self.characters.map { .init($0.snapshot) }),
             tests: .init(self.tests.map { .init($0.snapshot) })
         )
+    }
+}
+
+extension GameSharedProtocol {
+    func enemies(of x: RpgCharacterRef) -> [RpgCharacterRef] {
+        characters.keys.filter { $0 != x }
     }
 }
