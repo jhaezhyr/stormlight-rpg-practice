@@ -1,0 +1,20 @@
+public struct PlayerRpgCharacterSnapshot: RpgCharacterSnapshot {
+    public var name: String
+    public var attributes: CompleteDictionary<AttributeName, Int>
+    public var ranksInCoreSkills: CompleteDictionary<CoreSkillName, Int>
+    public var modifiersForCoreSkills: CompleteDictionary<CoreSkillName, Int>
+    public var ranksInOtherSkills: [SkillName: Int]
+    public var modifiersForOtherSkills: [SkillName: Int]
+    public var defenses: CompleteDictionary<Realm, Int>
+    public var health: Resource
+    public var focus: Resource
+    public var investiture: Resource
+    public var recoveryDie: NumberDie
+    public var sensesRange: Distance
+    public var conditions: KeyedSet<AnyConditionSnapshot>
+    public var movementRate: Distance
+    public var size: CharacterSize
+    public var deflect: Int
+    public var equipment: KeyedSet<ReadyableItemSnapshot>
+    public var combatState: RpgCharacterCombatState?
+}

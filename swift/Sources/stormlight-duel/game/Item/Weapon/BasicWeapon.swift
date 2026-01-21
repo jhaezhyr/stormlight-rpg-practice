@@ -1,0 +1,37 @@
+public struct BasicWeapon: Weapon, Sendable, ItemSnapshot {
+    public var weaponName: WeaponName
+    public var type: WeaponType
+    public var weaponsSkill: WeaponsSkill
+    public var range: WeaponRange
+    public var damage: RandomDistribution
+    public var damageType: DamageType
+    public var traits: [(trait: any WeaponTrait, condition: TraitCondition)]
+    public var price: Money?
+    public var weight: Weight
+    public var name: String
+
+    init(
+        weaponName: WeaponName,
+        type: WeaponType,
+        weaponsSkill: WeaponsSkill,
+        range: WeaponRange,
+        damage: RandomDistribution,
+        damageType: DamageType,
+        traits: [(trait: any WeaponTrait, condition: TraitCondition)],
+        price: Money?,
+        weight: Weight,
+        in gameSession: isolated GameSession
+    ) {
+        self.weaponName = weaponName
+        self.type = type
+        self.weaponsSkill = weaponsSkill
+        self.range = range
+        self.damage = damage
+        self.damageType = damageType
+        self.traits = traits
+        self.price = price
+        self.weight = weight
+        let id = gameSession.nextId()
+        name = "\(self.weaponName) \(id)"
+    }
+}
