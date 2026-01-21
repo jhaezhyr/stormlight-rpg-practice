@@ -140,6 +140,7 @@ public struct Strike: CombatAction {
         await game.broadcaster.tellAll(
             "\(character.name) \(verbOfStrike) \(targetCharacter.name) and deals \(damageToDo) \(weapon.damageType.rawValue) damage."
         )
+        character.combatState?.weaponsUsed.insert(weapon.weaponName)
         // TODO Give lots of opportunities to resolve complications and opportunities, but those should all be spent by this point.
     }
 }
