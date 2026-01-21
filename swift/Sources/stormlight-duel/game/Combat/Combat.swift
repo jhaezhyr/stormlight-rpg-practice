@@ -41,13 +41,16 @@ public struct Combat: Scene {
         let game = gameSession.game
         // Let everyone start the combat.
         for ref in game.characters.keys {
-            let turnSpeed = await game.characters[ref]!.brain.decide(
-                options: TurnSpeed.allCases, in: game.snapshot)
             game.characters[ref]!.combatState = RpgCharacterCombatState(
-                turnSpeed: turnSpeed, reactionsRemaining: 1)
+                turnSpeed: .fast, reactionsRemaining: 1)
         }
         rounds: while true {
             // Give each character in this speed a turn
+            for ref in game.characters.keys {
+                let turnSpeed = await game.characters[ref]!.brain.decide(
+                    options: TurnSpeed.allCases, in: game.snapshot)
+                game.characters[ref]!.combatState!.turnSpeed = turnSpeed
+            }
             speeds: for speed in TurnSpeed.allCases {
                 // TODO allow characters to lower their speed mid-round somehow
                 charactersThisTurn: for character in game.characters.filter({ c in
