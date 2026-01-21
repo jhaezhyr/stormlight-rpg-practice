@@ -30,6 +30,12 @@ public struct Strike: CombatAction {
         if !readyableItem.isReady {
             return false
         }
+        if character.combatState!.weaponsUsed.contains(weapon.weaponName) {
+            return false
+        }
+        if !canAffordAction(by: characterRef, in: gameSnapshot) {
+            return false
+        }
         // TODO check range
         return true
     }

@@ -56,6 +56,7 @@ public struct Combat: Scene {
                     character.combatState!.reactionsRemaining = 1
                     character.combatState!.actionsRemaining =
                         character.combatState!.turnSpeed.actionsPerTurn
+                    character.combatState!.weaponsUsed = []
                     await game.broadcaster.tellAll("\nIt's \(character.name)'s turn")
                     await game.naiveDispatch(
                         CombatPhase.startOfTurn, for: RpgCharacterRef(of: character),
@@ -91,6 +92,7 @@ public struct Combat: Scene {
                     }
                     await game.naiveDispatch(
                         CombatPhase.endOfTurn, for: character.primaryKey, in: gameSession)
+                    character.combatState!.weaponsUsed = []
                 }
             }
         }
