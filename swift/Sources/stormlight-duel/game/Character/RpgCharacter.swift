@@ -88,10 +88,9 @@ extension RpgCharacter {
                     Realm.allCases.map { realm in
                         (
                             realm,
-                            AttributeName.realmToAttributes.reduce(10) { (partialDefense, x) in
-                                partialDefense
-                                    + x.1.map { attribute -> Int in self.attributes[attribute] }
-                                    .reduce(0, +)
+                            AttributeName.realmToAttributes[realm].reduce(10) {
+                                (partialDefense, attributeName) in
+                                partialDefense + self.attributes[attributeName]
                             }
                         )
                     }
