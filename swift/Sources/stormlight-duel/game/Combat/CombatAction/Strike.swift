@@ -48,7 +48,7 @@ public struct Strike: CombatAction {
         }
         guard
             let readyableItem = character.equipment[weaponToStrikeWith],
-            let weapon = readyableItem.core as? any Weapon
+            let weapon = readyableItem.core.core as? any WeaponSnapshot
         else {
             return
         }
