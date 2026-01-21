@@ -71,7 +71,7 @@ public enum CoreSkillName: Hashable, CaseIterable, Sendable {
     }()
 }
 
-public enum SurgeName: Hashable, CaseIterable {
+public enum SurgeName: Hashable, CaseIterable, Sendable {
     case division
     case abrasion
     case cohesion
@@ -84,7 +84,7 @@ public enum SurgeName: Hashable, CaseIterable {
     case transformation
 }
 
-public enum SkillName: Hashable {
+public enum SkillName: Hashable, Sendable {
     case core(CoreSkillName)
     case surge(SurgeName)
 }
@@ -119,7 +119,7 @@ public enum PathName: CaseIterable {
     case windrunner
 }
 
-public enum CharacterSize {
+public enum CharacterSize: Sendable {
     case tiny, small, normal, large, huge
 }
 
@@ -137,49 +137,59 @@ public struct RpgCharacterRef: Sendable, Hashable {
 
 public struct PathProgress {}
 
-public protocol RpgCharacter: AnyObject, AllTheListenersHolder, NonLeafGenericListenerHolder, Keyed
-{
+public protocol RpgCharacterSharedProtocol: Keyed {
     var name: String { get }
-
-    var game: Game! { get set }
-
     var attributes: CompleteDictionary<AttributeName, Int> { get }
     var ranksInCoreSkills: CompleteDictionary<CoreSkillName, Int> { get }
     var modifiersForCoreSkills: CompleteDictionary<CoreSkillName, Int> { get }  // Derived
     var ranksInOtherSkills: [SkillName: Int] { get }
     var modifiersForOtherSkills: [SkillName: Int] { get }
     var defenses: CompleteDictionary<Realm, Int> { get }
-    var health: Resource { get set }
-    var focus: Resource { get set }
-    var investiture: Resource { get set }
+    var health: Resource { get }
+    var focus: Resource { get }
+    var investiture: Resource { get }
     var recoveryDie: NumberDie { get }
     var sensesRange: Distance { get }
-    var conditions: KeyedSet<AnyCondition> { get set }
     var movementRate: Distance { get }
     var size: CharacterSize { get }
     var deflect: Int { get }
 
-    var brain: any RpgCharacterBrain { get }
+    var combatState: RpgCharacterCombatState? { get }
+}
+extension RpgCharacterSharedProtocol {
+    public var primaryKey: RpgCharacterRef {
+        RpgCharacterRef(name: name)
+    }
+}
+extension RpgCharacterSharedProtocol {
+    var modifiers: [SkillName: Int] {
+        [SkillName: Int].init(
+            uniqueKeysWithValues: modifiersForCoreSkills.map { (cs, v) in (SkillName.core(cs), v) }
+                + modifiersForOtherSkills.map { (os, v) in (os, v) })
+    }
+}
 
+public protocol RpgCharacter: AnyObject, SendableMetatype, RpgCharacterSharedProtocol,
+    AllTheListenersHolder,
+    NonLeafGenericListenerHolder, Keyed
+{
+    var game: Game! { get set }
+    var brain: any RpgCharacterBrain { get }
+    var snapshot: any RpgCharacterSnapshot { get }
+
+    var health: Resource { get set }
+    var focus: Resource { get set }
+    var investiture: Resource { get set }
+    var conditions: KeyedSet<AnyCondition> { get set }
     var equipment: KeyedSet<ReadyableItem> { get set }
 
     var combatState: RpgCharacterCombatState? { get set }
 }
 
 extension RpgCharacter {
-    public var primaryKey: RpgCharacterRef {
-        RpgCharacterRef(name: name)
-    }
-
     public var childHolders: [Any] {
         conditions.map { $0 as Any } + equipment.map { $0 as Any }
         // TODO something about path progress
-    }
-
-    var modifiers: [SkillName: Int] {
-        [SkillName: Int].init(
-            uniqueKeysWithValues: modifiersForCoreSkills.map { (cs, v) in (SkillName.core(cs), v) }
-                + modifiersForOtherSkills.map { (os, v) in (os, v) })
     }
 }
 
@@ -199,8 +209,23 @@ public struct ReadyableItem {
         self.core = core
         self.isReady = isReady
     }
+    public var snapshot: ReadyableItemSnapshot { .init(core.snapshot, isReady: isReady) }
 }
 extension ReadyableItem: Keyed {
+    public var primaryKey: ItemRef {
+        core.primaryKey
+    }
+}
+
+public struct ReadyableItemSnapshot: Sendable {
+    public var core: any ItemSnapshot
+    public var isReady: Bool
+    public init(_ core: any ItemSnapshot, isReady: Bool) {
+        self.core = core
+        self.isReady = isReady
+    }
+}
+extension ReadyableItemSnapshot: Keyed {
     public var primaryKey: ItemRef {
         core.primaryKey
     }
@@ -235,6 +260,29 @@ public class PlayerRpgCharacter: FullRpgCharacter {
 
     public var combatState: RpgCharacterCombatState?
 
+    public var snapshot: any RpgCharacterSnapshot {
+        FullRpgCharacterSnapshot(
+            name: name,
+            attributes: attributes,
+            ranksInCoreSkills: ranksInCoreSkills,
+            modifiersForCoreSkills: modifiersForCoreSkills,
+            ranksInOtherSkills: ranksInOtherSkills,
+            modifiersForOtherSkills: modifiersForOtherSkills,
+            defenses: defenses,
+            health: health,
+            focus: focus,
+            investiture: investiture,
+            recoveryDie: recoveryDie,
+            sensesRange: sensesRange,
+            conditions: .init(conditions.map { AnyConditionSnapshot($0.snapshot) }),
+            movementRate: movementRate,
+            size: size,
+            deflect: deflect,
+            equipment: .init(equipment.map { $0.snapshot }),
+            combatState: combatState,
+        )
+    }
+
     public init(
         name: String,
         expertises: Set<Expertise>,
@@ -267,9 +315,28 @@ public class PlayerRpgCharacter: FullRpgCharacter {
         self.conditions = conditions
         self.brain = brain
         self.combatState = combatState
-
-        self.brain.character = self
     }
+}
+
+public struct FullRpgCharacterSnapshot: RpgCharacterSnapshot {
+    public var name: String
+    public var attributes: CompleteDictionary<AttributeName, Int>
+    public var ranksInCoreSkills: CompleteDictionary<CoreSkillName, Int>
+    public var modifiersForCoreSkills: CompleteDictionary<CoreSkillName, Int>
+    public var ranksInOtherSkills: [SkillName: Int]
+    public var modifiersForOtherSkills: [SkillName: Int]
+    public var defenses: CompleteDictionary<Realm, Int>
+    public var health: Resource
+    public var focus: Resource
+    public var investiture: Resource
+    public var recoveryDie: NumberDie
+    public var sensesRange: Distance
+    public var conditions: KeyedSet<AnyConditionSnapshot>
+    public var movementRate: Distance
+    public var size: CharacterSize
+    public var deflect: Int
+    public var equipment: KeyedSet<ReadyableItemSnapshot>
+    public var combatState: RpgCharacterCombatState?
 }
 
 extension PlayerRpgCharacter {
@@ -284,7 +351,7 @@ extension PlayerRpgCharacter {
             ranksInOtherSkills: [:], health: .init(value: 12, maxValue: 12),
             focus: .init(value: 4, maxValue: 4),
             investiture: .init(value: 0, maxValue: 0), conditions: [],
-            brain: RpgCharacterDummyBrain())
+            brain: RpgCharacterDummyBrain(characterRef: RpgCharacterRef(name: "Baby son-Daddy")))
     }
 }
 
@@ -380,3 +447,92 @@ extension RpgCharacter {
 // Another option is to make things less declarative and more imperative. I don't want to have to think about self if I don't have to.
 
 // What's the frontend for this thing? I really don't want to be the only person using it, so I think an actual websocket-backed frontend is in order here, with this Swift code running as a backend.
+
+/// Cannot hold one itself recursively. `AnyRpgCharacter(AnyRpgCharacter(someChar)).core === someChar`
+public class AnyRpgCharacter: RpgCharacter {
+    public var name: String { core.name }
+    public var game: Game! {
+        get { core.game }
+        set { core.game = newValue }
+    }
+    public var attributes: CompleteDictionary<AttributeName, Int> { core.attributes }
+    public var ranksInCoreSkills: CompleteDictionary<CoreSkillName, Int> { core.ranksInCoreSkills }
+    public var ranksInOtherSkills: [SkillName: Int] { core.ranksInOtherSkills }
+    public var health: Resource {
+        get { core.health }
+        set { core.health = newValue }
+    }
+    public var focus: Resource {
+        get { core.focus }
+        set { core.focus = newValue }
+    }
+    public var investiture: Resource {
+        get { core.investiture }
+        set { core.investiture = newValue }
+    }
+    public var conditions: KeyedSet<AnyCondition> {
+        get { core.conditions }
+        set { core.conditions = newValue }
+    }
+    public var size: CharacterSize { core.size }
+    public var combatState: RpgCharacterCombatState? {
+        get { core.combatState }
+        set { core.combatState = newValue }
+    }
+    public var brain: any RpgCharacterBrain { core.brain }
+    public var equipment: KeyedSet<ReadyableItem> {
+        get { core.equipment }
+        set { core.equipment = newValue }
+    }
+    public var snapshot: any RpgCharacterSnapshot { core.snapshot }
+    public var core: any RpgCharacter
+    private init(notUnwrapping character: any RpgCharacter) {
+        self.core = character
+    }
+    public convenience init(_ character: any RpgCharacter) {
+        if let character = character as? AnyRpgCharacter {
+            self.init(character)
+        } else {
+            self.init(notUnwrapping: character)
+        }
+    }
+}
+
+public protocol RpgCharacterSnapshot: RpgCharacterSharedProtocol, Sendable {
+    var conditions: KeyedSet<AnyConditionSnapshot> { get }
+    var equipment: KeyedSet<ReadyableItemSnapshot> { get }
+}
+
+public struct AnyRpgCharacterSnapshot: RpgCharacterSnapshot {
+    public var modifiersForCoreSkills: CompleteDictionary<CoreSkillName, Int> {
+        core.modifiersForCoreSkills
+    }
+    public var modifiersForOtherSkills: [SkillName: Int] { core.modifiersForOtherSkills }
+    public var defenses: CompleteDictionary<Realm, Int> { core.defenses }
+    public var recoveryDie: NumberDie { core.recoveryDie }
+    public var sensesRange: Distance { core.sensesRange }
+    public var movementRate: Distance { core.movementRate }
+    public var deflect: Int { core.deflect }
+    public var name: String { core.name }
+    public var attributes: CompleteDictionary<AttributeName, Int> { core.attributes }
+    public var ranksInCoreSkills: CompleteDictionary<CoreSkillName, Int> { core.ranksInCoreSkills }
+    public var ranksInOtherSkills: [SkillName: Int] { core.ranksInOtherSkills }
+    public var health: Resource { core.health }
+    public var focus: Resource { core.focus }
+    public var investiture: Resource { core.investiture }
+    public var conditions: KeyedSet<AnyConditionSnapshot> { core.conditions }
+    public var size: CharacterSize { core.size }
+    public var combatState: RpgCharacterCombatState? { core.combatState }
+    public var equipment: KeyedSet<ReadyableItemSnapshot> { core.equipment }
+    public var core: any RpgCharacterSnapshot
+    private init(notUnwrapping characterSnapshot: any RpgCharacterSnapshot) {
+        self.core = characterSnapshot
+    }
+    public init(_ character: any RpgCharacterSnapshot) {
+        if let character = character as? AnyRpgCharacterSnapshot {
+            self.init(character)
+        } else {
+            self.init(notUnwrapping: character)
+        }
+    }
+}

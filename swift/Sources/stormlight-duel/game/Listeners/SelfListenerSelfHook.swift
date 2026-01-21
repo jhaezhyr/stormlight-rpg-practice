@@ -21,7 +21,7 @@ extension NonLeafGenericListenerHolder where Self: SelfListenerSelfHookHolder {
     }
 }
 
-public protocol SelfListenerSelfHookProtocol {
+public protocol SelfListenerSelfHookProtocol: Sendable {
     associatedtype Trigger: HookTriggerForSomeRpgCharacter
     associatedtype C: RpgCharacter
     var id: ListenerId { get }
@@ -29,9 +29,10 @@ public protocol SelfListenerSelfHookProtocol {
     var action: ActionForRpgCharacter<C> { get }
 }
 extension SelfListenerSelfHookProtocol {
-    func typeErasedAction(_ game: Game, _ character: any RpgCharacter) {
+    func typeErasedAction(_ gameSession: isolated GameSession, _ character: any RpgCharacter) async
+    {
         if let wrappedCharacter = character as? AnyRpgCharacter {
-            self.typeErasedAction(game, wrappedCharacter.core)
+            await self.typeErasedAction(gameSession, wrappedCharacter.core)
             return
         }
         // If we get here, we don't have a wrapped character.
@@ -47,7 +48,7 @@ extension SelfListenerSelfHookProtocol {
             characterToUse = typeSafeCharacter
         }
 
-        self.action(game, characterToUse)
+        await self.action(gameSession, characterToUse)
     }
 }
 
@@ -56,24 +57,27 @@ public struct SelfListenerSelfHook<
 >:
     SelfListenerSelfHookProtocol
 {
-    public var id: ListenerId = nextListenerId()
+    public var id: ListenerId
     public var hook: Trigger
     public var action: ActionForRpgCharacter<Character>
     func asListener(for characterRef: RpgCharacterRef) -> Listener<
         HookTriggerForSpecificRpgCharacter<Trigger>
     > {
         let specificHook = HookTriggerForSpecificRpgCharacter(hook, for: characterRef)
-        return Listener(id: id, hook: specificHook) { game in
-            guard let character = game.character(at: characterRef, as: Character.self) else {
+        return Listener(id: id, hook: specificHook) { gameSession in
+            guard let character = gameSession.game.character(at: characterRef, as: Character.self)
+            else {
                 return
             }
-            action(game, character)
+            await action(gameSession, character)
         }
     }
 }
 
-func selfListen<Trigger: HookTriggerForSomeRpgCharacter, Character: RpgCharacter>(
-    toMy hook: Trigger, as _: Character.Type, action: @escaping ActionForRpgCharacter<Character>
-) -> SelfListenerSelfHook<Trigger, Character> {
-    SelfListenerSelfHook(hook: hook, action: action)
+extension GameSession {
+    func selfListen<Trigger: HookTriggerForSomeRpgCharacter, Character: RpgCharacter>(
+        toMy hook: Trigger, as _: Character.Type, action: @escaping ActionForRpgCharacter<Character>
+    ) -> SelfListenerSelfHook<Trigger, Character> {
+        SelfListenerSelfHook(id: self.nextId(), hook: hook, action: action)
+    }
 }

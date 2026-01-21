@@ -1,49 +1,31 @@
-public struct DurationCondition<C: Condition>: CompositeCondition {
+// I just made every condition into a ConditionSnapshot too. I'm pretty sure these are all stateless.
+
+public struct DurationCondition<C: Condition & ConditionSnapshot>: CompositeCondition,
+    ConditionSnapshot
+{
     public var core: C
     public var durationRemainingInTurns: Int
-    public var selfListenersSelfHooks: [any SelfListenerSelfHookProtocol] {
-        [
-            selfListen(toMy: CombatPhase.endOfTurn, as: AnyRpgCharacter.self) { game, character in
-                guard character.conditions.contains(self.id) else {
+    public let selfListenersSelfHooks: [any SelfListenerSelfHookProtocol]
+
+    public init(core: C, duration: Int, in gameSession: isolated GameSession) {
+        let id = core.id
+        self.core = core
+        self.durationRemainingInTurns = duration
+        self.selfListenersSelfHooks = [
+            gameSession.selfListen(toMy: CombatPhase.endOfTurn, as: AnyRpgCharacter.self) {
+                gameSession, character in
+                guard var me = character.conditions[id]?.core as? Self else {
                     fatalError(
                         "Why is this condition happening to a character without this condition?")
                 }
-                var me = self
                 me.durationRemainingInTurns -= 1
                 if me.durationRemainingInTurns <= 0 {
-                    character.conditions.remove(self.id)
+                    character.conditions.remove(id)
                 } else {
-                    character.conditions[self.id] = AnyCondition(me)
+                    character.conditions[id] = AnyCondition(me)
                 }
             }
         ]
-    }
-
-    public init(core: C, duration: Int) {
-        self.core = core
-        self.durationRemainingInTurns = duration
-    }
-
-    // It's cool! But it doesn't allow us to observe the duration.
-    static func getDurationListener<Con: Condition>(condition: Con)
-        -> SelfListenerSelfHook<
-        CombatPhase, AnyRpgCharacter
-        >
-    {
-        return {
-            var durationRemainingInTurns = 0
-            return selfListen(toMy: CombatPhase.endOfTurn, as: AnyRpgCharacter.self) {
-                game, character in
-                guard character.conditions.contains(condition.id) else {
-                    return
-                }
-                // TODO 50% of this function is boilerplate. However, we're not ready to pin ourselves down to one access mechanism for conditions yet.
-                durationRemainingInTurns -= 1
-                if durationRemainingInTurns <= 0 {
-                    character.conditions.remove(condition.id)
-                }
-            }
-        }()
     }
 }
 
@@ -62,14 +44,24 @@ private protocol LeafCondition: Condition, ListenerHolderLeaf, SelfListenerHolde
 {
 }
 
-public protocol Condition {
+public protocol ConditionSharedProtocol {
     var id: Int { get }
+}
+public protocol Condition: ConditionSharedProtocol {
+    var snapshot: any ConditionSnapshot { get }
+}
+
+public protocol ConditionSnapshot: Sendable, ConditionSharedProtocol {
+}
+extension Condition where Self: ConditionSnapshot {
+    public var snapshot: ConditionSnapshot { self }
 }
 
 /// Cannot hold one itself recursively. `AnyCondition(AnyCondition(someCondition)).core === someCondition`
 public struct AnyCondition: Condition {
     public var core: any Condition
     public var id: Int { core.id }
+    public var snapshot: any ConditionSnapshot { core.snapshot }
     private init(notUnwrapping character: any Condition) {
         self.core = character
     }
@@ -81,86 +73,140 @@ public struct AnyCondition: Condition {
         }
     }
 }
-
 extension AnyCondition: Keyed {
     public var primaryKey: Int { id }
 }
 
-nonisolated(unsafe) private var nextConditionId = 0
-private func getNextConditionId() -> Int {
-    nextConditionId += 1
-    return nextConditionId
+public struct AnyConditionSnapshot: ConditionSnapshot {
+    public var core: any ConditionSnapshot
+    public var id: Int { core.id }
+    private init(notUnwrapping conditionSnapshot: any ConditionSnapshot) {
+        self.core = conditionSnapshot
+    }
+    public init(_ conditionSnapshot: any ConditionSnapshot) {
+        if let conditionSnapshot = conditionSnapshot as? AnyConditionSnapshot {
+            self.init(conditionSnapshot)
+        } else {
+            self.init(notUnwrapping: conditionSnapshot)
+        }
+    }
+}
+extension AnyConditionSnapshot: Keyed {
+    public var primaryKey: Int { id }
 }
 
-public struct Afflicted: LeafCondition {
-    public var id: Int = getNextConditionId()
+public struct Afflicted: LeafCondition, ConditionSnapshot {
+    public let id: Int
     public let damagePerTurn: Damage
-    public init(damagePerTurn: Damage) {
+    public init(damagePerTurn: Damage, in gameSession: isolated GameSession) {
+        self.id = gameSession.nextId()
         self.damagePerTurn = damagePerTurn
-    }
-    public var selfListenersSelfHooks: [any SelfListenerSelfHookProtocol] {
-        [
-            selfListen(toMy: CombatPhase.endOfTurn, as: AnyRpgCharacter.self) { game, me in
+        self.selfListenersSelfHooks = [
+            gameSession.selfListen(toMy: CombatPhase.endOfTurn, as: AnyRpgCharacter.self) {
+                game, me in
                 me.takeDamage(damagePerTurn)
             }
         ]
     }
+    public let selfListenersSelfHooks: [any SelfListenerSelfHookProtocol]
 
     // TODO This condition can have multiple equivalent stacks; need to handle that
 }
-public struct Determined: LeafCondition {
-    public var id: Int = getNextConditionId()
-    public var selfListenersSelfHooksForTests: [any SelfListenerSelfHookForTestProtocol] {
-        [
-            selfListen(
+public struct Determined: LeafCondition, ConditionSnapshot {
+    public let id: Int
+    public let selfListenersSelfHooksForTests: [any SelfListenerSelfHookForTestProtocol]
+    public init(in gameSession: isolated GameSession) {
+        let id = gameSession.nextId()
+        self.id = id
+        self.selfListenersSelfHooksForTests = [
+            gameSession.selfListen(
                 toMyTests: TestHookType.afterFailure,
                 as: AnyRpgCharacter.self,
                 testType: AnyRpgTest.self
             ) {
                 game, character, test in
                 test.advantages += 1
-                character.conditions.remove(self.id)
+                character.conditions.remove(id)
             }
         ]
     }
 }
 
-public struct Disoriented: LeafCondition {
-    public var id: Int = getNextConditionId()
+public struct Disoriented: LeafCondition, ConditionSnapshot {
+    public let id: Int
+    public init(in gameSession: isolated GameSession) {
+        self.id = gameSession.nextId()
+    }
 }
-public struct Empowered: LeafCondition {
-    public var id: Int = getNextConditionId()
+public struct Empowered: LeafCondition, ConditionSnapshot {
+    public let id: Int
+    public init(in gameSession: isolated GameSession) {
+        self.id = gameSession.nextId()
+    }
 }
-public struct Enhanced: LeafCondition {
-    public var id: Int = getNextConditionId()
+public struct Enhanced: LeafCondition, ConditionSnapshot {
+    public let id: Int
     public var stat: AttributeName
     public var amount: Int
+    public init(stat: AttributeName, amount: Int, in gameSession: isolated GameSession) {
+        self.id = gameSession.nextId()
+        self.stat = stat
+        self.amount = amount
+    }
 }
-public struct Exhausted: LeafCondition {
-    public var id: Int = getNextConditionId()
+public struct Exhausted: LeafCondition, ConditionSnapshot {
+    public let id: Int
     public var amount: Int
+    public init(amount: Int, in gameSession: isolated GameSession) {
+        self.id = gameSession.nextId()
+        self.amount = amount
+    }
 }
-public struct Focused: LeafCondition {
-    public var id: Int = getNextConditionId()
+public struct Focused: LeafCondition, ConditionSnapshot {
+    public let id: Int
+    public init(in gameSession: isolated GameSession) {
+        self.id = gameSession.nextId()
+    }
 }
-public struct Immobilized: LeafCondition {
-    public var id: Int = getNextConditionId()
+public struct Immobilized: LeafCondition, ConditionSnapshot {
+    public let id: Int
+    public init(in gameSession: isolated GameSession) {
+        self.id = gameSession.nextId()
+    }
 }
-public struct Prone: LeafCondition {
-    public var id: Int = getNextConditionId()
+public struct Prone: LeafCondition, ConditionSnapshot {
+    public let id: Int
+    public init(in gameSession: isolated GameSession) {
+        self.id = gameSession.nextId()
+    }
 }
-public struct Restrained: LeafCondition {
-    public var id: Int = getNextConditionId()
+public struct Restrained: LeafCondition, ConditionSnapshot {
+    public let id: Int
+    public init(in gameSession: isolated GameSession) {
+        self.id = gameSession.nextId()
+    }
 }
-public struct Slowed: LeafCondition {
-    public var id: Int = getNextConditionId()
+public struct Slowed: LeafCondition, ConditionSnapshot {
+    public let id: Int
+    public init(in gameSession: isolated GameSession) {
+        self.id = gameSession.nextId()
+    }
 }
-public struct Stunned: LeafCondition {
-    public var id: Int = getNextConditionId()
+public struct Stunned: LeafCondition, ConditionSnapshot {
+    public let id: Int
+    public init(in gameSession: isolated GameSession) {
+        self.id = gameSession.nextId()
+    }
 }
-public struct Surprised: LeafCondition {
-    public var id: Int = getNextConditionId()
+public struct Surprised: LeafCondition, ConditionSnapshot {
+    public let id: Int
+    public init(in gameSession: isolated GameSession) {
+        self.id = gameSession.nextId()
+    }
 }
-public struct Unconscious: LeafCondition {
-    public var id: Int = getNextConditionId()
+public struct Unconscious: LeafCondition, ConditionSnapshot {
+    public let id: Int
+    public init(in gameSession: isolated GameSession) {
+        self.id = gameSession.nextId()
+    }
 }

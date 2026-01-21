@@ -1,11 +1,31 @@
+public protocol RpgTestSharedProtocol: Keyed {
+    var id: Int { get }
+
+    var skill: SkillName { get }
+    var advantages: Int { get }
+    var disadvantages: Int { get }
+    var testRolls: [RpgTestRoll] { get }
+    var difficulty: Int { get }  // In a head to head, this is the opponent's total number.
+    var opportunities: Int { get }
+    var complications: Int { get }
+
+    var success: Bool? { get }
+}
+extension RpgTestSharedProtocol {
+    public var primaryKey: RpgTestRef {
+        RpgTestRef(id: id)
+    }
+}
+
+public protocol RpgTestSnapshot: RpgTestSharedProtocol, Sendable {
+}
+
 /// Since a test has lots of hooks, it is a fully mutable structure
 ///
 /// A head-to-head test is presented to each character as a separate test structure.
 ///
 /// In an attack, there will also be damage rolls. Those rolls are not part of the test structure. However, the advantages, disadvantages, opportunities, and complications from the test can affect those rolls.
-public protocol RpgTestProtocol: AnyObject, Keyed {
-    var id: Int { get }
-
+public protocol RpgTest: AnyObject, RpgTestSharedProtocol, SendableMetatype {
     var skill: SkillName { get set }
     var advantages: Int { get set }
     var disadvantages: Int { get set }
@@ -14,16 +34,14 @@ public protocol RpgTestProtocol: AnyObject, Keyed {
     var opportunities: Int { get set }
     var complications: Int { get set }
 
-    var success: Bool? { get }
+    var snapshot: any RpgTestSnapshot { get }
 }
-extension RpgTestProtocol {
-    public var primaryKey: RpgTestRef {
-        RpgTestRef(id: id)
-    }
+extension RpgTest where Self: RpgTestSnapshot {
+    public var snapshot: any RpgTestSnapshot { self }
 }
 
-public class RpgSimpleTest: RpgTestProtocol {
-    public var id: Int = RpgTestRef.next().id
+public class RpgSimpleTest: RpgTest {
+    public let id: Int
     public var skill: SkillName
     public var difficulty: Int
     public var advantages: Int = 0
@@ -43,7 +61,9 @@ public class RpgSimpleTest: RpgTestProtocol {
         opportunities: Int? = nil,
         complications: Int? = nil,
         success: Bool? = nil,
+        in gameSession: isolated GameSession
     ) {
+        self.id = gameSession.nextId()
         self.skill = skill
         self.difficulty = difficulty
         if let advantages { self.advantages = advantages }
@@ -53,12 +73,37 @@ public class RpgSimpleTest: RpgTestProtocol {
         if let complications { self.complications = complications }
         if let success { self.success = success }
     }
+
+    public var snapshot: any RpgTestSnapshot {
+        RpgSimpleTestSnapshot(
+            id: id,
+            skill: skill,
+            difficulty: difficulty,
+            advantages: advantages,
+            disadvantages: disadvantages,
+            testRolls: testRolls,
+            opportunities: opportunities,
+            complications: complications,
+        )
+    }
 }
 
-/// Use this in places where `any RpgTestProtocol` doesn't work.
-public class AnyRpgTest: RpgTestProtocol {
-    public var core: any RpgTestProtocol
-    public init(_ test: any RpgTestProtocol) {
+public struct RpgSimpleTestSnapshot: RpgTestSnapshot {
+    public let id: Int
+    public var skill: SkillName
+    public var difficulty: Int
+    public var advantages: Int
+    public var disadvantages: Int
+    public var testRolls: [RpgTestRoll]
+    public var opportunities: Int
+    public var complications: Int
+    public var success: Bool?
+}
+
+/// Use this in places where `any RpgTest` doesn't work.
+public class AnyRpgTest: RpgTest {
+    public var core: any RpgTest
+    public init(_ test: any RpgTest) {
         self.core = test
     }
     public var id: Int { core.id }
@@ -93,16 +138,45 @@ public class AnyRpgTest: RpgTestProtocol {
     public var success: Bool? {
         core.success
     }
+    public var snapshot: any RpgTestSnapshot {
+        core.snapshot
+    }
+}
+
+public struct AnyRpgTestSnapshot: RpgTestSnapshot {
+    public var core: any RpgTestSnapshot
+    public init(_ test: any RpgTestSnapshot) {
+        self.core = test
+    }
+    public var id: Int { core.id }
+    public var skill: SkillName {
+        core.skill
+    }
+    public var advantages: Int {
+        core.advantages
+    }
+    public var disadvantages: Int {
+        core.disadvantages
+    }
+    public var testRolls: [RpgTestRoll] {
+        core.testRolls
+    }
+    public var difficulty: Int {
+        core.difficulty
+    }
+    public var opportunities: Int {
+        core.opportunities
+    }
+    public var complications: Int {
+        core.complications
+    }
+    public var success: Bool? {
+        core.success
+    }
 }
 
 public struct RpgTestRef: Sendable, Hashable {
     public var id: Int
-
-    public static func next() -> RpgTestRef {
-        last += 1
-        return RpgTestRef(id: last)
-    }
-    nonisolated(unsafe) private static var last: Int = 0
 }
 
 enum TestHookType: Sendable, HookTriggerForSomeRpgCharacterAndTest {
@@ -112,7 +186,7 @@ enum TestHookType: Sendable, HookTriggerForSomeRpgCharacterAndTest {
     case afterSuccess
 }
 
-public struct RpgTestRoll {
+public struct RpgTestRoll: Sendable {
     var numberDice: [NumberDie: Int]
     var plotDice: [PlotDieResult]
 }

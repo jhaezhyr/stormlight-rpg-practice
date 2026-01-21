@@ -4,13 +4,17 @@
 import Foundation
 import stormlight_duel
 
+@MainActor
 @main
 public struct MyCLI {
-    static func main() {
+    static func main() async {
+        let session = GameSession()
+        let broadcaster = CliBroadcaster()
+
         let player1 = PlayerRpgCharacter(
             name: "Kal",
             expertises: [],
-            equipment: [ReadyableItem(basicWeapons[.axe]!(), isReady: true)],
+            equipment: [await ReadyableItem(basicWeapons[.axe]!(session), isReady: true)],
             attributes: .init { _ in 2 },
             ranksInCoreSkills: .init { _ in 0 },
             ranksInOtherSkills: [:],
@@ -18,12 +22,15 @@ public struct MyCLI {
             focus: .init(maxValue: 4),
             investiture: .init(maxValue: 0),
             conditions: [],
-            brain: CliRpgCharacterBrain()
+            brain: CliRpgCharacterBrain(
+                broadcaster: broadcaster,
+                characterRef: RpgCharacterRef(name: "Kal")
+            )
         )
         let player2 = PlayerRpgCharacter(
             name: "Shallan",
             expertises: [],
-            equipment: [ReadyableItem(basicWeapons[.knife]!(), isReady: true)],
+            equipment: [await ReadyableItem(basicWeapons[.knife]!(session), isReady: true)],
             attributes: .init { _ in 2 },
             ranksInCoreSkills: .init { _ in 0 },
             ranksInOtherSkills: [:],
@@ -31,11 +38,13 @@ public struct MyCLI {
             focus: .init(maxValue: 4),
             investiture: .init(maxValue: 0),
             conditions: [],
-            brain: CliRpgCharacterBrain()
+            brain: CliRpgCharacterBrain(
+                broadcaster: broadcaster,
+                characterRef: RpgCharacterRef(name: "Shallan")
+            )
         )
-        var game = Game(characters: [player1, player2], broadcaster: CliBroadcaster())
+        await session.provideGame(Game(characters: [player1, player2], broadcaster: broadcaster))
 
-        let combat = Combat()
-        combat.run(in: game)
+        await session.switch(to: Combat())
     }
 }
