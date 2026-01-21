@@ -36,3 +36,9 @@ public struct AnyRpgCharacterSnapshot: RpgCharacterSnapshot {
         }
     }
 }
+
+extension RpgCharacterSharedProtocol {
+    var readyItems: [ItemType] {
+        equipment.compactMap { $0.isReady ? $0.core : nil }
+    }
+}

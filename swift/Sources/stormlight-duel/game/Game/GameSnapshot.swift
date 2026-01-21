@@ -12,3 +12,9 @@ extension Game {
         )
     }
 }
+
+extension GameSharedProtocol {
+    func enemies(of x: RpgCharacterRef) -> [RpgCharacterRef] {
+        characters.keys.filter { $0 != x }
+    }
+}
