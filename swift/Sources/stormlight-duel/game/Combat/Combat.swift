@@ -73,7 +73,7 @@ public struct Combat: Scene {
                             await game.broadcaster.tell(
                                 "\(someCharacter.primaryKey == character.primaryKey ? "Your" : "\(someCharacter.name)'s") stats:\n"
                                     + "  Health: \(someCharacter.health.value)/\(character.health.maxValue)\n"
-                                    + "  Focus: \(someCharacter.focus.value)/\(character.focus.value)\n"
+                                    + "  Focus: \(someCharacter.focus.value)/\(character.focus.maxValue)\n"
                                     + "  Conditions: \(someCharacter.conditions.map { "\($0.core)" }.joined(separator: ","))",
                                 to: character.primaryKey)
                         }
