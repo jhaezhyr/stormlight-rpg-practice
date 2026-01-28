@@ -29,6 +29,9 @@ public protocol RpgCharacterSharedProtocol: Keyed where Key == RpgCharacterRef {
 
     var combatState: RpgCharacterCombatState? { get }
 
+    /// Whether this character is controlled by a game player, instead of the game master.
+    var isPlayer: Bool { get }
+
     associatedtype ConditionType: ConditionSharedProtocol
     var conditions: KeyedSet<ConditionType> { get }
     associatedtype ItemType: ItemSharedProtocol
@@ -181,6 +184,7 @@ public class AnyRpgCharacter: RpgCharacter {
         get { core.equipment }
         set { core.equipment = newValue }
     }
+    public var isPlayer: Bool { core.isPlayer }
     public var snapshot: any RpgCharacterSnapshot { core.snapshot }
     public var core: any RpgCharacter
     private init(notUnwrapping character: any RpgCharacter) {

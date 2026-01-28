@@ -24,6 +24,7 @@ public struct AnyRpgCharacterSnapshot: RpgCharacterSnapshot {
     public var size: CharacterSize { core.size }
     public var combatState: RpgCharacterCombatState? { core.combatState }
     public var equipment: KeyedSet<Readyable<AnyItemSnapshot>> { core.equipment }
+    public var isPlayer: Bool { core.isPlayer }
     public var core: any RpgCharacterSnapshot
     private init(notUnwrapping characterSnapshot: any RpgCharacterSnapshot) {
         self.core = characterSnapshot

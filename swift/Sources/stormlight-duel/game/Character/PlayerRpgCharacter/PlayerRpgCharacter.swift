@@ -53,6 +53,8 @@ public class PlayerRpgCharacter: PlayerRpgCharacterProtocol {
 
     public var combatState: RpgCharacterCombatState?
 
+    public var isPlayer: Bool
+
     public var snapshot: any RpgCharacterSnapshot {
         PlayerRpgCharacterSnapshot(
             name: name,
@@ -73,6 +75,7 @@ public class PlayerRpgCharacter: PlayerRpgCharacterProtocol {
             deflect: deflect,
             equipment: .init(equipment.map { $0.snapshot }),
             combatState: combatState,
+            isPlayer: isPlayer,
         )
     }
 
@@ -92,6 +95,7 @@ public class PlayerRpgCharacter: PlayerRpgCharacterProtocol {
         conditions: KeyedSet<AnyCondition>,
         brain: any RpgCharacterBrain,
         combatState: RpgCharacterCombatState? = nil,
+        isPlayer: Bool,
     ) {
         self.name = name
         self.expertises = expertises
@@ -108,6 +112,7 @@ public class PlayerRpgCharacter: PlayerRpgCharacterProtocol {
         self.conditions = conditions
         self.brain = brain
         self.combatState = combatState
+        self.isPlayer = isPlayer
     }
 }
 
@@ -123,6 +128,8 @@ extension PlayerRpgCharacter {
             ranksInOtherSkills: [:], health: .init(value: 12, maxValue: 12),
             focus: .init(value: 4, maxValue: 4),
             investiture: .init(value: 0, maxValue: 0), conditions: [],
-            brain: RpgCharacterDummyBrain(characterRef: RpgCharacterRef(name: "Baby son-Daddy")))
+            brain: RpgCharacterDummyBrain(characterRef: RpgCharacterRef(name: "Baby son-Daddy")),
+            isPlayer: true
+        )
     }
 }

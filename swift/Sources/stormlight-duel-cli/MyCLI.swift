@@ -24,7 +24,9 @@ public struct MyCLI {
             conditions: [],
             brain: CliRpgCharacterBrain(
                 broadcaster: broadcaster,
-                characterRef: RpgCharacterRef(name: "Kal"))
+                characterRef: RpgCharacterRef(name: "Kal")
+            ),
+            isPlayer: true
         )
         let player2 = PlayerRpgCharacter(
             name: "Shallan",
@@ -37,7 +39,10 @@ public struct MyCLI {
             focus: .init(maxValue: 4),
             investiture: .init(maxValue: 0),
             conditions: [],
-            brain: Level1CpuBrain(for: RpgCharacterRef(name: "Shallan"))
+            brain: Level1CpuBrain(
+                for: RpgCharacterRef(name: "Shallan")
+            ),
+            isPlayer: false
         )
         await session.provideGame(Game(characters: [player1, player2], broadcaster: broadcaster))
 
