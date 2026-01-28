@@ -64,44 +64,39 @@ public struct Strike: CombatAction {
         // Run the damage test
         let weaponSkill = weapon.type.skill
         let targetPhysicalDefense = targetCharacter.defenses[.physical]
-        let test = RpgSimpleTest(
-            skill: weaponSkill, difficulty: targetPhysicalDefense, in: gameSession)
+        let test = RpgAttackTest(
+            tester: character.primaryKey,
+            opponent: target,
+            skill: weaponSkill,
+            difficulty: targetPhysicalDefense,
+            damageDice: weapon.damage.asArray,
+            damageModifiers: 0,
+            advantagesAvailable: 0,
+            disadvantagesAvailable: 0,
+            in: gameSession
+        )
         let testRef = test.primaryKey
         game.updateTest(test)
         await game.naiveDispatch(
             StrikePhase.aboutToAttemptStrike, for: meRef, attempting: testRef, in: gameSession)
         await game.naiveDispatch(
             TestHookType.beforeRoll, for: meRef, attempting: testRef, in: gameSession)
-        // TODO We're ignoring advantage, opportunity, etc. and just rolling
-        let attackRoll = Int.random(in: 1...20, using: &game.rng)
-        if attackRoll == 1 {
-            test.complications += 1
-        } else if attackRoll == 20 {
-            test.opportunities += 1
-        }
+        let result = await test.roll(in: gameSession)
         let weaponModifier = character.modifiers[weaponSkill, default: 0]
-        let attackNumber = attackRoll + weaponModifier
-        test.testRolls.append(RpgTestRoll(numberDice: [.d20: attackRoll], plotDice: []))
-        let damageDice = weapon.damage.dice
-            .flatMap { die, count in
-                Array(repeating: die, count: count)
-                    .map { die in (die, Int.random(in: 1...die.rawValue, using: &game.rng)) }
-            }
-        let damageMinAmount = damageDice.reduce(0, { sum, die in sum + die.1 })
-        let damageFullAmount = damageMinAmount + weaponModifier
+        let attackRoll = result.testDieRoll
+        let damageMinAmount = result.damage
+        let damageFullAmount = result.damage + weaponModifier
         await game.naiveDispatch(
             TestHookType.beforeResolution, for: meRef, attempting: testRef, in: gameSession)
         await game.broadcaster.tell(
-            "You rolled a \(attackRoll) (\(attackRoll)+\(weaponModifier)) with \(damageFullAmount) (\(damageMinAmount)+\(weaponModifier)) in damage dice",
+            "You rolled a \(attackRoll+weaponModifier) (\(attackRoll)+\(weaponModifier)) with \(damageFullAmount) (\(damageMinAmount)+\(weaponModifier)) in damage dice",
             to: character.primaryKey)
-        let success = (attackNumber >= test.difficulty)
         await game.broadcaster.tell(
             "The test to beat is \(test.difficulty) (\(targetCharacter.name)'s physical defense: \(targetPhysicalDefense))",
             to: character.primaryKey)
-        test.success = success
         let damageToDo: Int
         let verbOfStrike: String
-        if success {
+        if result.testResult {
             await game.broadcaster.tell(
                 "You passed the test and hit!", to: character.primaryKey)
             await game.naiveDispatch(

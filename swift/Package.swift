@@ -12,6 +12,7 @@ let package = Package(
         .package(url: "https://github.com/juri/terminal-styles.git", from: "0.3.0"),
         .package(url: "https://github.com/juri/terminal-widgets.git", from: "0.1.0"),
         .package(url: "https://github.com/juri/terminal-ansi.git", from: "0.3.0"),
+        .package(url: "https://github.com/mickmaccallum/CountedSet.git", from: "2.0.1"),
         .package(url: "https://github.com/swiftlang/swift-testing.git", from: "0.1.0"),
     ],
     targets: [
@@ -29,7 +30,11 @@ let package = Package(
             ],
         ),
 
-        .target(name: "stormlight-duel"),
+        .target(
+            name: "stormlight-duel",
+            dependencies: [
+                .product(name: "CountedSet", package: "CountedSet")
+            ]),
 
         // RPG Tests
         .testTarget(

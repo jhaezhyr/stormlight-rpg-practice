@@ -1,6 +1,15 @@
 {
-  "originHash" : "ff5320b07ab65748d603877388e71cdf93a6f1c0b83699b16a259d1448e005f7",
+  "originHash" : "c84da6afd09ae72b96778e721094942c0a17295f72b7a83e211d941a780a6fde",
   "pins" : [
+    {
+      "identity" : "countedset",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/mickmaccallum/CountedSet.git",
+      "state" : {
+        "revision" : "5bdaf31e6f71dcb430e40a0da3ff10ff61bf5368",
+        "version" : "2.0.1"
+      }
+    },
     {
       "identity" : "swift-syntax",
       "kind" : "remoteSourceControl",
