@@ -5,3 +5,5 @@ public protocol RpgCharacterBrain: Sendable {
     func decide<T: Sendable>(_ code: DecisionCode, type: T.Type, in gameSnapshot: GameSnapshot)
         async -> T
 }
+
+public typealias GameMasterBrain = RpgCharacterBrain

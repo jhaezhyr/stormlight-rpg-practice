@@ -11,10 +11,16 @@ public class Game {
 
     public var rng: any RandomNumberGenerator = SystemRandomNumberGenerator()
     public var broadcaster: any Broadcaster
+    public var gameMasterBrain: any GameMasterBrain
 
-    public init(characters: [any RpgCharacter], broadcaster: Broadcaster) {
+    public init(
+        characters: [any RpgCharacter],
+        broadcaster: Broadcaster,
+        gameMasterBrain: any GameMasterBrain
+    ) {
         self.characters = KeyedSet(characters.map(AnyRpgCharacter.init))
         self.broadcaster = broadcaster
+        self.gameMasterBrain = gameMasterBrain
     }
 }
 

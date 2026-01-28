@@ -44,7 +44,13 @@ public struct MyCLI {
             ),
             isPlayer: false
         )
-        await session.provideGame(Game(characters: [player1, player2], broadcaster: broadcaster))
+        await session.provideGame(
+            Game(
+                characters: [player1, player2], broadcaster: broadcaster,
+                gameMasterBrain: CliRpgCharacterBrain(
+                    broadcaster: broadcaster,
+                    characterRef: RpgCharacterRef(name: "GM EN")
+                )))
 
         await session.switch(to: Combat())
     }
