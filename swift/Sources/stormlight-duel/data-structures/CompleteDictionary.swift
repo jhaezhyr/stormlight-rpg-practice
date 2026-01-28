@@ -1,5 +1,4 @@
-public struct CompleteDictionary<Key: Hashable & CaseIterable & Sendable, Value: Sendable>: Sendable
-{
+public struct CompleteDictionary<Key: Hashable & CaseIterable, Value> {
     private var core: [Key: Value]
     public init(from dictionary: [Key: Value]) {
         core = dictionary
@@ -74,4 +73,7 @@ extension Dictionary {
     {
         [Key: T](uniqueKeysWithValues: self.map({ key, value in (key, transform(key, value)) }))
     }
+}
+
+extension CompleteDictionary: Sendable where Value: Sendable, Key: Sendable {
 }
