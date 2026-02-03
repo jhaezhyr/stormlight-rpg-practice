@@ -64,6 +64,8 @@ public struct RpgCharacterCombatState: RpgCharacterCombatStateSharedProtocol {
     public var reactionsRemaining: Int = 0
     public var hasStrikeAdvantageOver: Set<RpgCharacterRef> = []
 
+    public var reactionProviders: [Any]
+
     public init(
         turnSpeed: TurnSpeed,
         actionsRemaining: Int? = nil,
@@ -71,6 +73,7 @@ public struct RpgCharacterCombatState: RpgCharacterCombatStateSharedProtocol {
         actionsTaken: Set<CombatActionName>? = nil,
         reactionsRemaining: Int? = nil,
         hasStrikeAdvantageOver: Set<RpgCharacterRef>? = nil,
+        for characterRef: RpgCharacterRef,
         in gameSession: isolated GameSession = #isolation
     ) {
         self.turnSpeed = turnSpeed
@@ -79,6 +82,7 @@ public struct RpgCharacterCombatState: RpgCharacterCombatStateSharedProtocol {
         if let actionsTaken { self.actionsTaken = actionsTaken }
         if let reactionsRemaining { self.reactionsRemaining = reactionsRemaining }
         if let hasStrikeAdvantageOver { self.hasStrikeAdvantageOver = hasStrikeAdvantageOver }
+        self.reactionProviders = []
     }
 
     var snapshot: RpgCharacterCombatStateSnapshot {

@@ -72,6 +72,7 @@ public protocol RpgCharacter: AnyObject,
 extension RpgCharacter {
     public var childHolders: [Any] {
         conditions.map { $0 as Any } + equipment.map { $0 as Any }
+            + (combatState?.reactionProviders ?? [])
         // TODO something about path progress
     }
 }
