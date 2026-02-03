@@ -27,7 +27,8 @@ public protocol RpgCharacterSharedProtocol: Keyed where Key == RpgCharacterRef {
     var size: CharacterSize { get }
     var deflect: Int { get }
 
-    var combatState: RpgCharacterCombatState? { get }
+    associatedtype CombatState: RpgCharacterCombatStateSharedProtocol
+    var combatState: CombatState? { get }
 
     /// Whether this character is controlled by a game player, instead of the game master.
     var isPlayer: Bool { get }

@@ -74,7 +74,7 @@ public class PlayerRpgCharacter: PlayerRpgCharacterProtocol {
             size: size,
             deflect: deflect,
             equipment: .init(equipment.map { $0.snapshot }),
-            combatState: combatState,
+            combatState: combatState?.snapshot,
             isPlayer: isPlayer,
         )
     }
