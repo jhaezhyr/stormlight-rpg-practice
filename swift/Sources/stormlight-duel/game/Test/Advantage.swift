@@ -88,6 +88,14 @@ extension DecideOrOther: CustomStringConvertible {
 public struct RoleWithAdvantageNumber<Role: Hashable & Sendable & Comparable>: Hashable, Sendable {
     public var role: Role
     public var advantageNumber: RollModifier?
+
+    public init(
+        role: Role,
+        advantageNumber: RollModifier?
+    ) {
+        self.role = role
+        self.advantageNumber = advantageNumber
+    }
 }
 extension RoleWithAdvantageNumber: Comparable {
     public static func < (lhs: RoleWithAdvantageNumber<Role>, rhs: RoleWithAdvantageNumber<Role>)

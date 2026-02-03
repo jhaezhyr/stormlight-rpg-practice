@@ -47,29 +47,83 @@ public enum TurnSpeed: Hashable, CaseIterable, Sendable {
     }
 }
 
-public struct RpgCharacterCombatState: Sendable {
+public protocol RpgCharacterCombatStateSharedProtocol {
+    var turnSpeed: TurnSpeed { get }
+    var actionsRemaining: Int { get }
+    var weaponsUsed: Set<WeaponName> { get }
+    var actionsTaken: Set<CombatActionName> { get }
+    var reactionsRemaining: Int { get }
+    var hasStrikeAdvantageOver: Set<RpgCharacterRef> { get }
+}
+
+public struct RpgCharacterCombatState: RpgCharacterCombatStateSharedProtocol {
     public var turnSpeed: TurnSpeed
     public var actionsRemaining: Int = 0
     public var weaponsUsed: Set<WeaponName> = []
     public var actionsTaken: Set<CombatActionName> = []
     public var reactionsRemaining: Int = 0
     public var hasStrikeAdvantageOver: Set<RpgCharacterRef> = []
+
+    public var reactionProviders: [Any]
+
+    public init(
+        turnSpeed: TurnSpeed,
+        actionsRemaining: Int? = nil,
+        weaponsUsed: Set<WeaponName>? = nil,
+        actionsTaken: Set<CombatActionName>? = nil,
+        reactionsRemaining: Int? = nil,
+        hasStrikeAdvantageOver: Set<RpgCharacterRef>? = nil,
+        for characterRef: RpgCharacterRef,
+        in gameSession: isolated GameSession = #isolation
+    ) {
+        self.turnSpeed = turnSpeed
+        if let actionsRemaining { self.actionsRemaining = actionsRemaining }
+        if let weaponsUsed { self.weaponsUsed = weaponsUsed }
+        if let actionsTaken { self.actionsTaken = actionsTaken }
+        if let reactionsRemaining { self.reactionsRemaining = reactionsRemaining }
+        if let hasStrikeAdvantageOver { self.hasStrikeAdvantageOver = hasStrikeAdvantageOver }
+        self.reactionProviders = [DodgeProvider(for: characterRef)]
+    }
+
+    var snapshot: RpgCharacterCombatStateSnapshot {
+        .init(
+            turnSpeed: turnSpeed,
+            actionsRemaining: actionsRemaining,
+            weaponsUsed: weaponsUsed,
+            actionsTaken: actionsTaken,
+            reactionsRemaining: reactionsRemaining,
+            hasStrikeAdvantageOver: hasStrikeAdvantageOver,
+        )
+    }
+}
+
+public struct RpgCharacterCombatStateSnapshot: RpgCharacterCombatStateSharedProtocol, Sendable {
+    public var turnSpeed: TurnSpeed
+    public var actionsRemaining: Int
+    public var weaponsUsed: Set<WeaponName>
+    public var actionsTaken: Set<CombatActionName>
+    public var reactionsRemaining: Int
+    public var hasStrikeAdvantageOver: Set<RpgCharacterRef>
 }
 
 public struct Combat: Scene {
     public init() {
     }
 
+    public func start(in gameSession: isolated GameSession = #isolation) {
+        let game = gameSession.game
+        // Let everyone start the combat.
+        for character in game.characters {
+            character.combatState = RpgCharacterCombatState(
+                turnSpeed: .fast, reactionsRemaining: 1, for: character.primaryKey)
+        }
+    }
+
     public func run(in gameSession: isolated GameSession = #isolation) async {
         let game = gameSession.game
         let players = game.characters.filter { $0.isPlayer }.map { $0.core }
         let nonPlayers = game.characters.filter { !$0.isPlayer }.map { $0.core }
-        // Let everyone start the combat.
-        for ref in game.characters.keys {
-            game.characters[ref]!.combatState = RpgCharacterCombatState(
-                turnSpeed: .fast, reactionsRemaining: 1
-            )
-        }
+        start()
         rounds: for roundNum in 1... {
             await game.broadcaster.tellAll("======= ROUND \(roundNum) ========")
             var charactersPerPhase: CompleteDictionary<CombatTurnInitiative, [any RpgCharacter]> = [

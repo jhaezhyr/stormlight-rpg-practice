@@ -3,6 +3,7 @@ public enum DecisionCode: Sendable, Equatable {
     case initiative
     case combatChoice
     case whichDieToModify(_ modifier: RollModifier)
+    case shouldDodge
 }
 
 extension DecisionCode: CustomStringConvertible {
@@ -16,6 +17,8 @@ extension DecisionCode: CustomStringConvertible {
             "What action will you take?"
         case .whichDieToModify(let modifier):
             "Which die would you like to \(modifier) in this test?"
+        case .shouldDodge:
+            "You're being targeted. Would you like to dodge?"
         }
     }
 }

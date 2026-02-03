@@ -27,7 +27,8 @@ public protocol RpgCharacterSharedProtocol: Keyed where Key == RpgCharacterRef {
     var size: CharacterSize { get }
     var deflect: Int { get }
 
-    var combatState: RpgCharacterCombatState? { get }
+    associatedtype CombatState: RpgCharacterCombatStateSharedProtocol
+    var combatState: CombatState? { get }
 
     /// Whether this character is controlled by a game player, instead of the game master.
     var isPlayer: Bool { get }
@@ -71,6 +72,7 @@ public protocol RpgCharacter: AnyObject,
 extension RpgCharacter {
     public var childHolders: [Any] {
         conditions.map { $0 as Any } + equipment.map { $0 as Any }
+            + (combatState?.reactionProviders ?? [])
         // TODO something about path progress
     }
 }
@@ -196,5 +198,10 @@ public class AnyRpgCharacter: RpgCharacter {
         } else {
             self.init(notUnwrapping: character)
         }
+    }
+}
+extension AnyRpgCharacter: CustomStringConvertible {
+    public var description: String {
+        "\(name) (\(type(of: self)) wrapping \(type(of: core)))"
     }
 }

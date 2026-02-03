@@ -128,21 +128,50 @@ extension Game: NonLeafGenericListenerHolder, AllTheListenersHolder {
     }
 
     public func naiveDispatch<T: HookTriggerForSomeRpgCharacterAndTest>(
-        _ hookTrigger: T, for characterRef: RpgCharacterRef, attempting testRef: RpgTestRef,
+        _ hookTrigger: T, for _characterRef: RpgCharacterRef, attempting testRef: RpgTestRef,
         in gameSession: isolated GameSession
     ) async {
-        var listenersRun: Set<ListenerId> = []
-        while let listenerLeftToTry = allSelfListenersSelfHooksForTests.filter({
-            $0.hook as? T == hookTrigger && !listenersRun.contains($0.id)
-        }).first {
-            guard let char = self.anyCharacter(at: characterRef) else {
-                fatalError("Bad character reference")
+        // If the tester or the opponent can change because of hooks, then this logic will have to change.
+        do {
+            // The self listener
+            var listenersRun: Set<ListenerId> = []
+            while let listenerLeftToTry = allSelfListenersSelfHooksForTests.filter({
+                $0.hook as? T == hookTrigger && !listenersRun.contains($0.id)
+            }).first {
+                guard
+                    let char = (gameSession.game.anyTest(at: testRef)?.tester).flatMap({
+                        self.anyCharacter(at: $0)
+                    })
+                else {
+                    fatalError("Bad character reference")
+                }
+                guard let test = self.anyTest(at: testRef) else {
+                    fatalError("Bad test reference")
+                }
+                await listenerLeftToTry.typeErasedAction(gameSession, char, test)
+                listenersRun.insert(listenerLeftToTry.id)
             }
-            guard let test = self.anyTest(at: testRef) else {
-                fatalError("Bad test reference")
+        }
+        do {
+            // The targeted listener
+            var listenersRun: Set<ListenerId> = []
+            while let listenerLeftToTry = allListenersForWhenIAmTargetedInATest.filter({
+                $0.hook as? T == hookTrigger && !listenersRun.contains($0.id)
+            }).first {
+                // FIXME Runs on all these listeners, even when it's actually someone else being targeted in the test.
+                guard
+                    let char = (gameSession.game.anyTest(at: testRef)?.opponent).flatMap({
+                        self.anyCharacter(at: $0)
+                    })
+                else {
+                    fatalError("Bad character reference")
+                }
+                guard let test = self.anyTest(at: testRef) else {
+                    fatalError("Bad test reference")
+                }
+                await listenerLeftToTry.typeErasedAction(gameSession, char, test)
+                listenersRun.insert(listenerLeftToTry.id)
             }
-            await listenerLeftToTry.typeErasedAction(gameSession, char, test)
-            listenersRun.insert(listenerLeftToTry.id)
         }
     }
 }

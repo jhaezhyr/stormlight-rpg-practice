@@ -74,7 +74,7 @@ public class PlayerRpgCharacter: PlayerRpgCharacterProtocol {
             size: size,
             deflect: deflect,
             equipment: .init(equipment.map { $0.snapshot }),
-            combatState: combatState,
+            combatState: combatState?.snapshot,
             isPlayer: isPlayer,
         )
     }
@@ -117,19 +117,35 @@ public class PlayerRpgCharacter: PlayerRpgCharacterProtocol {
 }
 
 extension PlayerRpgCharacter {
-    public static func basicCharacter() -> PlayerRpgCharacter {
-        PlayerRpgCharacter(
-            name: "Baby son-Daddy", expertises: [], equipment: [],
+    public static func basicCharacter(
+        name: String = "Baby son-Daddy",
+        brain: (any RpgCharacterBrain)? = nil
+    ) -> PlayerRpgCharacter {
+        let brain = brain ?? RpgCharacterDummyBrain(characterRef: RpgCharacterRef(name: name))
+        return PlayerRpgCharacter(
+            name: name,
+            expertises: [],
+            equipment: [],
             attributes: [
                 .strength: 2, .speed: 1, .intellect: 2, .awareness: 2, .presence: 2, .willpower: 2,
             ],
             ranksInCoreSkills: .init(
-                from: .init(uniqueKeysWithValues: CoreSkillName.allCases.map { ($0, 0) })),
-            ranksInOtherSkills: [:], health: .init(value: 12, maxValue: 12),
+                from: .init(uniqueKeysWithValues: CoreSkillName.allCases.map { ($0, 0) })
+            ),
+            ranksInOtherSkills: [:],
+            health: .init(value: 12, maxValue: 12),
             focus: .init(value: 4, maxValue: 4),
-            investiture: .init(value: 0, maxValue: 0), conditions: [],
-            brain: RpgCharacterDummyBrain(characterRef: RpgCharacterRef(name: "Baby son-Daddy")),
+            investiture: .init(value: 0, maxValue: 0),
+            conditions: [],
+            brain: brain,
             isPlayer: true
         )
+    }
+}
+
+extension PlayerRpgCharacter: CustomStringConvertible {
+    public var description: String {
+        "\(name) (\(type(of: self)))"
+
     }
 }
