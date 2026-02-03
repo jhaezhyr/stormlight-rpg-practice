@@ -11,12 +11,14 @@ struct CliRpgCharacterBrain: RpgCharacterBrain {
     }
 
     @MainActor
-    func decide<C: Sendable>(options: C, in gameSnapshot: GameSnapshot) -> C.Element
+    func decide<C: Sendable>(_ code: DecisionCode, options: C, in gameSnapshot: GameSnapshot) async
+        -> C.Element
     where C: Collection, C.Element: Sendable {
         if let option = options.first, options.count == 1 {
             return option
         }
-        printForCharacter("Make a choice between the following \(options.count) options:")
+        try? await Task.sleep(for: .seconds(0.2))
+        await printForCharacter(code)
         for (i, x) in options.enumerated() {
             print(">", i, x)
         }
@@ -24,27 +26,36 @@ struct CliRpgCharacterBrain: RpgCharacterBrain {
             let index = Int(aLine)
         {
             let result = options[options.index(options.startIndex, offsetBy: index)]
-            printForCharacter("You chose \(result)")
+            await printForCharacter("You chose \(result)")
             return result
         }
-        printForCharacter("No, try again.")
-        return decide(options: options, in: gameSnapshot)
+        await printForCharacter("No, try again.")
+        return await decide(code, options: options, in: gameSnapshot)
     }
 
     @MainActor
-    func decide<T>(type: T.Type, in gameSnapshot: GameSnapshot) -> T where T: Sendable {
-        if T.self == CombatChoice.self {
-            return decideCombatChoice(in: gameSnapshot) as! T
+    func decide<T: Sendable>(_ code: DecisionCode, type: T.Type, in gameSnapshot: GameSnapshot)
+        async -> T
+    where T: Sendable {
+        try? await Task.sleep(for: .seconds(0.2))
+        switch code {
+        case .combatChoice:
+            return await decideCombatChoice(in: gameSnapshot) as! T
+        default:
+            if let allCases = (T.self as? (any CaseIterable.Type))?.allCases {
+                return await decide(code, options: allCases.map { $0 as! T }, in: gameSnapshot)
+            }
+            fatalError("I don't know how to decide when asked for \(type)")
+
         }
-        fatalError("I don't know how to decide when asked for \(type)")
     }
 
     @MainActor
-    private func decideCombatChoice(in gameSnapshot: GameSnapshot) -> CombatChoice {
+    private func decideCombatChoice(in gameSnapshot: GameSnapshot) async -> CombatChoice {
         guard let character = gameSnapshot.characters[characterRef] else {
             fatalError("Bad character ref \(characterRef)")
         }
-        printForCharacter(
+        await printForCharacter(
             "You have \(character.combatState!.actionsRemaining) actions. What is your combat choice?"
         )
         let actionsICanTake = allCombatActions.filter {
@@ -68,25 +79,25 @@ struct CliRpgCharacterBrain: RpgCharacterBrain {
                         args, (game: gameSnapshot, characterRef: characterRef))
                 {
                     if action.canTakeAction(by: characterRef, in: gameSnapshot) {
-                        printForCharacter("Your action is \(action)")
+                        await printForCharacter("Your action is \(action)")
                         return .action(action)
                     }
                 }
             }
             if ["e", "end", "end turn"].contains(line) {
-                printForCharacter("I guess your turn is over")
+                await printForCharacter("I guess your turn is over")
                 return .endTurn
             }
-            printForCharacter("No, try again.")
+            await printForCharacter("No, try again.")
         } catch {
-            printForCharacter(error.description)
+            await printForCharacter(error.description)
         }
-        return decideCombatChoice(in: gameSnapshot)
+        return await decideCombatChoice(in: gameSnapshot)
     }
 
     @MainActor
-    private func printForCharacter(_ thing: Any) {
-        broadcaster.tell("\(thing)", to: characterRef)
+    private func printForCharacter(_ thing: Any) async {
+        await broadcaster.tell("\(thing)", to: characterRef)
     }
 }
 

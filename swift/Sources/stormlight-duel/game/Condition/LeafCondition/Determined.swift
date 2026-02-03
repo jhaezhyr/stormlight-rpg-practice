@@ -11,7 +11,7 @@ public struct Determined: LeafCondition, ConditionSnapshot {
                 testType: AnyRpgTest.self
             ) {
                 game, character, test in
-                test.advantages += 1
+                test.opportunitiesAvailable += 1
                 character.conditions.remove(id)
             }
         ]

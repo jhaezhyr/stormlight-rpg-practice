@@ -7,6 +7,36 @@ public enum NumberDie: Int, Sendable {
     case d20 = 20
     case d100 = 100
 }
+extension NumberDie {
+    public func roll<RNG: RandomNumberGenerator>(rng: inout RNG) -> Int {
+        Int(rng.next(upperBound: UInt(rawValue - 1))) + 1
+    }
+
+    public func roll<RNG: RandomNumberGenerator>(
+        withModifier advantageNumber: RollModifier?,
+        rng: inout RNG
+    ) -> Int {
+        switch advantageNumber {
+        case .disadvantage:
+            let firstRoll = self.roll(rng: &rng)
+            let secondRoll = self.roll(rng: &rng)
+            return min(firstRoll, secondRoll)
+        case .advantage:
+            let firstRoll = self.roll(rng: &rng)
+            let secondRoll = self.roll(rng: &rng)
+            return max(firstRoll, secondRoll)
+        default:
+            let roll = self.roll(rng: &rng)
+            return roll
+        }
+    }
+}
+
+extension NumberDie: CustomStringConvertible {
+    public var description: String {
+        "d\(rawValue)"
+    }
+}
 
 public enum PlotDieResult: Sendable {
     case opportunity
@@ -17,6 +47,10 @@ public enum PlotDieResult: Sendable {
 
 public struct RandomDistribution: Sendable {
     public var dice: [(die: NumberDie, count: Int)]
+
+    public var asArray: [NumberDie] {
+        dice.flatMap { (die, count) in Array(repeating: die, count: count) }
+    }
 }
 
 // Measured in ft

@@ -5,12 +5,14 @@ public struct Level1CpuBrain: RpgCharacterBrain {
         self.meRef = meRef
     }
 
-    public func decide<C>(options: C, in gameSnapshot: GameSnapshot) async -> C.Element
+    public func decide<C>(_ code: DecisionCode, options: C, in gameSnapshot: GameSnapshot) async
+        -> C.Element
     where C: Collection, C: Sendable {
         return options.first!
     }
 
-    public func decide<T>(type: T.Type, in gameSnapshot: GameSnapshot) async -> T
+    public func decide<T>(_ code: DecisionCode, type: T.Type, in gameSnapshot: GameSnapshot) async
+        -> T
     where T: Sendable {
         let me = gameSnapshot.characters[meRef]!
         if T.self == CombatChoice.self {
