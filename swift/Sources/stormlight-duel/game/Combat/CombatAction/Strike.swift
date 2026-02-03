@@ -117,7 +117,8 @@ public struct Strike: CombatAction {
                     "You can graze for \(damageMinAmount). Focus: \(character.focus.value)/\(character.focus.maxValue)",
                     to: character.primaryKey)
                 let shouldGraze =
-                    await character.brain.decide(options: GrazeChoice.allCases, in: game.snapshot)
+                    await character.brain.decide(
+                        .shouldGraze, options: GrazeChoice.allCases, in: game.snapshot)
                     == .shouldGraze
                 if shouldGraze {
                     myCharacter.focus.value -= 1

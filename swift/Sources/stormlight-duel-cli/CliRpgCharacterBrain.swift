@@ -11,12 +11,13 @@ struct CliRpgCharacterBrain: RpgCharacterBrain {
     }
 
     @MainActor
-    func decide<C: Sendable>(options: C, in gameSnapshot: GameSnapshot) -> C.Element
+    func decide<C: Sendable>(_ code: DecisionCode, options: C, in gameSnapshot: GameSnapshot)
+        -> C.Element
     where C: Collection, C.Element: Sendable {
         if let option = options.first, options.count == 1 {
             return option
         }
-        printForCharacter("Make a choice between the following \(options.count) options:")
+        printForCharacter(code)
         for (i, x) in options.enumerated() {
             print(">", i, x)
         }
@@ -28,15 +29,23 @@ struct CliRpgCharacterBrain: RpgCharacterBrain {
             return result
         }
         printForCharacter("No, try again.")
-        return decide(options: options, in: gameSnapshot)
+        return decide(code, options: options, in: gameSnapshot)
     }
 
     @MainActor
-    func decide<T>(type: T.Type, in gameSnapshot: GameSnapshot) -> T where T: Sendable {
-        if T.self == CombatChoice.self {
+    func decide<T: Sendable>(_ code: DecisionCode, type: T.Type, in gameSnapshot: GameSnapshot)
+        -> T
+    where T: Sendable {
+        switch code {
+        case .combatChoice:
             return decideCombatChoice(in: gameSnapshot) as! T
+        default:
+            if let allCases = (T.self as? (any CaseIterable.Type))?.allCases {
+                return decide(code, options: allCases.map { $0 as! T }, in: gameSnapshot)
+            }
+            fatalError("I don't know how to decide when asked for \(type)")
+
         }
-        fatalError("I don't know how to decide when asked for \(type)")
     }
 
     @MainActor

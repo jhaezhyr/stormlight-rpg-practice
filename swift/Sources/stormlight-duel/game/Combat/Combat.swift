@@ -95,6 +95,7 @@ public struct Combat: Scene {
                             options.append(.waitForOthers)
                         }
                         let initiativeChoice = await character.brain.decide(
+                            .initiative,
                             options: options,
                             in: game.snapshot
                         )
@@ -159,6 +160,7 @@ public struct Combat: Scene {
             }
 
             let choice = await character.brain.decide(
+                .combatChoice,
                 type: CombatChoice.self, in: game.snapshot)
             guard case .action(let action) = choice else {
                 break actions
