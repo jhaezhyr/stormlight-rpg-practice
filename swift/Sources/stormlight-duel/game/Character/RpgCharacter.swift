@@ -200,3 +200,8 @@ public class AnyRpgCharacter: RpgCharacter {
         }
     }
 }
+extension AnyRpgCharacter: CustomStringConvertible {
+    public var description: String {
+        "\(name) (\(type(of: self)) wrapping \(type(of: core)))"
+    }
+}

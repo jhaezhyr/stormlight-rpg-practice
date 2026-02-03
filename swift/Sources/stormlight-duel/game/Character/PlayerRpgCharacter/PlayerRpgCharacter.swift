@@ -133,3 +133,10 @@ extension PlayerRpgCharacter {
         )
     }
 }
+
+extension PlayerRpgCharacter: CustomStringConvertible {
+    public var description: String {
+        "\(name) (\(type(of: self)))"
+
+    }
+}
