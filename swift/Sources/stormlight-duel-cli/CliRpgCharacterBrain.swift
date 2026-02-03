@@ -17,7 +17,7 @@ struct CliRpgCharacterBrain: RpgCharacterBrain {
         if let option = options.first, options.count == 1 {
             return option
         }
-        printForCharacter(code)
+        await printForCharacter(code)
         for (i, x) in options.enumerated() {
             print(">", i, x)
         }
@@ -29,7 +29,7 @@ struct CliRpgCharacterBrain: RpgCharacterBrain {
             return result
         }
         printForCharacter("No, try again.")
-        return decide(code, options: options, in: gameSnapshot)
+        return decide(options: options, in: gameSnapshot)
     }
 
     @MainActor
@@ -38,10 +38,10 @@ struct CliRpgCharacterBrain: RpgCharacterBrain {
     where T: Sendable {
         switch code {
         case .combatChoice:
-            return decideCombatChoice(in: gameSnapshot) as! T
+            return await decideCombatChoice(in: gameSnapshot) as! T
         default:
             if let allCases = (T.self as? (any CaseIterable.Type))?.allCases {
-                return decide(code, options: allCases.map { $0 as! T }, in: gameSnapshot)
+                return await decide(code, options: allCases.map { $0 as! T }, in: gameSnapshot)
             }
             fatalError("I don't know how to decide when asked for \(type)")
 
