@@ -82,7 +82,7 @@ public struct RpgCharacterCombatState: RpgCharacterCombatStateSharedProtocol {
         if let actionsTaken { self.actionsTaken = actionsTaken }
         if let reactionsRemaining { self.reactionsRemaining = reactionsRemaining }
         if let hasStrikeAdvantageOver { self.hasStrikeAdvantageOver = hasStrikeAdvantageOver }
-        self.reactionProviders = []
+        self.reactionProviders = [DodgeProvider(for: characterRef)]
     }
 
     var snapshot: RpgCharacterCombatStateSnapshot {
@@ -110,16 +110,20 @@ public struct Combat: Scene {
     public init() {
     }
 
+    public func start(in gameSession: isolated GameSession = #isolation) {
+        let game = gameSession.game
+        // Let everyone start the combat.
+        for character in game.characters {
+            character.combatState = RpgCharacterCombatState(
+                turnSpeed: .fast, reactionsRemaining: 1, for: character.primaryKey)
+        }
+    }
+
     public func run(in gameSession: isolated GameSession = #isolation) async {
         let game = gameSession.game
         let players = game.characters.filter { $0.isPlayer }.map { $0.core }
         let nonPlayers = game.characters.filter { !$0.isPlayer }.map { $0.core }
-        // Let everyone start the combat.
-        for ref in game.characters.keys {
-            game.characters[ref]!.combatState = RpgCharacterCombatState(
-                turnSpeed: .fast, reactionsRemaining: 1
-            )
-        }
+        start()
         rounds: for roundNum in 1... {
             await game.broadcaster.tellAll("======= ROUND \(roundNum) ========")
             var charactersPerPhase: CompleteDictionary<CombatTurnInitiative, [any RpgCharacter]> = [
