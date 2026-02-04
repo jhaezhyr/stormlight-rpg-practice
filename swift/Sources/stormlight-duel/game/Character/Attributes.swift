@@ -30,25 +30,25 @@ public enum AttributeName: Hashable, CaseIterable, Sendable {
     }()
 }
 
-public enum CoreSkillName: Hashable, CaseIterable, Sendable {
-    case agility
-    case athletics
-    case heavyWeaponry
-    case lightWeaponry
-    case stealth
-    case thievery
-    case crafting
-    case deduction
-    case discipline
-    case intimidation
-    case lore
-    case medicine
-    case deception
-    case insight
-    case leadership
-    case perception
-    case persuasion
-    case survival
+public enum CoreSkillName: String, Hashable, CaseIterable, Sendable {
+    case agility = "agility"
+    case athletics = "athletics"
+    case heavyWeaponry = "heavy"
+    case lightWeaponry = "light"
+    case stealth = "stealth"
+    case thievery = "thievery"
+    case crafting = "crafting"
+    case deduction = "deduction"
+    case discipline = "discipline"
+    case intimidation = "intimidation"
+    case lore = "lore"
+    case medicine = "medicine"
+    case deception = "deception"
+    case insight = "insight"
+    case leadership = "leadership"
+    case perception = "perception"
+    case persuasion = "persuasion"
+    case survival = "survival"
 
     public static let statToSkill: CompleteDictionary<AttributeName, Set<CoreSkillName>> = [
         .strength: [.athletics, .heavyWeaponry],
@@ -69,6 +69,16 @@ public enum CoreSkillName: Hashable, CaseIterable, Sendable {
                     })
             })
     }()
+
+    public var attribute: AttributeName {
+        Self.skillToAttribute[self]
+    }
+    public var realm: Realm {
+        AttributeName.statToRealm[attribute]
+    }
+}
+extension CoreSkillName: CustomStringConvertible {
+    public var description: String { rawValue }
 }
 
 public enum SurgeName: Hashable, CaseIterable, Sendable {

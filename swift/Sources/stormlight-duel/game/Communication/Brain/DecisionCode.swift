@@ -4,6 +4,7 @@ public enum DecisionCode: Sendable, Equatable {
     case combatChoice
     case whichDieToModify(_ modifier: RollModifier)
     case shouldDodge
+    case skillForGainAdvantage
 }
 
 extension DecisionCode: CustomStringConvertible {
@@ -19,6 +20,8 @@ extension DecisionCode: CustomStringConvertible {
             "Which die would you like to \(modifier) in this test?"
         case .shouldDodge:
             "You're being targeted. Would you like to dodge?"
+        case .skillForGainAdvantage:
+            "Which skill would you like to use to gain advantage over your opponent?"
         }
     }
 }
