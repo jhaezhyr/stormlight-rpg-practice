@@ -54,9 +54,13 @@ public class RpgAttackTest: RpgTest {
             complicationsAvailable: complicationsAvailable)
     }
 
+    /// Remember to call .afterSuccess or .afterFailure after calling this
     public func roll(in gameSession: isolated GameSession) async -> RpgAttackTestResult {
         let game = gameSession.game
         let character = game.anyCharacter(at: tester)!
+        await game.naiveDispatch(
+            TestHookType.beforeRoll, for: tester, attempting: primaryKey, in: gameSession
+        )
         let (
             advantagesApplied,
             disadvantagesApplied,
@@ -76,11 +80,18 @@ public class RpgAttackTest: RpgTest {
         }[0]
         let damageDieRolls = dieRoleCounts.compactMap {
             if case .damageDie(let numberDie) = $0.role {
-                numberDie.roll(withModifier: $0.advantageNumber, rng: &game.rng)
+                (
+                    die: numberDie, modifier: $0.advantageNumber,
+                    result: numberDie.roll(withModifier: $0.advantageNumber, rng: &game.rng)
+                )
             } else {
                 nil
             }
         }
+
+        await game.naiveDispatch(
+            TestHookType.beforeResolution, for: tester, attempting: primaryKey, in: gameSession
+        )
 
         //let testDieRollOpportunity = testDieRoll == 20
         //let testDieRollComplication = testDieRoll == 1
@@ -89,6 +100,22 @@ public class RpgAttackTest: RpgTest {
         let testModifier = character.modifiers[skill] ?? 0
         let testResult = testDieRoll + testModifier + otherModifiers >= difficulty
 
+        let modifierBit =
+            if let modifier = dieRoleCounts.first(where: { _ in true })!.advantageNumber {
+                " with \(modifier)"
+            } else {
+                ""
+            }
+        await gameSession.game.broadcaster.tell(
+            "You rolled a \(NumberDie.d20)\(modifierBit) and got a \(testDieRoll). The skill was \(skill), so your modifier was \(testModifier). The difficulty was \(difficulty) and you got \(testDieRoll + testModifier). \(testResult ? "You hit!" : "You failed the attack test.")",
+            to: tester
+        )
+
+        let (dice:dice, result:result) = describeDice(damageDieRolls)
+        await gameSession.game.broadcaster.tell(
+            "You rolled \(dice) for your damage and got \(result).", to: tester)
+
+        let dieRollResults = damageDieRolls.map { $0.result }
         return RpgAttackTestResult(
             testDieRoll: testDieRoll,
             testResult: testResult,
@@ -96,10 +123,62 @@ public class RpgAttackTest: RpgTest {
             disadvantagesApplied: disadvantagesApplied,
             opportunitiesApplied: 0,
             complicationsApplied: 0,
-            damageDieRolls: damageDieRolls,
-            damage: damageDieRolls.reduce(0, +) + damageModifiers
+            damageDieRolls: dieRollResults,
+            damage: dieRollResults.reduce(0, +) + damageModifiers
         )
     }
+}
+
+public func describeDice(_ dice: [(die: NumberDie, modifier: RollModifier?, result: Int)]) -> (
+    dice: String, result: String
+) {
+    // You rolled a d10 with advantage and got an 8.
+    // You rolled two d10s and got 2 and 3.
+    // You rolled a d10 with advantage and a d8 and got 4+1.
+    // You rolled four d6s and a d6 with disadvantage and got 6+5+4+3+2
+    // You rolled two d4s with advantage and got 2+3
+
+    // Bucket them by role.
+    struct DieAndModifier: Hashable {
+        var die: NumberDie
+        var modifier: RollModifier?
+    }
+    var buckets: [DieAndModifier: [Int]] = [:]
+    for (die, modifier, result) in dice {
+        buckets[DieAndModifier(die: die, modifier: modifier), default: []].append(result)
+    }
+    let sortedBuckets = buckets.sorted { lh, rh in lh.key.die.rawValue > rh.key.die.rawValue }
+    let spelledOutNumbers = [
+        0: "no",
+        1: "a",
+        2: "two",
+        3: "three",
+        4: "four",
+        5: "five",
+        6: "six",
+        7: "seven",
+        8: "eight",
+        9: "nine",
+        10: "ten",
+    ]
+    let bucketDiceDescriptions = sortedBuckets.map { (dieAndModifer, results) in
+        "\(spelledOutNumbers[results.count] ?? "lots of") \(dieAndModifer.die)\(results.count > 1 ? "s" : "")"
+    }
+    let bucketDiceDescriptionWhole =
+        switch bucketDiceDescriptions.count {
+        case 0:
+            "nothing"
+        case 1:
+            bucketDiceDescriptions[0]
+        case 2:
+            bucketDiceDescriptions.joined(separator: " and ")
+        default:
+            bucketDiceDescriptions.dropLast().joined(separator: ", ") + ", and "
+                + bucketDiceDescriptions.last!
+        }
+    let resultDescription = sortedBuckets.flatMap { $0.value }.map { "\($0)" }.joined(
+        separator: "+")
+    return (dice: bucketDiceDescriptionWhole, result: resultDescription)
 }
 
 public enum AttackDieRole: Sendable, Equatable, Hashable {

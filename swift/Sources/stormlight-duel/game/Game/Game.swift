@@ -75,6 +75,10 @@ extension Game {
     public func test<Test: RpgTest>(at ref: RpgTestRef, as type: Test.Type) -> Test? {
         tests[ref]?.core as? Test
     }
+
+    public func removeTest(_ test: any RpgTest) {
+        tests.remove(test.primaryKey)
+    }
 }
 
 extension Game: NonLeafGenericListenerHolder, AllTheListenersHolder {

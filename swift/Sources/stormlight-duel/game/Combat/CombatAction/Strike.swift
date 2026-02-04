@@ -79,32 +79,20 @@ public struct Strike: CombatAction {
         game.updateTest(test)
         await game.naiveDispatch(
             StrikePhase.aboutToAttemptStrike, for: meRef, attempting: testRef, in: gameSession)
-        await game.naiveDispatch(
-            TestHookType.beforeRoll, for: meRef, attempting: testRef, in: gameSession)
         let result = await test.roll(in: gameSession)
         let weaponModifier = character.modifiers[weaponSkill, default: 0]
-        let attackRoll = result.testDieRoll
         let damageMinAmount = result.damage
         let damageFullAmount = result.damage + weaponModifier
         await game.naiveDispatch(
             TestHookType.beforeResolution, for: meRef, attempting: testRef, in: gameSession)
-        await game.broadcaster.tell(
-            "You rolled a \(attackRoll+weaponModifier) (\(attackRoll)+\(weaponModifier)) with \(damageFullAmount) (\(damageMinAmount)+\(weaponModifier)) in damage dice",
-            to: character.primaryKey)
-        await game.broadcaster.tell(
-            "The test to beat is \(test.difficulty) (\(targetCharacter.name)'s physical defense: \(targetPhysicalDefense))",
-            to: character.primaryKey)
         let damageToDo: Int
         let verbOfStrike: String
         if result.testResult {
-            await game.broadcaster.tell(
-                "You passed the test and hit!", to: character.primaryKey)
             await game.naiveDispatch(
                 TestHookType.afterSuccess, for: meRef, attempting: testRef, in: gameSession)
             damageToDo = damageFullAmount
             verbOfStrike = "strikes"
         } else {
-            await game.broadcaster.tell("You failed the attack test.", to: character.primaryKey)
             await game.naiveDispatch(
                 TestHookType.afterFailure, for: meRef, attempting: testRef, in: gameSession)
             if character.focus.value >= 1 {

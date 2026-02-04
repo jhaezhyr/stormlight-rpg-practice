@@ -98,6 +98,14 @@ public enum SkillName: Hashable, Sendable {
     case core(CoreSkillName)
     case surge(SurgeName)
 }
+extension SkillName: CustomStringConvertible {
+    public var description: String {
+        switch self {
+        case .core(let x): "\(x)"
+        case .surge(let x): "\(x)"
+        }
+    }
+}
 
 public enum CultureName: CaseIterable {
     case alethi
