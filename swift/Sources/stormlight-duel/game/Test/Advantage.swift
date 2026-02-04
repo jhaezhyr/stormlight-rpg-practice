@@ -14,7 +14,6 @@ func assignAdvantagesAndDisadvantages<Role>(
 ) {
     var advantagesApplied = 0
     var disadvantagesApplied = 0
-    print(dieRoleCounts)
     var result = dieRoleCounts.mapToCountedSet { (role, count) in
         (element: RoleWithAdvantageNumber(role: role, advantageNumber: nil), count: count)
     }
@@ -24,7 +23,6 @@ func assignAdvantagesAndDisadvantages<Role>(
         toAllocate rollModifier: RollModifier,
         in gameSession: isolated GameSession = #isolation
     ) async -> Bool {
-        print(result)
         let options =
             result.filterToCountedSet { die, count in
                 die.advantageNumber != rollModifier ? 1 : 0
@@ -32,7 +30,6 @@ func assignAdvantagesAndDisadvantages<Role>(
             + [
                 .other("ignore")
             ]
-        print(options)
         let choice = await brain.decide(
             .whichDieToModify(rollModifier), options: options, in: gameSession.game.snapshot)
         guard case .decide(let choice) = choice else {
@@ -62,7 +59,6 @@ func assignAdvantagesAndDisadvantages<Role>(
             advantagesApplied += 1
         }
     }
-    print(dieRoleCounts)
     return (
         advantagesApplied: advantagesApplied,
         disadvantagesApplied: disadvantagesApplied,
