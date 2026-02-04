@@ -53,7 +53,6 @@ public protocol RpgCharacterCombatStateSharedProtocol {
     var weaponsUsed: Set<WeaponName> { get }
     var actionsTaken: Set<CombatActionName> { get }
     var reactionsRemaining: Int { get }
-    var hasStrikeAdvantageOver: Set<RpgCharacterRef> { get }
 }
 
 public struct RpgCharacterCombatState: RpgCharacterCombatStateSharedProtocol {
@@ -62,7 +61,6 @@ public struct RpgCharacterCombatState: RpgCharacterCombatStateSharedProtocol {
     public var weaponsUsed: Set<WeaponName> = []
     public var actionsTaken: Set<CombatActionName> = []
     public var reactionsRemaining: Int = 0
-    public var hasStrikeAdvantageOver: Set<RpgCharacterRef> = []
 
     public var reactionProviders: [Any]
 
@@ -81,7 +79,6 @@ public struct RpgCharacterCombatState: RpgCharacterCombatStateSharedProtocol {
         if let weaponsUsed { self.weaponsUsed = weaponsUsed }
         if let actionsTaken { self.actionsTaken = actionsTaken }
         if let reactionsRemaining { self.reactionsRemaining = reactionsRemaining }
-        if let hasStrikeAdvantageOver { self.hasStrikeAdvantageOver = hasStrikeAdvantageOver }
         self.reactionProviders = [DodgeProvider(for: characterRef)]
     }
 
@@ -92,7 +89,6 @@ public struct RpgCharacterCombatState: RpgCharacterCombatStateSharedProtocol {
             weaponsUsed: weaponsUsed,
             actionsTaken: actionsTaken,
             reactionsRemaining: reactionsRemaining,
-            hasStrikeAdvantageOver: hasStrikeAdvantageOver,
         )
     }
 }
@@ -103,7 +99,6 @@ public struct RpgCharacterCombatStateSnapshot: RpgCharacterCombatStateSharedProt
     public var weaponsUsed: Set<WeaponName>
     public var actionsTaken: Set<CombatActionName>
     public var reactionsRemaining: Int
-    public var hasStrikeAdvantageOver: Set<RpgCharacterRef>
 }
 
 public struct Combat: Scene {

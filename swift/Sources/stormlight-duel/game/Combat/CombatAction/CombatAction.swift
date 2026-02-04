@@ -65,4 +65,4 @@ public enum CombatChoice: Sendable {
     case endTurn
 }
 
-public let allCombatActions: [CombatAction.Type] = [Strike.self, Move.self]
+public let allCombatActions: [CombatAction.Type] = [Strike.self, Move.self, GainAdvantage.self]

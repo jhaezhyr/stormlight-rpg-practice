@@ -17,14 +17,14 @@ public struct AnyCondition: Condition {
     public var core: any Condition
     public var id: Int { core.id }
     public var snapshot: any ConditionSnapshot { core.snapshot }
-    private init(notUnwrapping character: any Condition) {
-        self.core = character
+    private init(notUnwrapping condition: any Condition) {
+        self.core = condition
     }
-    public init(_ character: any Condition) {
-        if let character = character as? AnyCondition {
+    public init(_ condition: any Condition) {
+        if let character = condition as? AnyCondition {
             self.init(character)
         } else {
-            self.init(notUnwrapping: character)
+            self.init(notUnwrapping: condition)
         }
     }
 }

@@ -1,6 +1,8 @@
 public protocol SelfListenerSelfHookForTestHolder {
     var selfListenersSelfHooksForTests: [any SelfListenerSelfHookForTestProtocol] { get }
     var allSelfListenersSelfHooksForTests: [any SelfListenerSelfHookForTestProtocol] { get }
+    var debugAllSelfListenersSelfHooksForTests: [(String, any SelfListenerSelfHookForTestProtocol)]
+    { get }
 }
 extension SelfListenerSelfHookForTestHolder {
     public var selfListenersSelfHooksForTests: [any SelfListenerSelfHookForTestProtocol] { [] }
@@ -11,12 +13,29 @@ extension SelfListenerSelfHookForTestHolderLeaf {
     public var allSelfListenersSelfHooksForTests: [any SelfListenerSelfHookForTestProtocol] {
         selfListenersSelfHooksForTests
     }
+    public var debugAllSelfListenersSelfHooksForTests:
+        [(String, any SelfListenerSelfHookForTestProtocol)]
+    {
+        allSelfListenersSelfHooksForTests.map { ("\(self)", $0) }
+    }
 }
 extension NonLeafGenericListenerHolder where Self: SelfListenerSelfHookForTestHolder {
     public var allSelfListenersSelfHooksForTests: [any SelfListenerSelfHookForTestProtocol] {
         selfListenersSelfHooksForTests
             + childHolders.compactMap {
                 ($0 as? any SelfListenerSelfHookForTestHolder)?.allSelfListenersSelfHooksForTests
+            }.flatMap { $0 }
+    }
+
+    public var debugAllSelfListenersSelfHooksForTests:
+        [(String, any SelfListenerSelfHookForTestProtocol)]
+    {
+        selfListenersSelfHooksForTests.map { ("\(self)", $0) }
+            + childHolders.compactMap {
+                ($0 as? any SelfListenerSelfHookForTestHolder)?
+                    .debugAllSelfListenersSelfHooksForTests.map { str, lis in
+                        ("\(str), \(self)", lis)
+                    }
             }.flatMap { $0 }
     }
 }
@@ -50,18 +69,20 @@ extension SelfListenerSelfHookForTestProtocol {
         } else {
             guard let typeSafeCharacter = character as? C else {
                 fatalError(
-                    "You passed the wrong character type into the SelfListenerSelfHookProtocol")
+                    "You passed the wrong character type into the SelfListenerSelfHookProtocol. Needed \(C.self), got \(type(of: character))"
+                )
             }
             characterToUse = typeSafeCharacter
         }
         let testToUse: Test
-        if C.self == AnyRpgTest.self {
+        if Test.self == AnyRpgTest.self {
             // We WANT a wrapped test.
             testToUse = AnyRpgTest(test) as! Test
         } else {
             guard let typeSafeTest = test as? Test else {
                 fatalError(
-                    "You passed the wrong test type into the SelfListenerSelfHookProtocol")
+                    "You passed the wrong test type into the SelfListenerSelfHookProtocol. Needed \(Test.self), got \(type(of: test))"
+                )
             }
             testToUse = typeSafeTest
         }
