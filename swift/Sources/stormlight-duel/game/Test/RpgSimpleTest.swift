@@ -47,9 +47,16 @@ public class RpgSimpleTest: RpgTest {
             complicationsAvailable: complicationsAvailable)
     }
 
+    /// Make sure to dispatch an "afterSuccess" or "afterFailure"
     public func roll(in gameSession: isolated GameSession) async -> RpgSimpleTestResult {
         let game = gameSession.game
         let character = game.anyCharacter(at: tester)!
+        await game.naiveDispatch(
+            TestHookType.beforeRoll,
+            for: tester,
+            attempting: primaryKey,
+            in: gameSession
+        )
         let (
             advantagesApplied,
             disadvantagesApplied,
@@ -62,10 +69,17 @@ public class RpgSimpleTest: RpgTest {
             advantageBrain: character.brain,
             dieRoleCounts: [SimpleTestDieRole.testDie]
         )
-
+        let testDieRollModifier = dieRoleCounts.first { _ in true }!.advantageNumber
         let testDieRoll = NumberDie.d20.roll(
-            withModifier: dieRoleCounts.first { _ in true }!.advantageNumber,
+            withModifier: testDieRollModifier,
             rng: &game.rng
+        )
+
+        await game.naiveDispatch(
+            TestHookType.beforeResolution,
+            for: tester,
+            attempting: primaryKey,
+            in: gameSession
         )
 
         //let testDieRollOpportunity = testDieRoll == 20
@@ -74,6 +88,17 @@ public class RpgSimpleTest: RpgTest {
 
         let testModifier = character.modifiers[skill] ?? 0
         let testResult = testDieRoll + testModifier >= difficulty
+
+        let modifierBit =
+            if let modifier = dieRoleCounts.first(where: { _ in true })!.advantageNumber {
+                " with \(modifier)"
+            } else {
+                ""
+            }
+        await gameSession.game.broadcaster.tell(
+            "You rolled a \(NumberDie.d20)\(modifierBit) and got a \(testDieRoll). The skill was \(skill), so your modifier was \(testModifier). The difficulty was \(difficulty) and you got \(testDieRoll + testModifier). \(testResult ? "You passed!" : "You failed.")",
+            to: character.primaryKey
+        )
 
         return RpgSimpleTestResult(
             testDieRoll: testDieRoll,

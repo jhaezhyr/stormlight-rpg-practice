@@ -53,6 +53,7 @@ public protocol RpgCharacterCombatStateSharedProtocol {
     var weaponsUsed: Set<WeaponName> { get }
     var actionsTaken: Set<CombatActionName> { get }
     var reactionsRemaining: Int { get }
+    var recoveriesRemaining: Int { get }
 }
 
 public struct RpgCharacterCombatState: RpgCharacterCombatStateSharedProtocol {
@@ -61,6 +62,7 @@ public struct RpgCharacterCombatState: RpgCharacterCombatStateSharedProtocol {
     public var weaponsUsed: Set<WeaponName> = []
     public var actionsTaken: Set<CombatActionName> = []
     public var reactionsRemaining: Int = 0
+    public var recoveriesRemaining: Int = 1
 
     public var reactionProviders: [Any]
 
@@ -89,6 +91,7 @@ public struct RpgCharacterCombatState: RpgCharacterCombatStateSharedProtocol {
             weaponsUsed: weaponsUsed,
             actionsTaken: actionsTaken,
             reactionsRemaining: reactionsRemaining,
+            recoveriesRemaining: recoveriesRemaining,
         )
     }
 }
@@ -99,6 +102,7 @@ public struct RpgCharacterCombatStateSnapshot: RpgCharacterCombatStateSharedProt
     public var weaponsUsed: Set<WeaponName>
     public var actionsTaken: Set<CombatActionName>
     public var reactionsRemaining: Int
+    public var recoveriesRemaining: Int
 }
 
 public struct Combat: Scene {

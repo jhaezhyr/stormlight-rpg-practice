@@ -26,12 +26,6 @@ public struct GainAdvantage: CombatAction {
             in: gameSession
         )
         game.updateTest(test)
-        await game.naiveDispatch(
-            TestHookType.beforeRoll,
-            for: me.primaryKey,
-            attempting: test.primaryKey,
-            in: gameSession
-        )
         let result = await test.roll(in: gameSession)
         if result.testResult {
             me.conditions.upsert(
@@ -48,6 +42,13 @@ public struct GainAdvantage: CombatAction {
             await game.broadcaster.tell(
                 "\(me.primaryKey.name) failed to gain advantage over you.", to: opponent.primaryKey)
         }
+        await game.naiveDispatch(
+            result.testResult ? TestHookType.afterSuccess : TestHookType.afterFailure,
+            for: me.primaryKey,
+            attempting: test.primaryKey,
+            in: gameSession
+        )
+        game.removeTest(test)
     }
 
     public func resolveReferences(

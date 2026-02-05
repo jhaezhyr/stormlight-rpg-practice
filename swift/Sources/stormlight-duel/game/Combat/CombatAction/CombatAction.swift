@@ -11,6 +11,9 @@ public protocol CombatAction: Sendable {
     var focusCost: Int { get }
     func canTakeAction(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot) -> Bool
     func action(by characterRef: RpgCharacterRef, in gameSession: isolated GameSession) async
+    static func canMaybeTakeAction(
+        by character: RpgCharacterRef, in gameSnapshot: GameSnapshot
+    ) -> Bool
 }
 extension CombatAction {
     public func canTakeAction(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot)
@@ -65,4 +68,6 @@ public enum CombatChoice: Sendable {
     case endTurn
 }
 
-public let allCombatActions: [CombatAction.Type] = [Strike.self, Move.self, GainAdvantage.self]
+public let allCombatActions: [CombatAction.Type] = [
+    Strike.self, Move.self, GainAdvantage.self, Recover.self,
+]
