@@ -21,6 +21,7 @@ public struct MyCLI {
             health: .init(maxValue: 12),
             focus: .init(maxValue: 4),
             investiture: .init(maxValue: 0),
+            reach: 0,
             conditions: [],
             brain: CliRpgCharacterBrain(
                 broadcaster: broadcaster,
@@ -38,6 +39,7 @@ public struct MyCLI {
             health: .init(maxValue: 12),
             focus: .init(maxValue: 4),
             investiture: .init(maxValue: 0),
+            reach: 0,
             conditions: [],
             brain: Level1CpuBrain(
                 for: RpgCharacterRef(name: "Shallan")
@@ -52,6 +54,6 @@ public struct MyCLI {
                     characterRef: RpgCharacterRef(name: "GM EN")
                 )))
 
-        await session.switch(to: Combat())
+        await session.switch(to: Combat(map: Map.emptyDuel))
     }
 }

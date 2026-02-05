@@ -13,6 +13,9 @@ public struct CompleteDictionary<Key: Hashable & CaseIterable, Value> {
             fatalError("CompleteDictionary incomplete. Missing keys: \(missingCases)")
         }
     }
+    public init<S: Sequence>(uniqueKeysWithValues: S) where S.Element == (Key, Value) {
+        self.init(from: Dictionary.init(uniqueKeysWithValues: uniqueKeysWithValues))
+    }
     public init(valueFn: (_ k: Key) -> Value) {
         core = Dictionary(uniqueKeysWithValues: Key.allCases.map { ($0, valueFn($0)) })
     }

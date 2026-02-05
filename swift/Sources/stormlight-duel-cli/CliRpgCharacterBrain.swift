@@ -131,9 +131,9 @@ extension CliArgsContextFreeConvertibleType {
     }
 }
 
-extension Move: CliArgsContextFreeConvertibleType {
+extension InteractiveMove: CliArgsContextFreeConvertibleType {
     init?(args: [Any]) throws(CliParseError) {
-        if let alreadyParsedMove = args.first as? Move, args.count == 1 {
+        if let alreadyParsedMove = args.first as? InteractiveMove, args.count == 1 {
             self = alreadyParsedMove
             return
         }
@@ -145,32 +145,10 @@ extension Move: CliArgsContextFreeConvertibleType {
         else {
             return nil
         }
-        var distance: Distance?
-        var directionIsForward: Bool?
-        for arg in remaining {
-            let isBackwardText: Set<Substring> = ["backward", "back", "b", "away", "from"]
-            let isForwardText: Set<Substring> = ["forward", "toward", "to"]
-            if let distanceArg = try Distance(args: [arg]), distance == nil {
-                distance = distanceArg
-            } else if let string = arg as? Substring, isBackwardText.contains(string),
-                directionIsForward == nil
-            {
-                directionIsForward = false
-            } else if let string = arg as? Substring, isForwardText.contains(string),
-                directionIsForward == nil
-            {
-                directionIsForward = true
-            } else {
-                throw CliParseError(
-                    "\(arg) cannot be assigned to `distance` or to `directionIsForward`.")
-            }
-        }
-        let finalDistance = distance ?? 5
-        let finalDirectionIsForward = directionIsForward ?? true
-        self.init(distanceToward: finalDistance * (finalDirectionIsForward ? 1 : -1))
+        self.init()
     }
 
-    static var helpText: Substring { "(m)ove [\(Distance.helpText)] [forward|backward]" }
+    static var helpText: Substring { "(m)ove" }
 }
 
 extension Strike: CliArgsConvertibleType {

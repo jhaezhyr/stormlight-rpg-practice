@@ -47,74 +47,24 @@ public enum TurnSpeed: Hashable, CaseIterable, Sendable {
     }
 }
 
-public protocol RpgCharacterCombatStateSharedProtocol {
-    var turnSpeed: TurnSpeed { get }
-    var actionsRemaining: Int { get }
-    var weaponsUsed: Set<WeaponName> { get }
-    var actionsTaken: Set<CombatActionName> { get }
-    var reactionsRemaining: Int { get }
-    var recoveriesRemaining: Int { get }
-}
-
-public struct RpgCharacterCombatState: RpgCharacterCombatStateSharedProtocol {
-    public var turnSpeed: TurnSpeed
-    public var actionsRemaining: Int = 0
-    public var weaponsUsed: Set<WeaponName> = []
-    public var actionsTaken: Set<CombatActionName> = []
-    public var reactionsRemaining: Int = 0
-    public var recoveriesRemaining: Int = 1
-
-    public var reactionProviders: [Any]
-
-    public init(
-        turnSpeed: TurnSpeed,
-        actionsRemaining: Int? = nil,
-        weaponsUsed: Set<WeaponName>? = nil,
-        actionsTaken: Set<CombatActionName>? = nil,
-        reactionsRemaining: Int? = nil,
-        hasStrikeAdvantageOver: Set<RpgCharacterRef>? = nil,
-        for characterRef: RpgCharacterRef,
-        in gameSession: isolated GameSession = #isolation
-    ) {
-        self.turnSpeed = turnSpeed
-        if let actionsRemaining { self.actionsRemaining = actionsRemaining }
-        if let weaponsUsed { self.weaponsUsed = weaponsUsed }
-        if let actionsTaken { self.actionsTaken = actionsTaken }
-        if let reactionsRemaining { self.reactionsRemaining = reactionsRemaining }
-        self.reactionProviders = [DodgeProvider(for: characterRef)]
-    }
-
-    var snapshot: RpgCharacterCombatStateSnapshot {
-        .init(
-            turnSpeed: turnSpeed,
-            actionsRemaining: actionsRemaining,
-            weaponsUsed: weaponsUsed,
-            actionsTaken: actionsTaken,
-            reactionsRemaining: reactionsRemaining,
-            recoveriesRemaining: recoveriesRemaining,
-        )
-    }
-}
-
-public struct RpgCharacterCombatStateSnapshot: RpgCharacterCombatStateSharedProtocol, Sendable {
-    public var turnSpeed: TurnSpeed
-    public var actionsRemaining: Int
-    public var weaponsUsed: Set<WeaponName>
-    public var actionsTaken: Set<CombatActionName>
-    public var reactionsRemaining: Int
-    public var recoveriesRemaining: Int
-}
-
 public struct Combat: Scene {
-    public init() {
+    public let map: Map
+
+    public init(map: Map) {
+        self.map = map
     }
 
     public func start(in gameSession: isolated GameSession = #isolation) {
         let game = gameSession.game
         // Let everyone start the combat.
-        for character in game.characters {
+        for (position, character) in zip(map.characterStartPositions, game.characters) {
             character.combatState = RpgCharacterCombatState(
-                turnSpeed: .fast, reactionsRemaining: 1, for: character.primaryKey)
+                space: Space1D(
+                    origin: position,
+                    size: 5,
+                    orientation: .left),
+                for: character.primaryKey
+            )
         }
     }
 
@@ -203,12 +153,25 @@ public struct Combat: Scene {
                 return true
             }
 
+            await gameSession.game.broadcaster.tellAll(
+                (gameSession.game.scene as! Combat).map.oneLineDescription(
+                    in: gameSession.game.snapshot
+                ),
+            )
             for someCharacter in game.characters {
+                let opponents = game.characters.filter { $0.primaryKey != someCharacter.primaryKey }
+                let (distanceToNearestOppontent, nearestOpponent) =
+                    opponents.map {
+                        ($0.combatState!.space.distance(to: someCharacter.combatState!.space), $0)
+                    }
+                    .sorted { (lh, rh) in lh.0 < rh.0 }[0]
                 await game.broadcaster.tell(
                     "\(someCharacter.primaryKey == character.primaryKey ? "Your" : "\(someCharacter.name)'s") stats:\n"
                         + "  Health: \(someCharacter.health.value)/\(character.health.maxValue)\n"
                         + "  Focus: \(someCharacter.focus.value)/\(character.focus.maxValue)\n"
-                        + "  Conditions: \(someCharacter.conditions.map { "\($0.core)" }.joined(separator: ","))",
+                        + "  Conditions: \(someCharacter.conditions.map { "\($0.core)" }.joined(separator: ","))\n"
+                        + "  Space controlled: \(someCharacter.combatState!.space.lo)...\(someCharacter.combatState!.space.hi)\n"
+                        + "  Distance to \(nearestOpponent.name): \(distanceToNearestOppontent)",
                     to: character.primaryKey)
             }
 

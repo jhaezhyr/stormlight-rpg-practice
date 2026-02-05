@@ -69,5 +69,5 @@ public enum CombatChoice: Sendable {
 }
 
 public let allCombatActions: [CombatAction.Type] = [
-    Strike.self, Move.self, GainAdvantage.self, Recover.self,
+    Strike.self, InteractiveMove.self, GainAdvantage.self, Recover.self,
 ]

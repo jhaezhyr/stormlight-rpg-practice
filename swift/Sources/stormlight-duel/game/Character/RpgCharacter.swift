@@ -26,6 +26,8 @@ public protocol RpgCharacterSharedProtocol: Keyed where Key == RpgCharacterRef {
     var movementRate: Distance { get }
     var size: CharacterSize { get }
     var deflect: Int { get }
+    /// You can only do touch/melee when your space is within `reach` of your target.
+    var reach: Distance { get }
 
     associatedtype CombatState: RpgCharacterCombatStateSharedProtocol
     var combatState: CombatState? { get }
@@ -186,6 +188,7 @@ public class AnyRpgCharacter: RpgCharacter {
         get { core.equipment }
         set { core.equipment = newValue }
     }
+    public var reach: Distance { core.reach }
     public var isPlayer: Bool { core.isPlayer }
     public var snapshot: any RpgCharacterSnapshot { core.snapshot }
     public var core: any RpgCharacter
