@@ -77,6 +77,22 @@ public struct Space1D: Equatable, Hashable, Sendable {
         orientation == .right ? origin + size : origin
     }
 
+    public init(
+        origin: Position1D,
+        size: Distance,
+        orientation: Direction1D = .right
+    ) {
+        self.origin = origin
+        self.size = size
+        self.orientation = orientation
+    }
+
+    public init(
+        _ range: Range<Position1D>
+    ) {
+        self.init(origin: range.lowerBound, size: range.upperBound - range.lowerBound)
+    }
+
     public func distance(to other: Position1D) -> Distance {
         let lo = lo
         let hi = hi
