@@ -100,7 +100,15 @@ public struct Space1D: Equatable, Hashable, Sendable {
         let rh = rhLo..<rhHi
         return rh.contains(lhLo) || rh.contains(lhHi - 1)
             || lh.contains(rhLo) || lh.contains(rhHi - 1)
+    }
 
+    public func touchesOrOverlaps(_ other: Self) -> Bool {
+        let (lhLo, lhHi) = (lo, hi)
+        let (rhLo, rhHi) = (other.lo, other.hi)
+        let lh = lhLo..<lhHi
+        let rh = rhLo..<rhHi
+        return rh.contains(lhLo) || rh.contains(lhHi)
+            || lh.contains(rhLo) || lh.contains(rhHi)
     }
 
     public func facing(_ newOrientation: Direction1D) -> Self {
@@ -111,6 +119,13 @@ public struct Space1D: Equatable, Hashable, Sendable {
         case .left: return .init(origin: origin + size, size: size, orientation: .right)
         case .right: return .init(origin: origin - size, size: size, orientation: .left)
         }
+    }
+
+    public func expanded(by amount: Distance) -> Self {
+        var result = self
+        result.size += 2 * amount
+        result.origin -= orientation == .right ? amount : -amount
+        return result
     }
 
     public static func + (lh: Self, rh: Vector1D) -> Self {

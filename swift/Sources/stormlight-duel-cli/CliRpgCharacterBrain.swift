@@ -148,7 +148,7 @@ extension InteractiveMove: CliArgsContextFreeConvertibleType {
         self.init()
     }
 
-    static var helpText: Substring { "(m)ove [\(Distance.helpText)]" }
+    static var helpText: Substring { "(m)ove" }
 }
 
 extension Strike: CliArgsConvertibleType {

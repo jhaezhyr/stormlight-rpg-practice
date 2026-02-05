@@ -27,6 +27,9 @@ public struct Strike: CombatAction {
         else {
             return false
         }
+        guard let target = gameSnapshot.characters[target] else {
+            fatalError("Bad target reference \(target)")
+        }
         if !readyableItem.isReady {
             return false
         }
@@ -36,7 +39,18 @@ public struct Strike: CombatAction {
         if !canAffordAction(by: characterRef, in: gameSnapshot) {
             return false
         }
-        // TODO check range
+        let availableRange =
+            switch weapon.range {
+            case .melee(let extraReach):
+                character.reach + (extraReach ?? 0)
+            case .ranged(short: _, long: let longDistance):
+                longDistance
+            }
+        if !character.combatState!.space.expanded(by: availableRange).touchesOrOverlaps(
+            target.combatState!.space
+        ) {
+            return false
+        }
         return true
     }
 
@@ -58,6 +72,7 @@ public struct Strike: CombatAction {
         else {
             return
         }
+        // TODO Do things for ranged weapons.
         let myCharacter: any RpgCharacter = game.anyCharacter(at: character.primaryKey)!
         let targetCharacter: any RpgCharacter = game.anyCharacter(at: target)!
         let meRef = RpgCharacterRef(of: character)
