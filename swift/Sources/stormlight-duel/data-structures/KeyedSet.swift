@@ -75,6 +75,11 @@ extension KeyedSet: Collection {
 
 extension KeyedSet: Sendable where Element: Sendable {
 }
+extension KeyedSet: Equatable where Element: Equatable {
+    public static func == (lh: Self, rh: Self) -> Bool {
+        lh.core == rh.core
+    }
+}
 
 extension KeyedSet: ExpressibleByArrayLiteral {
     public init(arrayLiteral elements: Element...) {
