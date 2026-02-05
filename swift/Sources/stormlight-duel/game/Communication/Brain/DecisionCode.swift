@@ -6,6 +6,7 @@ public enum DecisionCode: Sendable, Equatable {
     case shouldDodge
     case skillForGainAdvantage
     case howToRecover
+    case directionToMove5Ft
 }
 
 extension DecisionCode: CustomStringConvertible {
@@ -25,6 +26,8 @@ extension DecisionCode: CustomStringConvertible {
             "Which skill would you like to use to gain advantage over your opponent?"
         case .howToRecover:
             "How would you like to use this point of recovery?"
+        case .directionToMove5Ft:
+            "Which direction would you like to move 5ft?"
         }
     }
 }

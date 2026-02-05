@@ -52,6 +52,6 @@ public struct MyCLI {
                     characterRef: RpgCharacterRef(name: "GM EN")
                 )))
 
-        await session.switch(to: Combat())
+        await session.switch(to: Combat(map: Map.emptyDuel))
     }
 }

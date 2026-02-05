@@ -1,4 +1,5 @@
 public protocol RpgCharacterCombatStateSharedProtocol {
+    var space: Space1D { get }
     var turnSpeed: TurnSpeed { get }
     var actionsRemaining: Int { get }
     var weaponsUsed: Set<WeaponName> { get }
@@ -8,7 +9,8 @@ public protocol RpgCharacterCombatStateSharedProtocol {
 }
 
 public struct RpgCharacterCombatState: RpgCharacterCombatStateSharedProtocol {
-    public var turnSpeed: TurnSpeed
+    public var space: Space1D
+    public var turnSpeed: TurnSpeed = .fast
     public var actionsRemaining: Int = 0
     public var weaponsUsed: Set<WeaponName> = []
     public var actionsTaken: Set<CombatActionName> = []
@@ -18,7 +20,8 @@ public struct RpgCharacterCombatState: RpgCharacterCombatStateSharedProtocol {
     public var reactionProviders: [Any]
 
     public init(
-        turnSpeed: TurnSpeed,
+        space: Space1D,
+        turnSpeed: TurnSpeed? = nil,
         actionsRemaining: Int? = nil,
         weaponsUsed: Set<WeaponName>? = nil,
         actionsTaken: Set<CombatActionName>? = nil,
@@ -27,7 +30,8 @@ public struct RpgCharacterCombatState: RpgCharacterCombatStateSharedProtocol {
         for characterRef: RpgCharacterRef,
         in gameSession: isolated GameSession = #isolation
     ) {
-        self.turnSpeed = turnSpeed
+        self.space = space
+        if let turnSpeed { self.turnSpeed = turnSpeed }
         if let actionsRemaining { self.actionsRemaining = actionsRemaining }
         if let weaponsUsed { self.weaponsUsed = weaponsUsed }
         if let actionsTaken { self.actionsTaken = actionsTaken }
@@ -37,6 +41,7 @@ public struct RpgCharacterCombatState: RpgCharacterCombatStateSharedProtocol {
 
     var snapshot: RpgCharacterCombatStateSnapshot {
         .init(
+            space: space,
             turnSpeed: turnSpeed,
             actionsRemaining: actionsRemaining,
             weaponsUsed: weaponsUsed,
@@ -48,10 +53,61 @@ public struct RpgCharacterCombatState: RpgCharacterCombatStateSharedProtocol {
 }
 
 public struct RpgCharacterCombatStateSnapshot: RpgCharacterCombatStateSharedProtocol, Sendable {
+    public var space: Space1D
     public var turnSpeed: TurnSpeed
     public var actionsRemaining: Int
     public var weaponsUsed: Set<WeaponName>
     public var actionsTaken: Set<CombatActionName>
     public var reactionsRemaining: Int
     public var recoveriesRemaining: Int
+}
+
+public typealias Vector1D = Int
+public typealias Position1D = Vector1D
+
+public struct Space1D: Equatable, Hashable, Sendable {
+    public var origin: Position1D
+    public var size: Distance
+    public var orientation: Direction1D
+
+    public var lo: Position1D {
+        orientation == .left ? origin : origin + size
+    }
+    public var hi: Position1D {
+        orientation == .left ? origin + size : origin
+    }
+
+    public func distance(to other: Position1D) -> Distance {
+        let lo = lo
+        let hi = hi
+        if other < lo {
+            return lo - other
+        } else if other > hi {
+            return other - hi
+        } else {
+            return 0
+        }
+    }
+
+    public func overlaps(_ other: Self) -> Bool {
+        let (lhLo, lhHi) = (lo, hi)
+        let (rhLo, rhHi) = (other.lo, other.hi)
+        let lh = lhLo..<lhHi
+        let rh = rhLo..<rhHi
+        return rh.contains(lhLo) || rh.contains(lhHi) || lh.contains(rhLo) || lh.contains(rhHi)
+    }
+
+    public func facing(_ newOrientation: Direction1D) -> Self {
+        if orientation == self.orientation {
+            return self
+        }
+        switch orientation {
+        case .left: return .init(origin: origin + size, size: size, orientation: .right)
+        case .right: return .init(origin: origin - size, size: size, orientation: .left)
+        }
+    }
+
+    public static func + (lh: Self, rh: Vector1D) -> Self {
+        .init(origin: lh.origin + rh, size: lh.size, orientation: lh.orientation)
+    }
 }

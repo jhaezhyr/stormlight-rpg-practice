@@ -48,15 +48,23 @@ public enum TurnSpeed: Hashable, CaseIterable, Sendable {
 }
 
 public struct Combat: Scene {
-    public init() {
+    public let map: Map
+
+    public init(map: Map) {
+        self.map = map
     }
 
     public func start(in gameSession: isolated GameSession = #isolation) {
         let game = gameSession.game
         // Let everyone start the combat.
-        for character in game.characters {
+        for (position, character) in zip(map.characterStartPositions, game.characters) {
             character.combatState = RpgCharacterCombatState(
-                turnSpeed: .fast, reactionsRemaining: 1, for: character.primaryKey)
+                space: Space1D(
+                    origin: position,
+                    size: 5,
+                    orientation: .left),
+                for: character.primaryKey
+            )
         }
     }
 

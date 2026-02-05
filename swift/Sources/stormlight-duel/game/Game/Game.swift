@@ -8,6 +8,7 @@ public protocol GameSharedProtocol {
 public class Game {
     public var characters: KeyedSet<AnyRpgCharacter>
     public var tests: KeyedSet<AnyRpgTest> = []
+    public var scene: Scene?
 
     public var rng: any RandomNumberGenerator = SystemRandomNumberGenerator()
     public var broadcaster: any Broadcaster
