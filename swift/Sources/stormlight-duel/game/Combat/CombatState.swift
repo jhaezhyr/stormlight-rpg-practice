@@ -71,10 +71,10 @@ public struct Space1D: Equatable, Hashable, Sendable {
     public var orientation: Direction1D
 
     public var lo: Position1D {
-        orientation == .left ? origin : origin + size
+        orientation == .right ? origin : origin - size
     }
     public var hi: Position1D {
-        orientation == .left ? origin + size : origin
+        orientation == .right ? origin + size : origin
     }
 
     public func distance(to other: Position1D) -> Distance {
@@ -89,12 +89,18 @@ public struct Space1D: Equatable, Hashable, Sendable {
         }
     }
 
+    public func distance(to other: Space1D) -> Distance {
+        min(distance(to: other.lo), distance(to: other.hi))
+    }
+
     public func overlaps(_ other: Self) -> Bool {
         let (lhLo, lhHi) = (lo, hi)
         let (rhLo, rhHi) = (other.lo, other.hi)
         let lh = lhLo..<lhHi
         let rh = rhLo..<rhHi
-        return rh.contains(lhLo) || rh.contains(lhHi) || lh.contains(rhLo) || lh.contains(rhHi)
+        return rh.contains(lhLo) || rh.contains(lhHi - 1)
+            || lh.contains(rhLo) || lh.contains(rhHi - 1)
+
     }
 
     public func facing(_ newOrientation: Direction1D) -> Self {
@@ -109,5 +115,11 @@ public struct Space1D: Equatable, Hashable, Sendable {
 
     public static func + (lh: Self, rh: Vector1D) -> Self {
         .init(origin: lh.origin + rh, size: lh.size, orientation: lh.orientation)
+    }
+}
+
+extension Space1D: CustomStringConvertible {
+    public var description: String {
+        "\(lo)\(orientation == .left ? "<=" : "->")\(hi)"
     }
 }

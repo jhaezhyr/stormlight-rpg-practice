@@ -14,12 +14,18 @@ public struct InteractiveMove: CombatAction {
             let choiceMap = [Direction1D: Space1D](
                 uniqueKeysWithValues: Direction1D.allCases.compactMap { direction in
                     let newSpace = mySpace.facing(direction) + (direction == .right ? 5 : -5)
-                    if opponentSpaces.contains(where: { $0.overlaps(mySpace) }) {
+                    if opponentSpaces.contains(where: { $0.overlaps(newSpace) }) {
                         return nil
                     } else {
                         return (direction, newSpace)
                     }
                 })
+            await gameSession.game.broadcaster.tell(
+                (gameSession.game.scene as! Combat).map.oneLineDescription(
+                    in: gameSession.game.snapshot
+                ),
+                to: character
+            )
             let choice = await me.brain.decide(
                 .directionToMove5Ft,
                 options: choiceMap.keys.map { DecideOrOther.decide($0) } + [.other("stop")],

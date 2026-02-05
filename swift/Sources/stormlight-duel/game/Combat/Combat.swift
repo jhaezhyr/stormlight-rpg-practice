@@ -153,12 +153,25 @@ public struct Combat: Scene {
                 return true
             }
 
+            await gameSession.game.broadcaster.tellAll(
+                (gameSession.game.scene as! Combat).map.oneLineDescription(
+                    in: gameSession.game.snapshot
+                ),
+            )
             for someCharacter in game.characters {
+                let opponents = game.characters.filter { $0.primaryKey != someCharacter.primaryKey }
+                let (distanceToNearestOppontent, nearestOpponent) =
+                    opponents.map {
+                        ($0.combatState!.space.distance(to: someCharacter.combatState!.space), $0)
+                    }
+                    .sorted { (lh, rh) in lh.0 < rh.0 }[0]
                 await game.broadcaster.tell(
                     "\(someCharacter.primaryKey == character.primaryKey ? "Your" : "\(someCharacter.name)'s") stats:\n"
                         + "  Health: \(someCharacter.health.value)/\(character.health.maxValue)\n"
                         + "  Focus: \(someCharacter.focus.value)/\(character.focus.maxValue)\n"
-                        + "  Conditions: \(someCharacter.conditions.map { "\($0.core)" }.joined(separator: ","))",
+                        + "  Conditions: \(someCharacter.conditions.map { "\($0.core)" }.joined(separator: ","))\n"
+                        + "  Space controlled: \(someCharacter.combatState!.space.lo)...\(someCharacter.combatState!.space.hi)\n"
+                        + "  Distance to \(nearestOpponent.name): \(distanceToNearestOppontent)",
                     to: character.primaryKey)
             }
 
