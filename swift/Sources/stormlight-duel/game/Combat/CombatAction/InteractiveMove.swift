@@ -39,7 +39,8 @@ public struct InteractiveMove: CombatAction {
                 me.combatState!.space = choiceMap[direction]!
                 movementRemaining -= 5
                 await gameSession.game.naiveDispatch(
-                    MoveHook.stepped(direction: direction), for: character, in: gameSession)
+                    MoveHook.stepped(direction: direction, carefully: false), for: character,
+                    in: gameSession)
             case .other(_):
                 break movementLoop
             }
@@ -61,6 +62,6 @@ extension Direction1D: CustomStringConvertible {
 }
 
 public enum MoveHook: HookTrigger {
-    case stepped(direction: Direction1D)
+    case stepped(direction: Direction1D, carefully: Bool)
     case moved
 }

@@ -1,4 +1,4 @@
-public protocol Scene {
+public protocol Scene: Sendable {
     func run(in gameSession: isolated GameSession) async
 }
 extension Scene {

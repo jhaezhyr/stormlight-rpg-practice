@@ -47,10 +47,10 @@ public struct ReactiveStrikeProvider: SelfListenerHolderLeaf {
         }
         // TODO relies on the BUG that selfListen fires for every character, not just me
         self.selfListeners = [
-            gameSession.selfListen(MoveHook.stepped(direction: .left)) {
+            gameSession.selfListen(MoveHook.stepped(direction: .left, carefully: false)) {
                 await action($0, $1, .left)
             },
-            gameSession.selfListen(MoveHook.stepped(direction: .right)) {
+            gameSession.selfListen(MoveHook.stepped(direction: .right, carefully: false)) {
                 await action($0, $1, .right)
             },
         ]
