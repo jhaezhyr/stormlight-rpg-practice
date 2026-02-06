@@ -14,7 +14,7 @@ public struct RpgCharacterCombatState: RpgCharacterCombatStateSharedProtocol {
     public var actionsRemaining: Int = 0
     public var weaponsUsed: Set<WeaponName> = []
     public var actionsTaken: Set<CombatActionName> = []
-    public var reactionsRemaining: Int = 0
+    public var reactionsRemaining: Int = 1
     public var recoveriesRemaining: Int = 1
 
     public var reactionProviders: [Any]
@@ -36,7 +36,10 @@ public struct RpgCharacterCombatState: RpgCharacterCombatStateSharedProtocol {
         if let weaponsUsed { self.weaponsUsed = weaponsUsed }
         if let actionsTaken { self.actionsTaken = actionsTaken }
         if let reactionsRemaining { self.reactionsRemaining = reactionsRemaining }
-        self.reactionProviders = [DodgeProvider(for: characterRef)]
+        self.reactionProviders = [
+            DodgeProvider(for: characterRef),
+            ReactiveStrikeProvider(for: characterRef),
+        ]
     }
 
     var snapshot: RpgCharacterCombatStateSnapshot {
@@ -146,6 +149,10 @@ public struct Space1D: Equatable, Hashable, Sendable {
 
     public static func + (lh: Self, rh: Vector1D) -> Self {
         .init(origin: lh.origin + rh, size: lh.size, orientation: lh.orientation)
+    }
+
+    public static func - (lh: Self, rh: Vector1D) -> Self {
+        .init(origin: lh.origin - rh, size: lh.size, orientation: lh.orientation)
     }
 }
 

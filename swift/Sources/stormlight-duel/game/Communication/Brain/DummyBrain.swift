@@ -39,7 +39,6 @@ public final class RpgCharacterDummyBrain: RpgCharacterBrain {
 
     @MainActor
     private func getPremadeAnswer<T: Sendable>(ofType type: T.Type) -> T? {
-        print("Looking for a premade answer of type \(type). We have \(premadeAnswers) available.")
         for (i, premadeAnswer) in premadeAnswers.enumerated() {
             if let answerAsRightType = premadeAnswer as? T {
                 premadeAnswers.remove(at: i)
