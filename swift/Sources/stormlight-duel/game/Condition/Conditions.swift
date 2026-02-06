@@ -5,7 +5,7 @@ extension ConditionSharedProtocol {
     public var primaryKey: Int { id }
 }
 
-public protocol Condition: ConditionSharedProtocol {
+public protocol Condition: ConditionSharedProtocol, Responder {
     var snapshot: any ConditionSnapshot { get }
 }
 extension Condition where Self: ConditionSnapshot {
@@ -17,6 +17,8 @@ public struct AnyCondition: Condition {
     public var core: any Condition
     public var id: Int { core.id }
     public var snapshot: any ConditionSnapshot { core.snapshot }
+    public var handlers: [any EventHandlerProtocol] { core.handlers }
+    public var childResponders: [any Responder] { core.childResponders }
     private init(notUnwrapping condition: any Condition) {
         self.core = condition
     }

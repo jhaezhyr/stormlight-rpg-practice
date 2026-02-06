@@ -51,12 +51,7 @@ public class RpgSimpleTest: RpgTest {
     public func roll(in gameSession: isolated GameSession) async -> RpgSimpleTestResult {
         let game = gameSession.game
         let character = game.anyCharacter(at: tester)!
-        await game.naiveDispatch(
-            TestHookType.beforeRoll,
-            for: tester,
-            attempting: primaryKey,
-            in: gameSession
-        )
+        await game.dispatch(TestEvent(TestHookType.beforeRoll, test: self))
         let (
             advantagesApplied,
             disadvantagesApplied,
@@ -75,12 +70,7 @@ public class RpgSimpleTest: RpgTest {
             rng: &game.rng
         )
 
-        await game.naiveDispatch(
-            TestHookType.beforeResolution,
-            for: tester,
-            attempting: primaryKey,
-            in: gameSession
-        )
+        await game.dispatch(TestEvent(TestHookType.beforeResolution, test: self))
 
         //let testDieRollOpportunity = testDieRoll == 20
         //let testDieRollComplication = testDieRoll == 1

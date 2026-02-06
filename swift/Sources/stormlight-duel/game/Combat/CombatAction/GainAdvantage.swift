@@ -42,10 +42,12 @@ public struct GainAdvantage: CombatAction {
             await game.broadcaster.tell(
                 "\(me.primaryKey.name) failed to gain advantage over you.", to: opponent.primaryKey)
         }
-        await game.naiveDispatch(
-            result.testResult ? TestHookType.afterSuccess : TestHookType.afterFailure,
-            for: me.primaryKey,
-            attempting: test.primaryKey,
+        await game.dispatch(
+            TestEvent(
+                result.testResult ? TestHookType.afterSuccess : TestHookType.afterFailure,
+                test: test,
+                in: gameSession
+            ),
             in: gameSession
         )
         game.removeTest(test)
@@ -72,15 +74,22 @@ extension GainAdvantage: CustomStringConvertible {
     }
 }
 
-public struct HasGainedAdvantageCondition: LeafCondition, ConditionSnapshot {
+public struct HasGainedAdvantageCondition: Condition {
     public let id: Int
-    public var snapshot: any ConditionSnapshot { self }
+    public var snapshot: any ConditionSnapshot {
+        HasGainedAdvantageConditionSnapshot(
+            id: id,
+            skill: skill,
+            characterRef: characterRef,
+            opponentRef: opponentRef,
+        )
+    }
     /// The skill with which we gained advantage. This is the skill we cannot use during the attack test.
     public let skill: CoreSkillName
     public let characterRef: RpgCharacterRef
     public let opponentRef: RpgCharacterRef
 
-    public let selfListenersSelfHooksForTests: [any SelfListenerSelfHookForTestProtocol]
+    public let handlers: [any EventHandlerProtocol]
 
     public init(
         skill: CoreSkillName,
@@ -93,18 +102,16 @@ public struct HasGainedAdvantageCondition: LeafCondition, ConditionSnapshot {
         self.skill = skill
         self.characterRef = characterRef
         self.opponentRef = opponentRef
-        self.selfListenersSelfHooksForTests = [
-            gameSession.selfListen(
-                toMyTests: TestHookType.beforeRoll,
-                as: AnyRpgCharacter.self,
-                testType: AnyRpgTest.self,
-            ) { game, character, test in
+        self.handlers = [
+            EventHandler<TestEvent<TestHookType>> { event, game in
+                let test = event.test
+                let character = event.tester
                 guard characterRef == test.tester else {
                     await game.game.broadcaster.tell(
                         "Can't gain advantage unless it's my test.", to: characterRef)
                     return
                 }
-                guard let test = test.core as? RpgAttackTest else {
+                guard let test = test as? RpgAttackTest else {
                     await game.game.broadcaster.tell(
                         "Can't gain advantage except on attack tests", to: characterRef)
                     return
@@ -126,13 +133,20 @@ public struct HasGainedAdvantageCondition: LeafCondition, ConditionSnapshot {
 
                 test.advantagesAvailable += 1
 
-                character.core.conditions.remove(id)
+                character.conditions.remove(id)
             }
         ]
     }
 }
-extension HasGainedAdvantageCondition: CustomStringConvertible {
+extension HasGainedAdvantageConditionSnapshot: CustomStringConvertible {
     public var description: String {
         "gained advantage over \(opponentRef.name) with \(skill)"
     }
+}
+
+public struct HasGainedAdvantageConditionSnapshot: ConditionSnapshot {
+    public let id: Int
+    public let skill: CoreSkillName
+    public let characterRef: RpgCharacterRef
+    public let opponentRef: RpgCharacterRef
 }

@@ -1,19 +1,26 @@
-public struct Determined: LeafCondition, ConditionSnapshot {
+public struct Determined: Condition {
     public let id: Int
-    public let selfListenersSelfHooksForTests: [any SelfListenerSelfHookForTestProtocol]
-    public init(in gameSession: isolated GameSession) {
+    public let handlers: [any EventHandlerProtocol]
+    public var snapshot: any ConditionSnapshot {
+        DeterminedSnapshot(id: id)
+    }
+    public init(for meRef: RpgCharacterRef, in gameSession: isolated GameSession) {
         let id = gameSession.nextId()
         self.id = id
-        self.selfListenersSelfHooksForTests = [
-            gameSession.selfListen(
-                toMyTests: TestHookType.afterFailure,
-                as: AnyRpgCharacter.self,
-                testType: AnyRpgTest.self
-            ) {
-                game, character, test in
+        self.handlers = [
+            EventHandler<TestEvent<TestHookType>> {
+                (event, game) in
+                var test = event.test
+                guard event.tester.primaryKey == meRef else {
+                    return
+                }
                 test.opportunitiesAvailable += 1
-                character.conditions.remove(id)
+                event.tester.conditions.remove(id)
             }
         ]
     }
+}
+
+public struct DeterminedSnapshot: ConditionSnapshot {
+    public let id: Int
 }

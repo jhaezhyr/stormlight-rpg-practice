@@ -1,38 +1,39 @@
-public struct DodgeProvider: ListenerForWhenIAmTargetedInATestHolderLeaf {
-    public var listenersForWhenIAmTargetedInATest: [any ListenerForWhenIAmTargetedInATestProtocol]
+public struct DodgeProvider: Responder {
+    public let handlers: [any EventHandlerProtocol]
     public init(
-        for characterRef: RpgCharacterRef, in gameSession: isolated GameSession = #isolation
+        for meRef: RpgCharacterRef,
+        in gameSession: isolated GameSession = #isolation,
     ) {
-        self.listenersForWhenIAmTargetedInATest = [
-            gameSession.selfListen(
-                toTestsWhereIAmTargeted: StrikePhase.aboutToAttemptStrike,
-                as: AnyRpgCharacter.self,
-                testType: RpgAttackTest.self
-            ) {
-                session, character, test in
-                // TODO Shouldn't have to check this.
-                if test.opponent != characterRef {
+        self.handlers = [
+            EventHandler<TestEvent<StrikePhase>> {
+                event, session in
+                guard event.event == .aboutToAttemptStrike else {
+                    return
+                }
+                var test = event.test  // TODO A bug is saying this can't be a `let`
+                let me = event.opponent!
+                guard test.opponent == meRef else {
                     return
                 }
                 let focusCost = 1
                 let reactionCost = 1
-                if character.core.focus.value < focusCost {
+                if me.focus.value < focusCost {
                     return
                 }
-                guard let combatState = character.core.combatState,
+                guard let combatState = me.combatState,
                     combatState.reactionsRemaining >= reactionCost
                 else {
                     return
                 }
-                let choice = await character.core.brain.decide(
+                let choice = await me.brain.decide(
                     .shouldDodge,
                     options: ShouldDodgeChoice.allCases,
                     in: session.game.snapshot
                 )
                 if choice == .shouldDodge {
                     test.disadvantagesAvailable += 1
-                    character.focus.value -= focusCost
-                    character.core.combatState!.reactionsRemaining -= reactionCost
+                    me.focus.value -= focusCost
+                    me.combatState!.reactionsRemaining -= reactionCost
                 }
             }
         ]
