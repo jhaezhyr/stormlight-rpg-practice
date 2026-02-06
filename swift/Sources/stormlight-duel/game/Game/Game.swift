@@ -3,6 +3,7 @@ public protocol GameSharedProtocol {
     associatedtype TestType: RpgTestSharedProtocol
     var characters: KeyedSet<CharacterType> { get }
     var tests: KeyedSet<TestType> { get }
+    var scene: Scene? { get }
 }
 
 public class Game {
