@@ -56,8 +56,7 @@ extension RpgCharacterSharedProtocol {
 public protocol RpgCharacter: AnyObject,
     RpgCharacterSharedProtocol,
     SendableMetatype,
-    AllTheListenersHolder,
-    NonLeafGenericListenerHolder
+    Responder
 {
     var brain: any RpgCharacterBrain { get }
     var snapshot: any RpgCharacterSnapshot { get }
@@ -72,8 +71,9 @@ public protocol RpgCharacter: AnyObject,
 }
 
 extension RpgCharacter {
-    public var childHolders: [Any] {
-        conditions.map { $0.core as Any } + equipment.map { $0 as Any }
+    public var childResponders: [any Responder] {
+        conditions.map { $0.core as any Responder }
+            + equipment.map { $0.core as any Responder }
             + (combatState?.reactionProviders ?? [])
         // TODO something about path progress
     }
@@ -140,7 +140,7 @@ extension RpgCharacter {
 }
 
 extension RpgCharacter {
-    public func takeDamage(_ damage: Damage) {
+    public func takeDamage(_ damage: Damage, in gameSession: GameSession = #isolation) {
         let damageReduction = damage.type == .vital ? 0 : deflect
         health.value = max(0, health.value - max(0, damage.amount - damageReduction))
     }

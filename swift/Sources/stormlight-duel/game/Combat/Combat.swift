@@ -8,9 +8,18 @@ public struct Damage: Equatable, Hashable, Sendable {
     }
 }
 
-public enum CombatPhase: HookTriggerForSomeRpgCharacter, Sendable {
+public enum CombatPhase: Sendable {
     case startOfTurn
     case endOfTurn
+}
+public struct CombatPhaseEvent: Event {
+    public let phase: CombatPhase
+    public let character: any RpgCharacter
+
+    public init(phase: CombatPhase, character: any RpgCharacter) {
+        self.phase = phase
+        self.character = character
+    }
 }
 
 public enum CombatTurnInitiativeChoice: Sendable {
@@ -145,9 +154,7 @@ public struct Combat: Scene {
         character.combatState!.actionsRemaining =
             character.combatState!.turnSpeed.actionsPerTurn
         await game.broadcaster.tellAll("\nIt's \(character.name)'s turn")
-        await game.naiveDispatch(
-            CombatPhase.startOfTurn, for: RpgCharacterRef(of: character),
-            in: gameSession)
+        await game.dispatch(CombatPhaseEvent(phase: .startOfTurn, character: character))
         actions: while true {
             if isOver(in: game) {
                 return true
@@ -191,8 +198,7 @@ public struct Combat: Scene {
                 await action.action(by: character.primaryKey, in: gameSession)
             }
         }
-        await game.naiveDispatch(
-            CombatPhase.endOfTurn, for: character.primaryKey, in: gameSession)
+        await game.dispatch(CombatPhaseEvent(phase: .endOfTurn, character: character))
         character.combatState!.weaponsUsed = []
         return false
     }

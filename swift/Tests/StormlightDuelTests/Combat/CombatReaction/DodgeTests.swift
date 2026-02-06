@@ -25,7 +25,7 @@ func dodgeCreatesOneAdvantage() async throws {
         let goodGuy = session.game.character(at: goodGuyRef, as: PlayerRpgCharacter.self)!
         let knife = basicWeapons[.knife]!(session)
         goodGuy.equipment.upsert(Readyable(knife, isReady: true))
-        let combat = Combat()
+        let combat = Combat(map: Map.emptyDuel)
         combat.start()
         let action = Strike(badGuyRef, with: knife.primaryKey)
         await badBrain.insertPremadeAnswer(ShouldDodgeChoice.shouldDodge)

@@ -54,8 +54,10 @@ public struct Strike: CombatAction {
         return true
     }
 
-    public func action(by characterRef: RpgCharacterRef, in gameSession: isolated GameSession) async
-    {
+    public func action(
+        by characterRef: RpgCharacterRef,
+        in gameSession: isolated GameSession = #isolation,
+    ) async {
         let game = gameSession.game
         guard let character = game.characters[characterRef] else {
             fatalError("Bad character reference \(characterRef)")
@@ -75,7 +77,6 @@ public struct Strike: CombatAction {
         // TODO Do things for ranged weapons.
         let myCharacter: any RpgCharacter = game.anyCharacter(at: character.primaryKey)!
         let targetCharacter: any RpgCharacter = game.anyCharacter(at: target)!
-        let meRef = RpgCharacterRef(of: character)
         // Run the damage test
         let weaponSkill = weapon.type.skill
         let targetPhysicalDefense = targetCharacter.defenses[.physical]
@@ -90,26 +91,21 @@ public struct Strike: CombatAction {
             disadvantagesAvailable: 0,
             in: gameSession
         )
-        let testRef = test.primaryKey
         game.updateTest(test)
-        await game.naiveDispatch(
-            StrikePhase.aboutToAttemptStrike, for: meRef, attempting: testRef, in: gameSession)
+        await game.dispatch(TestEvent(StrikePhase.aboutToAttemptStrike, test: test))
         let result = await test.roll(in: gameSession)
         let weaponModifier = character.modifiers[weaponSkill, default: 0]
         let damageMinAmount = result.damage
         let damageFullAmount = result.damage + weaponModifier
-        await game.naiveDispatch(
-            TestHookType.beforeResolution, for: meRef, attempting: testRef, in: gameSession)
+        await game.dispatch(TestEvent(TestHookType.beforeResolution, test: test))
         let damageToDo: Int
         let verbOfStrike: String
         if result.testResult {
-            await game.naiveDispatch(
-                TestHookType.afterSuccess, for: meRef, attempting: testRef, in: gameSession)
+            await game.dispatch(TestEvent(TestHookType.afterSuccess, test: test))
             damageToDo = damageFullAmount
             verbOfStrike = "strikes"
         } else {
-            await game.naiveDispatch(
-                TestHookType.afterFailure, for: meRef, attempting: testRef, in: gameSession)
+            await game.dispatch(TestEvent(TestHookType.afterFailure, test: test))
             if character.focus.value >= 1 {
                 await game.broadcaster.tell(
                     "You can graze for \(damageMinAmount). Focus: \(character.focus.value)/\(character.focus.maxValue)",
@@ -131,11 +127,9 @@ public struct Strike: CombatAction {
                 verbOfStrike = "misses"
             }
         }
-        await game.naiveDispatch(
-            StrikePhase.aboutToDealDamage, for: meRef, attempting: testRef, in: gameSession)
+        await game.dispatch(TestEvent(StrikePhase.aboutToDealDamage, test: test))
         targetCharacter.takeDamage(Damage(damageToDo, type: weapon.damageType))
-        await game.naiveDispatch(
-            StrikePhase.dealtDamage, for: meRef, attempting: testRef, in: gameSession)
+        await game.dispatch(TestEvent(StrikePhase.dealtDamage, test: test))
         await game.broadcaster.tellAll(
             "\(character.name) \(verbOfStrike) \(targetCharacter.name) and deals \(damageToDo) \(weapon.damageType.rawValue) damage."
         )
@@ -144,7 +138,7 @@ public struct Strike: CombatAction {
     }
 }
 
-public enum StrikePhase: HookTriggerForSomeRpgCharacterAndTest {
+public enum StrikePhase: Event {
     case aboutToAttemptStrike
     case aboutToDealDamage
     case dealtDamage

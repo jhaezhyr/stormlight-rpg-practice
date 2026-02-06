@@ -83,101 +83,14 @@ extension Game {
     }
 }
 
-extension Game: NonLeafGenericListenerHolder, AllTheListenersHolder {
-    public var childHolders: [Any] {
+extension Game: Responder {
+    public var childResponders: [any Responder] {
         characters.map { $0.core }
     }
 
-    /// Why is it called naive? Because it only talks to the listeners that want something exactly like this. No narrow character mutation. If there was an event sent that included something for a character, none of the SelfListeners will be notified.
-    public func naiveDispatch<T: HookTrigger>(
-        _ hookTrigger: T, in gameSession: isolated GameSession
-    ) async {
-        var listenersRun: Set<ListenerId> = []
-        while let listenerLeftToTry = allListeners.filter({
-            $0.hook as? T == hookTrigger && !listenersRun.contains($0.id)
-        }).first {
-            // Getting this every time means we can add new listeners in response to listeners.
-            await listenerLeftToTry.action(gameSession)
-            listenersRun.insert(listenerLeftToTry.id)
-        }
-    }
-
-    public func naiveDispatch<T: HookTrigger>(
-        _ hookTrigger: T, for characterRef: RpgCharacterRef, in gameSession: isolated GameSession
-    ) async {
-        var listenersRun: Set<ListenerId> = []
-        while let listenerLeftToTry = allSelfListeners.filter({
-            $0.hook as? T == hookTrigger && !listenersRun.contains($0.id)
-        }).first {
-            guard let char = self.anyCharacter(at: characterRef) else {
-                fatalError("Bad character reference")
-            }
-            await listenerLeftToTry.typeErasedAction(gameSession, char)
-            listenersRun.insert(listenerLeftToTry.id)
-        }
-    }
-
-    public func naiveDispatch<T: HookTriggerForSomeRpgCharacter>(
-        _ hookTrigger: T, for characterRef: RpgCharacterRef, in gameSession: isolated GameSession
-    ) async {
-        var listenersRun: Set<ListenerId> = []
-        while let listenerLeftToTry = allSelfListenersSelfHooks.filter({
-            $0.hook as? T == hookTrigger && !listenersRun.contains($0.id)
-        }).first {
-            guard let char = self.anyCharacter(at: characterRef) else {
-                fatalError("Bad character reference")
-            }
-            await listenerLeftToTry.typeErasedAction(gameSession, char)
-            listenersRun.insert(listenerLeftToTry.id)
-
-        }
-    }
-
-    public func naiveDispatch<T: HookTriggerForSomeRpgCharacterAndTest>(
-        _ hookTrigger: T, for _characterRef: RpgCharacterRef, attempting testRef: RpgTestRef,
-        in gameSession: isolated GameSession
-    ) async {
-        // If the tester or the opponent can change because of hooks, then this logic will have to change.
-        do {
-            // The self listener
-            var listenersRun: Set<ListenerId> = []
-            while let listenerLeftToTry = allSelfListenersSelfHooksForTests.filter({
-                $0.hook as? T == hookTrigger && !listenersRun.contains($0.id)
-            }).first {
-                guard
-                    let char = (gameSession.game.anyTest(at: testRef)?.tester).flatMap({
-                        self.anyCharacter(at: $0)
-                    })
-                else {
-                    fatalError("Bad character reference")
-                }
-                guard let test = self.anyTest(at: testRef) else {
-                    fatalError("Bad test reference")
-                }
-                await listenerLeftToTry.typeErasedAction(gameSession, char, test)
-                listenersRun.insert(listenerLeftToTry.id)
-            }
-        }
-        do {
-            // The targeted listener
-            var listenersRun: Set<ListenerId> = []
-            while let listenerLeftToTry = allListenersForWhenIAmTargetedInATest.filter({
-                $0.hook as? T == hookTrigger && !listenersRun.contains($0.id)
-            }).first {
-                // FIXME Runs on all these listeners, even when it's actually someone else being targeted in the test.
-                guard
-                    let char = (gameSession.game.anyTest(at: testRef)?.opponent).flatMap({
-                        self.anyCharacter(at: $0)
-                    })
-                else {
-                    fatalError("Bad character reference")
-                }
-                guard let test = self.anyTest(at: testRef) else {
-                    fatalError("Bad test reference")
-                }
-                await listenerLeftToTry.typeErasedAction(gameSession, char, test)
-                listenersRun.insert(listenerLeftToTry.id)
-            }
+    public func dispatch(_ event: Event?, in gameSession: isolated GameSession = #isolation) async {
+        if let event {
+            await respondAndPassOn(to: event, in: gameSession)
         }
     }
 }

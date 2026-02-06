@@ -96,7 +96,7 @@ public struct RpgTestRef: Sendable, Hashable {
     public var id: Int
 }
 
-public enum TestHookType: Sendable, HookTriggerForSomeRpgCharacterAndTest {
+public enum TestHookType: Sendable {
     case beforeRoll
     case beforeResolution
     case afterFailure

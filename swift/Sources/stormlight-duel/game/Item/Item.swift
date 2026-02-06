@@ -25,7 +25,7 @@ public enum TraitCondition: Sendable {
     case notExpert
 }
 
-public protocol Item: ItemSharedProtocol {
+public protocol Item: ItemSharedProtocol, Responder {
     var snapshot: any ItemSnapshot { get }
 }
 extension Item where Self: ItemSnapshot {
@@ -40,6 +40,9 @@ public struct AnyItem: Item {
     public var weight: Weight { core.weight }
 
     public var snapshot: any ItemSnapshot { core.snapshot }
+
+    public var childResponders: [any Responder] { core.childResponders }
+    public var handlers: [any EventHandlerProtocol] { core.handlers }
 
     init(_ core: any Item) {
         if let wrappedCore = core as? AnyItem {

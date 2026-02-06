@@ -17,7 +17,7 @@ public struct RpgCharacterCombatState: RpgCharacterCombatStateSharedProtocol {
     public var reactionsRemaining: Int = 1
     public var recoveriesRemaining: Int = 1
 
-    public var reactionProviders: [Any]
+    public var reactionProviders: [any Responder]
 
     public init(
         space: Space1D,

@@ -71,9 +71,8 @@ public struct DisengageAction: CombatAction {
         }
         let newSpace = mySpace + (direction == .right ? 5 : -5)
         me.combatState!.space = newSpace
-        await gameSession.game.naiveDispatch(
-            MoveHook.stepped(direction: direction, carefully: true),
-            for: characterRef,
+        await gameSession.game.dispatch(
+            MovementStepEvent(subject: me, direction: direction, carefully: true),
             in: gameSession
         )
     }
