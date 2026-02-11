@@ -12,7 +12,7 @@ public class Game {
     public var scene: Scene?
 
     public var rng: any RandomNumberGenerator = SystemRandomNumberGenerator()
-    public var broadcaster: any Broadcaster
+    public var broadcaster: Broadcaster
     public var gameMasterBrain: any GameMasterBrain
 
     public init(

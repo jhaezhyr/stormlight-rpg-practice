@@ -97,19 +97,44 @@ public class RpgAttackTest: RpgTest {
         let testResult = testDieRoll + testModifier + otherModifiers >= difficulty
 
         let modifierBit =
-            if let modifier = dieRoleCounts.first(where: { _ in true })!.advantageNumber {
+            if let modifier = dieRoleCounts.first(where: { roleWithAdvantageNumber in
+                roleWithAdvantageNumber.role == .testDie
+            })!.advantageNumber {
                 " with \(modifier)"
             } else {
                 ""
             }
-        await gameSession.game.broadcaster.tell(
-            "You rolled a \(NumberDie.d20)\(modifierBit) and got a \(testDieRoll). The skill was \(skill), so your modifier was \(testModifier). The difficulty was \(difficulty) and you got \(testDieRoll + testModifier). \(testResult ? "You hit!" : "You failed the attack test.")",
-            to: tester
+        await gameSession.game.broadcaster.tellAll(
+            SingleTargetMessage(
+                "$1 rolled a \(NumberDie.d20)\(modifierBit) and got a \(testDieRoll). The skill was \(skill), so their modifier was \(testModifier). The difficulty was \(difficulty) and they got \(testDieRoll + testModifier). \(testResult ? "$1 hit!" : "$1 failed the attack test.")",
+                "You rolled a \(NumberDie.d20)\(modifierBit) and got a \(testDieRoll). The skill was \(skill), so your modifier was \(testModifier). The difficulty was \(difficulty) and you got \(testDieRoll + testModifier). \(testResult ? "You hit!" : "You failed the attack test.")",
+                for: tester)
         )
 
         let (dice:dice, result:result) = describeDice(damageDieRolls)
-        await gameSession.game.broadcaster.tell(
-            "You rolled \(dice) for your damage and got \(result).", to: tester)
+        let modifiers = dieRoleCounts.compactMap {
+            if case .damageDie(_) = $0.role {
+                $0.advantageNumber
+            } else {
+                nil
+            }
+        }
+        let damageModifierBit =
+            switch (modifiers.count { $0 == .advantage }, modifiers.count { $0 == .disadvantage }) {
+            case (0, 0): ""
+            case (1, 0): " with advantage"
+            case (let x, 0): " with \(x) advantages"
+            case (0, 1): " with disadvantage"
+            case (0, let x): " with \(x) disadvantages"
+            case (1, 1): " with 1 advantage and 1 disadvantage"
+            case (let x, 1): " with \(x) advantage and 1 disadvantage"
+            case (let x, let y): " with \(x) advantages and \(y) disadvantages"
+            }
+        await gameSession.game.broadcaster.tellAll(
+            SingleTargetMessage(
+                "$1 rolled \(dice)\(damageModifierBit) for their damage and got \(result).",
+                "You rolled \(dice)\(damageModifierBit) for your damage and got \(result).",
+                for: tester))
 
         let dieRollResults = damageDieRolls.map { $0.result }
         return RpgAttackTestResult(

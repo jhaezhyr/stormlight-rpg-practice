@@ -22,10 +22,19 @@ public struct CombatPhaseEvent: Event {
     }
 }
 
-public enum CombatTurnInitiativeChoice: Sendable {
+public enum CombatTurnInitiativeChoice: Sendable, Equatable {
     case goNow
     case waitForOthers
     case waitForSlowPhase
+}
+extension CombatTurnInitiativeChoice: CustomStringConvertible {
+    public var description: String {
+        switch self {
+        case .goNow: "go now"
+        case .waitForOthers: "wait for others"
+        case .waitForSlowPhase: "wait for slow phase"
+        }
+    }
 }
 
 public struct CombatTurnInitiative: CaseIterable, Sendable, Hashable, CustomStringConvertible {
@@ -33,7 +42,7 @@ public struct CombatTurnInitiative: CaseIterable, Sendable, Hashable, CustomStri
     public var turnSpeed: TurnSpeed
 
     public var description: String {
-        "\(turnSpeed == .fast ? "Fast" : "Slow") \(isPlayer ? "player" : "NPC") phase"
+        "\(turnSpeed == .fast ? "fast" : "slow") \(isPlayer ? "player" : "NPC") phase"
     }
 
     public static let playerFast: Self = .init(isPlayer: true, turnSpeed: .fast)
@@ -83,7 +92,7 @@ public struct Combat: Scene {
         let nonPlayers = game.characters.filter { !$0.isPlayer }.map { $0.core }
         start()
         rounds: for roundNum in 1... {
-            await game.broadcaster.tellAll("======= ROUND \(roundNum) ========")
+            await game.broadcaster.tellAll(NoTargetMessage("======= ROUND \(roundNum) ========"))
             var charactersPerPhase: CompleteDictionary<CombatTurnInitiative, [any RpgCharacter]> = [
                 .playerFast: players,
                 .npcFast: nonPlayers,
@@ -92,9 +101,9 @@ public struct Combat: Scene {
             ]
             for initiativePhase in CombatTurnInitiative.allCases {
                 if !charactersPerPhase[initiativePhase].isEmpty {
-                    await game.broadcaster.tellAll("--- \(initiativePhase) ---")
+                    await game.broadcaster.tellAll(NoTargetMessage("--- \(initiativePhase) ---"))
                 } else {
-                    await game.broadcaster.tellAll("Skipping \(initiativePhase)")
+                    await game.broadcaster.tellAll(NoTargetMessage("Skipping \(initiativePhase)"))
                 }
                 while !charactersPerPhase[initiativePhase].isEmpty {
                     for character in charactersPerPhase[initiativePhase] {
@@ -129,8 +138,8 @@ public struct Combat: Scene {
                             charactersPerPhase[
                                 .init(isPlayer: initiativePhase.isPlayer, turnSpeed: .slow)
                             ].append(character)
+                            character.combatState!.turnSpeed = .slow
                         }
-                        // TODO Test it!
                     }
                 }
             }
@@ -138,10 +147,12 @@ public struct Combat: Scene {
 
         let winners = game.characters.filter { $0.health.value > 0 }
         if winners.count == 0 {
-            await game.broadcaster.tellAll("You're all unconcious. Good job.")
+            await game.broadcaster.tellAll(NoTargetMessage("You're all unconcious. Good job."))
         } else if winners.count == 1 {
             await game.broadcaster.tellAll(
-                "\(winners.map { $0.core.name }.joined(separator: " and ")) won!")
+                ContextFreeMultiTargetMessage(
+                    "\(winners.enumerated().map { i, _ in "$\(i)" }.joined(separator: " and ")) won!",
+                    for: winners.map { $0.primaryKey }))
         }
     }
 
@@ -153,33 +164,12 @@ public struct Combat: Scene {
         character.combatState!.reactionsRemaining = 1
         character.combatState!.actionsRemaining =
             character.combatState!.turnSpeed.actionsPerTurn
-        await game.broadcaster.tellAll("\nIt's \(character.name)'s turn")
+        await game.broadcaster.tellAll(
+            SingleTargetMessage("It's $1's turn.", "It's your turn.", for: character.primaryKey))
         await game.dispatch(CombatPhaseEvent(phase: .startOfTurn, character: character))
         actions: while true {
             if isOver(in: game) {
                 return true
-            }
-
-            await gameSession.game.broadcaster.tellAll(
-                (gameSession.game.scene as! Combat).map.oneLineDescription(
-                    in: gameSession.game.snapshot
-                ),
-            )
-            for someCharacter in game.characters {
-                let opponents = game.characters.filter { $0.primaryKey != someCharacter.primaryKey }
-                let (distanceToNearestOppontent, nearestOpponent) =
-                    opponents.map {
-                        ($0.combatState!.space.distance(to: someCharacter.combatState!.space), $0)
-                    }
-                    .sorted { (lh, rh) in lh.0 < rh.0 }[0]
-                await game.broadcaster.tell(
-                    "\(someCharacter.primaryKey == character.primaryKey ? "Your" : "\(someCharacter.name)'s") stats:\n"
-                        + "  Health: \(someCharacter.health.value)/\(character.health.maxValue)\n"
-                        + "  Focus: \(someCharacter.focus.value)/\(character.focus.maxValue)\n"
-                        + "  Conditions: \(someCharacter.conditions.map { "\($0.core)" }.joined(separator: ","))\n"
-                        + "  Space controlled: \(someCharacter.combatState!.space.lo)...\(someCharacter.combatState!.space.hi)\n"
-                        + "  Distance to \(nearestOpponent.name): \(distanceToNearestOppontent)",
-                    to: character.primaryKey)
             }
 
             let choice = await character.brain.decide(

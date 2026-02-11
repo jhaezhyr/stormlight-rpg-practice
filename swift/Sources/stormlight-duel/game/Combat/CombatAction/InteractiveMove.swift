@@ -21,14 +21,6 @@ public struct InteractiveMove: CombatAction {
                         return (direction, newSpace)
                     }
                 })
-            await gameSession.game.broadcaster.tell(
-                map.oneLineDescription(
-                    in: gameSession.game.snapshot
-                ),
-                to: character
-            )
-            await gameSession.game.broadcaster.tell(
-                "You have \(movementRemaining) movement remaining.", to: character)
             let choice = await me.brain.decide(
                 .directionToMove5Ft,
                 options: choiceMap.keys.map { DecideOrOther.decide($0) } + [.other("stop")],

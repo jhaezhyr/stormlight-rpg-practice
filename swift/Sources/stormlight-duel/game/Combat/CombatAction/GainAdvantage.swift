@@ -38,9 +38,10 @@ public struct GainAdvantage: CombatAction {
                 )
             )
         } else {
-            await game.broadcaster.tell("You failed to gain advantage.", to: me.primaryKey)
-            await game.broadcaster.tell(
-                "\(me.primaryKey.name) failed to gain advantage over you.", to: opponent.primaryKey)
+            await game.broadcaster.tellAll(
+                SingleTargetMessage(
+                    "$1 failed to gain advantage.", "You failed to gain advantage",
+                    for: characterRef))
         }
         await game.dispatch(
             TestEvent(
@@ -107,29 +108,22 @@ public struct HasGainedAdvantageCondition: Condition {
                 let test = event.test
                 let character = event.tester
                 guard characterRef == test.tester else {
-                    await game.game.broadcaster.tell(
-                        "Can't gain advantage unless it's my test.", to: characterRef)
                     return
                 }
                 guard let test = test as? RpgAttackTest else {
-                    await game.game.broadcaster.tell(
-                        "Can't gain advantage except on attack tests", to: characterRef)
                     return
                 }
                 guard opponentRef == test.opponent else {
-                    await game.game.broadcaster.tell(
-                        "Can't gain advantage against a different opponent", to: characterRef)
                     return
                 }
                 if test.skill == .core(skill) {
-                    await game.game.broadcaster.tell(
-                        "Can't use advantage gained with the same skill we're using to strike.",
-                        to: characterRef)
                     return
-                    // TODO Does the advantage stick around?
                 }
-                await game.game.broadcaster.tell(
-                    "You have an advantage for this attack!", to: characterRef)
+                await game.game.broadcaster.tellAll(
+                    SingleTargetMessage(
+                        "$1 has advantage for this attack!",
+                        "You have advantage for this attack!",
+                        for: characterRef))
 
                 test.advantagesAvailable += 1
 
