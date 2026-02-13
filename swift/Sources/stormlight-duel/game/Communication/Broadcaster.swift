@@ -47,8 +47,9 @@ public struct SingleTargetMessage: Message {
         }
     }
     public init(
-        _ thirdPersonDescription: String, _ secondPersonDescription: String,
-        for target: RpgCharacterRef
+        w1 thirdPersonDescription: String,
+        wU secondPersonDescription: String,
+        as1 target: RpgCharacterRef
     ) {
         self.thirdPersonDescription = thirdPersonDescription
         self.secondPersonDescription = secondPersonDescription
@@ -75,11 +76,11 @@ public struct DoubleTargetMessage: Message {
         }
     }
     public init(
-        _ thirdPersonDescription: String,
-        _ secondPersonSubjectDescription: String,
-        _ secondPersonObjectDescription: String,
-        for subject: RpgCharacterRef,
-        and object: RpgCharacterRef
+        w12 thirdPersonDescription: String,
+        wU2 secondPersonSubjectDescription: String,
+        w1U secondPersonObjectDescription: String,
+        as1 subject: RpgCharacterRef,
+        as2 object: RpgCharacterRef
     ) {
         self.thirdPersonDescription = thirdPersonDescription
         self.secondPersonSubjectDescription = secondPersonSubjectDescription

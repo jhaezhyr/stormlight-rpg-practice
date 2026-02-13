@@ -14,9 +14,9 @@ public struct Recover: CombatAction {
         var amountToPut = character.recoveryDie.roll(rng: &gameSession.game.rng)
         await gameSession.game.broadcaster.tellAll(
             SingleTargetMessage(
-                "$1 rolled their \(character.recoveryDie) and got a \(amountToPut)",
-                "You rolled your \(character.recoveryDie) and got a \(amountToPut)",
-                for: characterRef)
+                w1: "$1 rolled their \(character.recoveryDie) and got a \(amountToPut)",
+                wU: "You rolled your \(character.recoveryDie) and got a \(amountToPut)",
+                as1: characterRef)
         )
         putLoop: while amountToPut > 0 {
             await gameSession.game.broadcaster.tellHint(
@@ -57,9 +57,11 @@ public struct Recover: CombatAction {
             let finalFocus = character.focus.value
             await gameSession.game.broadcaster.tellAll(
                 SingleTargetMessage(
-                    "$1 restored \(finalHealth - initialHealth) health and \(finalFocus - initialFocus) focus",
-                    "You restored \(finalHealth - initialHealth) health and \(finalFocus - initialFocus) focus",
-                    for: characterRef)
+                    w1:
+                        "$1 restored \(finalHealth - initialHealth) health and \(finalFocus - initialFocus) focus",
+                    wU:
+                        "You restored \(finalHealth - initialHealth) health and \(finalFocus - initialFocus) focus",
+                    as1: characterRef)
             )
         }
     }

@@ -40,8 +40,8 @@ public struct GainAdvantage: CombatAction {
         } else {
             await game.broadcaster.tellAll(
                 SingleTargetMessage(
-                    "$1 failed to gain advantage.", "You failed to gain advantage",
-                    for: characterRef))
+                    w1: "$1 failed to gain advantage.", wU: "You failed to gain advantage",
+                    as1: characterRef))
         }
         await game.dispatch(
             TestEvent(
@@ -121,9 +121,9 @@ public struct HasGainedAdvantageCondition: Condition {
                 }
                 await game.game.broadcaster.tellAll(
                     SingleTargetMessage(
-                        "$1 has advantage for this attack!",
-                        "You have advantage for this attack!",
-                        for: characterRef))
+                        w1: "$1 has advantage for this attack!",
+                        wU: "You have advantage for this attack!",
+                        as1: characterRef))
 
                 test.advantagesAvailable += 1
 

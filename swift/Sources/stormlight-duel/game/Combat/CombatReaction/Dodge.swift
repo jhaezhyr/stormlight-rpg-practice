@@ -33,8 +33,9 @@ public struct DodgeProvider: Responder {
                 if choice == .shouldDodge {
                     await session.game.broadcaster.tellAll(
                         SingleTargetMessage(
-                            "$1 dodges the incoming strike.", "You dodge the incoming strike.",
-                            for: meRef))
+                            w1: "$1 dodges the incoming strike.",
+                            wU: "You dodge the incoming strike.",
+                            as1: meRef))
                     test.disadvantagesAvailable += 1
                     me.focus.value -= focusCost
                     me.combatState!.reactionsRemaining -= reactionCost

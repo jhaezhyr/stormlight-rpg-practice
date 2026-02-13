@@ -94,10 +94,10 @@ public struct Strike: CombatAction {
         game.updateTest(test)
         await game.broadcaster.tellAll(
             DoubleTargetMessage(
-                "$1 targets $2 for a strike with their \(weaponToStrikeWith.name)",
-                "You target $2 for a strike with your \(weaponToStrikeWith.name)",
-                "$1 targets you for a strike with your \(weaponToStrikeWith.name)",
-                for: characterRef, and: target))
+                w12: "$1 targets $2 for a strike with their \(weaponToStrikeWith.name)",
+                wU2: "You target $2 for a strike with your \(weaponToStrikeWith.name)",
+                w1U: "$1 targets you for a strike with your \(weaponToStrikeWith.name)",
+                as1: characterRef, as2: target))
         await game.dispatch(TestEvent(StrikePhase.aboutToAttemptStrike, test: test))
         let result = await test.roll(in: gameSession)
         let weaponModifier = character.modifiers[weaponSkill, default: 0]
@@ -138,10 +138,13 @@ public struct Strike: CombatAction {
         await game.dispatch(TestEvent(StrikePhase.dealtDamage, test: test))
         await game.broadcaster.tellAll(
             DoubleTargetMessage(
-                "$1 \(verbOfStrike.thirdPerson) $2 and deals \(damageToDo) \(weapon.damageType.rawValue) damage.",
-                "You \(verbOfStrike.secondPerson) $2 and deal \(damageToDo) \(weapon.damageType.rawValue) damage.",
-                "$1 \(verbOfStrike.thirdPerson) you and deals \(damageToDo) \(weapon.damageType.rawValue) damage.",
-                for: characterRef, and: target)
+                w12:
+                    "$1 \(verbOfStrike.thirdPerson) $2 and deals \(damageToDo) \(weapon.damageType.rawValue) damage.",
+                wU2:
+                    "You \(verbOfStrike.secondPerson) $2 and deal \(damageToDo) \(weapon.damageType.rawValue) damage.",
+                w1U:
+                    "$1 \(verbOfStrike.thirdPerson) you and deals \(damageToDo) \(weapon.damageType.rawValue) damage.",
+                as1: characterRef, as2: target)
         )
         character.combatState?.weaponsUsed.insert(weapon.weaponName)
         // TODO Give lots of opportunities to resolve complications and opportunities, but those should all be spent by this point.

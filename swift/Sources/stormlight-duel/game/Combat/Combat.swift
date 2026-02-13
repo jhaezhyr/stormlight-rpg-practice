@@ -165,7 +165,8 @@ public struct Combat: Scene {
         character.combatState!.actionsRemaining =
             character.combatState!.turnSpeed.actionsPerTurn
         await game.broadcaster.tellAll(
-            SingleTargetMessage("It's $1's turn.", "It's your turn.", for: character.primaryKey))
+            SingleTargetMessage(
+                w1: "It's $1's turn.", wU: "It's your turn.", as1: character.primaryKey))
         await game.dispatch(CombatPhaseEvent(phase: .startOfTurn, character: character))
         actions: while true {
             if isOver(in: game) {

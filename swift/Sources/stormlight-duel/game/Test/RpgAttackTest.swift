@@ -106,9 +106,11 @@ public class RpgAttackTest: RpgTest {
             }
         await gameSession.game.broadcaster.tellAll(
             SingleTargetMessage(
-                "$1 rolled a \(NumberDie.d20)\(modifierBit) and got a \(testDieRoll). The skill was \(skill), so their modifier was \(testModifier). The difficulty was \(difficulty) and they got \(testDieRoll + testModifier). \(testResult ? "$1 hit!" : "$1 failed the attack test.")",
-                "You rolled a \(NumberDie.d20)\(modifierBit) and got a \(testDieRoll). The skill was \(skill), so your modifier was \(testModifier). The difficulty was \(difficulty) and you got \(testDieRoll + testModifier). \(testResult ? "You hit!" : "You failed the attack test.")",
-                for: tester)
+                w1:
+                    "$1 rolled a \(NumberDie.d20)\(modifierBit) and got a \(testDieRoll). The skill was \(skill), so their modifier was \(testModifier). The difficulty was \(difficulty) and they got \(testDieRoll + testModifier). \(testResult ? "$1 hit!" : "$1 failed the attack test.")",
+                wU:
+                    "You rolled a \(NumberDie.d20)\(modifierBit) and got a \(testDieRoll). The skill was \(skill), so your modifier was \(testModifier). The difficulty was \(difficulty) and you got \(testDieRoll + testModifier). \(testResult ? "You hit!" : "You failed the attack test.")",
+                as1: tester)
         )
 
         let (dice:dice, result:result) = describeDice(damageDieRolls)
@@ -132,9 +134,9 @@ public class RpgAttackTest: RpgTest {
             }
         await gameSession.game.broadcaster.tellAll(
             SingleTargetMessage(
-                "$1 rolled \(dice)\(damageModifierBit) for their damage and got \(result).",
-                "You rolled \(dice)\(damageModifierBit) for your damage and got \(result).",
-                for: tester))
+                w1: "$1 rolled \(dice)\(damageModifierBit) for their damage and got \(result).",
+                wU: "You rolled \(dice)\(damageModifierBit) for your damage and got \(result).",
+                as1: tester))
 
         let dieRollResults = damageDieRolls.map { $0.result }
         return RpgAttackTestResult(
