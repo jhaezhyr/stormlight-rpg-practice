@@ -92,6 +92,12 @@ public struct Strike: CombatAction {
             in: gameSession
         )
         game.updateTest(test)
+        await game.broadcaster.tellAll(
+            DoubleTargetMessage(
+                w12: "$1 targets $2 for a strike with their \(weaponToStrikeWith.name)",
+                wU2: "You target $2 for a strike with your \(weaponToStrikeWith.name)",
+                w1U: "$1 targets you for a strike with your \(weaponToStrikeWith.name)",
+                as1: characterRef, as2: target))
         await game.dispatch(TestEvent(StrikePhase.aboutToAttemptStrike, test: test))
         let result = await test.roll(in: gameSession)
         let weaponModifier = character.modifiers[weaponSkill, default: 0]
@@ -99,15 +105,15 @@ public struct Strike: CombatAction {
         let damageFullAmount = result.damage + weaponModifier
         await game.dispatch(TestEvent(TestHookType.beforeResolution, test: test))
         let damageToDo: Int
-        let verbOfStrike: String
+        let verbOfStrike: (thirdPerson: Substring, secondPerson: Substring)
         if result.testResult {
             await game.dispatch(TestEvent(TestHookType.afterSuccess, test: test))
             damageToDo = damageFullAmount
-            verbOfStrike = "strikes"
+            verbOfStrike = ("strikes", "strike")
         } else {
             await game.dispatch(TestEvent(TestHookType.afterFailure, test: test))
             if character.focus.value >= 1 {
-                await game.broadcaster.tell(
+                await game.broadcaster.tellHint(
                     "You can graze for \(damageMinAmount). Focus: \(character.focus.value)/\(character.focus.maxValue)",
                     to: character.primaryKey)
                 let shouldGraze =
@@ -117,24 +123,37 @@ public struct Strike: CombatAction {
                 if shouldGraze {
                     myCharacter.focus.value -= 1
                     damageToDo = damageMinAmount
-                    verbOfStrike = "grazes"
+                    verbOfStrike = ("grazes", "graze")
                 } else {
                     damageToDo = 0
-                    verbOfStrike = "misses"
+                    verbOfStrike = ("misses", "miss")
                 }
             } else {
                 damageToDo = 0
-                verbOfStrike = "misses"
+                verbOfStrike = ("misses", "miss")
             }
         }
         await game.dispatch(TestEvent(StrikePhase.aboutToDealDamage, test: test))
         targetCharacter.takeDamage(Damage(damageToDo, type: weapon.damageType))
         await game.dispatch(TestEvent(StrikePhase.dealtDamage, test: test))
         await game.broadcaster.tellAll(
-            "\(character.name) \(verbOfStrike) \(targetCharacter.name) and deals \(damageToDo) \(weapon.damageType.rawValue) damage."
+            DoubleTargetMessage(
+                w12:
+                    "$1 \(verbOfStrike.thirdPerson) $2 and deals \(damageToDo) \(weapon.damageType.rawValue) damage.",
+                wU2:
+                    "You \(verbOfStrike.secondPerson) $2 and deal \(damageToDo) \(weapon.damageType.rawValue) damage.",
+                w1U:
+                    "$1 \(verbOfStrike.thirdPerson) you and deals \(damageToDo) \(weapon.damageType.rawValue) damage.",
+                as1: characterRef, as2: target)
         )
         character.combatState?.weaponsUsed.insert(weapon.weaponName)
         // TODO Give lots of opportunities to resolve complications and opportunities, but those should all be spent by this point.
+    }
+}
+
+extension Strike: CustomStringConvertible {
+    public var description: String {
+        "strike \(target.name) with \(weaponToStrikeWith.name)"
     }
 }
 
@@ -147,4 +166,12 @@ public enum StrikePhase: Event {
 public enum GrazeChoice: Int, CaseIterable, Sendable {
     case shouldGraze = 0
     case shouldNotGraze = 1
+}
+extension GrazeChoice: CustomStringConvertible {
+    public var description: String {
+        switch self {
+        case .shouldGraze: "graze for minimal damage"
+        case .shouldNotGraze: "don't graze"
+        }
+    }
 }

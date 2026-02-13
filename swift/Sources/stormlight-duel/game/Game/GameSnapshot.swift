@@ -3,6 +3,8 @@ public struct GameSnapshot: GameSharedProtocol, Sendable {
     public var characters: KeyedSet<AnyRpgCharacterSnapshot>
     public var tests: KeyedSet<AnyRpgTestSnapshot>
     public var scene: (any Scene)?
+
+    public static let empty = Self(characters: [], tests: [])
 }
 
 extension Game {

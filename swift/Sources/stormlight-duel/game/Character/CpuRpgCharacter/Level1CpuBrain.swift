@@ -20,9 +20,6 @@ public struct Level1CpuBrain: RpgCharacterBrain {
                 for weapon in me.readyItems.compactMap({ $0.core as? any WeaponSnapshot }) {
                     let strike = Strike(enemy, with: weapon.primaryKey)
                     if strike.canTakeAction(by: meRef, in: gameSnapshot) {
-                        print(
-                            "Kal: Attacking \(enemy.name) with \(weapon.name) (\(weapon.weaponName))"
-                        )
                         return CombatChoice.action(strike) as! T
                     }
                 }
@@ -30,5 +27,11 @@ public struct Level1CpuBrain: RpgCharacterBrain {
             return CombatChoice.endTurn as! T
         }
         fatalError("Level 1 brain doesn't know how to decide on \(type) values")
+    }
+
+    public func hear<M>(_ message: M, in gameSnapshot: GameSnapshot) async where M: Message {
+    }
+
+    public func hearHint(_ message: String, in gameSnapshot: GameSnapshot) async {
     }
 }

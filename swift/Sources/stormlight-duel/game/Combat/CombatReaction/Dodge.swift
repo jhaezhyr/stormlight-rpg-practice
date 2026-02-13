@@ -31,6 +31,11 @@ public struct DodgeProvider: Responder {
                     in: session.game.snapshot
                 )
                 if choice == .shouldDodge {
+                    await session.game.broadcaster.tellAll(
+                        SingleTargetMessage(
+                            w1: "$1 dodges the incoming strike.",
+                            wU: "You dodge the incoming strike.",
+                            as1: meRef))
                     test.disadvantagesAvailable += 1
                     me.focus.value -= focusCost
                     me.combatState!.reactionsRemaining -= reactionCost
@@ -43,4 +48,12 @@ public struct DodgeProvider: Responder {
 public enum ShouldDodgeChoice: Sendable, Equatable, CaseIterable {
     case shouldDodge
     case shouldNotDodge
+}
+extension ShouldDodgeChoice: CustomStringConvertible {
+    public var description: String {
+        switch self {
+        case .shouldDodge: "dodge"
+        case .shouldNotDodge: "don't dodge"
+        }
+    }
 }

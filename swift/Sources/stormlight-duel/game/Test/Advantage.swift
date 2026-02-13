@@ -39,7 +39,7 @@ func assignAdvantagesAndDisadvantages<Role>(
         result.insert(
             RoleWithAdvantageNumber(
                 role: choice.role,
-                advantageNumber: combine(modifier: choice.advantageNumber, with: .disadvantage)
+                advantageNumber: combine(modifier: choice.advantageNumber, with: rollModifier)
             )
         )
         return true
@@ -79,6 +79,10 @@ extension DecideOrOther: CustomStringConvertible {
             otherString
         }
     }
+}
+extension DecideOrOther: Equatable where T: Equatable {
+}
+extension DecideOrOther: Hashable where T: Hashable {
 }
 
 public struct RoleWithAdvantageNumber<Role: Hashable & Sendable & Comparable>: Hashable, Sendable {

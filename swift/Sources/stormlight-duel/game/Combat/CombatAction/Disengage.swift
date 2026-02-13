@@ -77,3 +77,8 @@ public struct DisengageAction: CombatAction {
         )
     }
 }
+extension DisengageAction: CustomStringConvertible {
+    public var description: String {
+        "disengage to the \(direction)"
+    }
+}

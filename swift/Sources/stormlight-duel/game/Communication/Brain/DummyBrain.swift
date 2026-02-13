@@ -52,4 +52,10 @@ public final class RpgCharacterDummyBrain: RpgCharacterBrain {
     public func insertPremadeAnswer<T: Sendable>(_ value: T) {
         self.premadeAnswers.append(value)
     }
+
+    public func hear<M>(_ message: M, in gameSnapshot: GameSnapshot) async where M: Message {
+    }
+
+    public func hearHint(_ message: String, in gameSnapshot: GameSnapshot) async {
+    }
 }

@@ -85,9 +85,13 @@ public class RpgSimpleTest: RpgTest {
             } else {
                 ""
             }
-        await gameSession.game.broadcaster.tell(
-            "You rolled a \(NumberDie.d20)\(modifierBit) and got a \(testDieRoll). The skill was \(skill), so your modifier was \(testModifier). The difficulty was \(difficulty) and you got \(testDieRoll + testModifier). \(testResult ? "You passed!" : "You failed.")",
-            to: character.primaryKey
+        await gameSession.game.broadcaster.tellAll(
+            SingleTargetMessage(
+                w1:
+                    "$1 rolled a \(NumberDie.d20)\(modifierBit) and got a \(testDieRoll). The skill was \(skill), so their modifier was \(testModifier). The difficulty was \(difficulty) and they got \(testDieRoll + testModifier). \(testResult ? "$1 passed!" : "$1 failed.")",
+                wU:
+                    "You rolled a \(NumberDie.d20)\(modifierBit) and got a \(testDieRoll). The skill was \(skill), so your modifier was \(testModifier). The difficulty was \(difficulty) and you got \(testDieRoll + testModifier). \(testResult ? "You passed!" : "You failed.")",
+                as1: character.primaryKey)
         )
 
         return RpgSimpleTestResult(

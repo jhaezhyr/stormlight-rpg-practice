@@ -9,7 +9,7 @@ import stormlight_duel
 public struct MyCLI {
     static func main() async {
         let session = GameSession()
-        let broadcaster = CliBroadcaster()
+        let broadcaster = Broadcaster()
 
         let player1 = PlayerRpgCharacter(
             name: "Kal",
@@ -23,8 +23,7 @@ public struct MyCLI {
             investiture: .init(maxValue: 0),
             reach: 0,
             conditions: [],
-            brain: CliRpgCharacterBrain(
-                broadcaster: broadcaster,
+            brain: await CliRpgCharacterBrain(
                 characterRef: RpgCharacterRef(name: "Kal")
             ),
             isPlayer: true
@@ -49,9 +48,8 @@ public struct MyCLI {
         await session.provideGame(
             Game(
                 characters: [player1, player2], broadcaster: broadcaster,
-                gameMasterBrain: CliRpgCharacterBrain(
-                    broadcaster: broadcaster,
-                    characterRef: RpgCharacterRef(name: "GM EN")
+                gameMasterBrain: Level1CpuBrain(
+                    for: RpgCharacterRef(name: "GM EN")
                 )))
 
         await session.switch(to: Combat(map: Map.emptyDuel))

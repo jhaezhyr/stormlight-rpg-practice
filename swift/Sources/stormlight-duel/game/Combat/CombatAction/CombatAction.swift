@@ -68,6 +68,15 @@ public enum CombatChoice: Sendable {
     case endTurn
 }
 
+extension CombatChoice: CustomStringConvertible {
+    public var description: String {
+        switch self {
+        case .action(let action): "\(action)"
+        case .endTurn: "end turn"
+        }
+    }
+}
+
 public let allCombatActions: [CombatAction.Type] = [
     Strike.self, InteractiveMove.self, GainAdvantage.self, Recover.self, DisengageAction.self,
 ]
