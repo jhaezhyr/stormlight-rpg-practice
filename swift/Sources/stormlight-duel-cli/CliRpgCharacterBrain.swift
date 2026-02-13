@@ -4,8 +4,37 @@ import stormlight_duel
 struct CliRpgCharacterBrain: RpgCharacterBrain {
     let characterRef: RpgCharacterRef
 
-    init(characterRef: RpgCharacterRef) {
+    @MainActor
+    init(characterRef: RpgCharacterRef) async {
         self.characterRef = characterRef
+        _ = await self.decideBetweenOptions(
+            UnderstandingChoice.allCases,
+            prompt: """
+                Welcome to STORMLIGHT DUEL!
+
+                This videogame experience is based on the "Cosmere Roleplaying Game" by
+                Brotherwise Games, based on works by Brandon Sanderson. The videogame is
+                written and hosted by Braeden Hintze.
+
+                            * ** INSTRUCTIONS ** * 
+
+                You play as a player character named Kal. You are in a one-on-one combat
+                with Shallan, an NPC. Bring her down.
+
+                You have no armor, no talents, and level 0 skills. You also have an axe.
+
+                Anytime you are prompted to make a choice, you type in your answer and
+                press ENTER. In some cases, you are given multiple numbered options. In
+                other cases, your choices are a list of one-word commands. Some commands
+                have single-letter aliases to make them easier to type.
+
+                When the game waits for your input, you also can type "status" in order
+                to see the map and the conditions of both characters. The map shows a K
+                for your location, an S for Shallan's location, and a . for every 5ft
+                distance. The map is 1-dimensional to keep things simple and brutal.
+
+                Do you understand?
+                """, in: GameSnapshot.empty)
     }
 
     @MainActor
@@ -249,4 +278,9 @@ extension CliRpgCharacterBrain {
         )
         return answer
     }
+}
+
+enum UnderstandingChoice: String, Sendable, Hashable, CustomStringConvertible, CaseIterable {
+    case yes = "yes, life before death"
+    var description: String { self.rawValue }
 }

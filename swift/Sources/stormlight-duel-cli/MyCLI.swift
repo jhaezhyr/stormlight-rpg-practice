@@ -23,7 +23,7 @@ public struct MyCLI {
             investiture: .init(maxValue: 0),
             reach: 0,
             conditions: [],
-            brain: CliRpgCharacterBrain(
+            brain: await CliRpgCharacterBrain(
                 characterRef: RpgCharacterRef(name: "Kal")
             ),
             isPlayer: true
@@ -48,8 +48,8 @@ public struct MyCLI {
         await session.provideGame(
             Game(
                 characters: [player1, player2], broadcaster: broadcaster,
-                gameMasterBrain: CliRpgCharacterBrain(
-                    characterRef: RpgCharacterRef(name: "GM EN")
+                gameMasterBrain: Level1CpuBrain(
+                    for: RpgCharacterRef(name: "GM EN")
                 )))
 
         await session.switch(to: Combat(map: Map.emptyDuel))
