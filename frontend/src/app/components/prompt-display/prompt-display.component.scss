@@ -1,0 +1,42 @@
+:host {
+    display: block;
+}
+
+.prompt-area {
+    height: 30vh;
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.prompt-message {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.type {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.text {
+    font-size: 1.05rem;
+}
+
+.input-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+input {
+    flex: 1 1 auto;
+    padding: 0.5rem;
+}
+
+button {
+    padding: 0.5rem 0.75rem;
+}

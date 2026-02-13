@@ -1,0 +1,15 @@
+<div class="toolbar">
+    <input [(ngModel)]="wsUrl" placeholder="ws://localhost:1234" />
+    <button (click)="connect()">Connect</button>
+    <button (click)="disconnect()">Disconnect</button>
+</div>
+
+<div class="grid">
+    <div class="left">
+        <app-player-status></app-player-status>
+        <app-prompt-display></app-prompt-display>
+    </div>
+    <div class="right">
+        <app-event-log></app-event-log>
+    </div>
+</div>

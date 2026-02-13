@@ -1,0 +1,20 @@
+:host {
+    display: block;
+}
+
+.player-status {
+    height: 20vh;
+    overflow-y: auto;
+    padding: 0.5rem;
+    border-bottom: 1px solid #ddd;
+}
+
+.status-content {
+    font-size: 0.95rem;
+}
+
+.raw {
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    color: #444;
+}

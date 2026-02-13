@@ -1,0 +1,30 @@
+:host {
+    display: block;
+}
+
+.event-log {
+    max-height: 60vh;
+    overflow: auto;
+    padding: 0.5rem;
+    border-left: 1px solid #eee;
+}
+
+ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+.msg-type {
+    font-size: 0.8rem;
+    color: #666
+}
+
+.msg-text {
+    font-size: 0.95rem
+}
