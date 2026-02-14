@@ -1,3 +1,6 @@
+import CompleteDictionary
+import KeyedSet
+
 public struct PlayerRpgCharacterSnapshot: RpgCharacterSnapshot {
     public var name: String
     public var attributes: CompleteDictionary<AttributeName, Int>

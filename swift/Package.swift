@@ -30,10 +30,15 @@ let package = Package(
             ],
         ),
 
+        .target(name: "KeyedSet", path: "Sources/lib/KeyedSet/"),
+        .target(name: "CompleteDictionary", path: "Sources/lib/CompleteDictionary/"),
+
         .target(
             name: "stormlight-duel",
             dependencies: [
-                .product(name: "CountedSet", package: "CountedSet")
+                .product(name: "CountedSet", package: "CountedSet"),
+                .target(name: "KeyedSet"),
+                .target(name: "CompleteDictionary"),
             ]),
 
         // RPG Tests

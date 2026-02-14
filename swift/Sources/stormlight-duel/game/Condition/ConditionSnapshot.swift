@@ -1,3 +1,5 @@
+import KeyedSet
+
 public protocol ConditionSnapshot: Sendable, ConditionSharedProtocol {
 }
 

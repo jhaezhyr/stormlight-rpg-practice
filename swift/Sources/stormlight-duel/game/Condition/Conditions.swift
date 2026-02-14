@@ -1,3 +1,5 @@
+import KeyedSet
+
 public protocol ConditionSharedProtocol: Keyed where Key == Int {
     var id: Int { get }
 }

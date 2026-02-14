@@ -1,3 +1,5 @@
+import KeyedSet
+
 /// The immutable, sendable version of Game.
 public struct GameSnapshot: GameSharedProtocol, Sendable {
     public var characters: KeyedSet<AnyRpgCharacterSnapshot>

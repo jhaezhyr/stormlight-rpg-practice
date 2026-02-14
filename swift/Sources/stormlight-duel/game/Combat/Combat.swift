@@ -1,3 +1,5 @@
+import CompleteDictionary
+
 public struct Damage: Equatable, Hashable, Sendable {
     public var amount: Int
     public var type: DamageType

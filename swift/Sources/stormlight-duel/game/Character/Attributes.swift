@@ -1,3 +1,5 @@
+import CompleteDictionary
+
 public enum Realm: Hashable, CaseIterable, Sendable {
     case physical
     case cognitive

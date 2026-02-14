@@ -1,3 +1,5 @@
+import KeyedSet
+
 public protocol RpgTestSharedProtocol: Keyed where Key == RpgTestRef {
     var id: Int { get }
 

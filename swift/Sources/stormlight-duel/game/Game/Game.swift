@@ -1,3 +1,5 @@
+import KeyedSet
+
 public protocol GameSharedProtocol {
     associatedtype CharacterType: RpgCharacterSharedProtocol
     associatedtype TestType: RpgTestSharedProtocol
