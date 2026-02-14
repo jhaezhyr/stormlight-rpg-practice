@@ -19,6 +19,7 @@ let package = Package(
         // Signals Library
         .target(
             name: "Signals",
+            path: "Sources/lib/Signals/"
         ),
 
         // Signals Tests
