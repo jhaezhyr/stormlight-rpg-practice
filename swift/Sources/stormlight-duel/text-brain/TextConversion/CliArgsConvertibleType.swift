@@ -1,52 +1,62 @@
 import stormlight_duel
 
-struct CliParseError: Error {
-    var description: Substring
+public struct CliParseError: Error {
+    public var description: Substring
 
-    init(_ description: Substring) {
+    public init(_ description: Substring) {
         self.description = description
     }
 }
 
-typealias CliArgsConversionContext = (game: GameSnapshot, characterRef: RpgCharacterRef)
+public typealias CliArgsConversionContext = (game: GameSnapshot, characterRef: RpgCharacterRef)
 
 /// The CLI input might look like this:
 /// - move 15 back
 /// - strike
-protocol CliArgsConvertibleType {
+public protocol CliArgsConvertibleType {
     /// If it returns nil, it means it's not even trying to be this type.
     /// If it throws, it means it is trying to be this type, but it's wrong.
     init?(args: [Any], context: CliArgsConversionContext) throws(CliParseError)
     static var helpText: Substring { get }
 }
 extension CliArgsConvertibleType {
-    static var parser: CliArgsParser<Self> {
+    public static var parser: CliArgsParser<Self> {
         CliArgsParser(Self.self)
     }
-    static var anyParser: CliArgsParser<Any> { parser.asAny }
+    public static var anyParser: CliArgsParser<Any> { parser.asAny }
 }
 
-protocol CliArgsParserProtocol {
+public protocol CliArgsParserProtocol {
     associatedtype Value
     var helpText: Substring { get }
     func parse(args: [Any], context: CliArgsConversionContext) throws(CliParseError) -> Value?
 }
-struct CliArgsParser<T>: CliArgsParserProtocol {
-    let helpText: Substring
-    let parseFunc: (_ args: [Any], _ context: CliArgsConversionContext) throws(CliParseError) -> T?
-    func parse(args: [Any], context: CliArgsConversionContext) throws(CliParseError) -> T? {
+public struct CliArgsParser<T>: CliArgsParserProtocol {
+    public let helpText: Substring
+    private let parseFunc:
+        (_ args: [Any], _ context: CliArgsConversionContext) throws(CliParseError) -> T?
+    public func parse(args: [Any], context: CliArgsConversionContext) throws(CliParseError) -> T? {
         let result = try parseFunc(args, context)
         return result
     }
+    public init(
+        helpText: Substring,
+        parseFunc:
+            @escaping (_ args: [Any], _ context: CliArgsConversionContext) throws(CliParseError) ->
+            T?
+    ) {
+        self.helpText = helpText
+        self.parseFunc = parseFunc
+    }
 }
 extension CliArgsParser where T: CliArgsConvertibleType {
-    init(_ type: T.Type) {
+    public init(_ type: T.Type) {
         self.helpText = type.helpText
         self.parseFunc = type.init(args:context:)
     }
 }
 extension CliArgsParser {
-    init(parsers: [any CliArgsParserProtocol], converter: @escaping (Any) -> T?) {
+    public init(parsers: [any CliArgsParserProtocol], converter: @escaping (Any) -> T?) {
         self.parseFunc = { (args, context) throws(CliParseError) in
             for parser in parsers {
                 if let result = try parser.parse(args: args, context: context),
@@ -61,18 +71,18 @@ extension CliArgsParser {
     }
 }
 extension CliArgsParser {
-    var asAny: CliArgsParser<Any> {
+    public var asAny: CliArgsParser<Any> {
         CliArgsParser<Any>(helpText: self.helpText) { (args, context) throws(CliParseError) in
             try parseFunc(args, context)
         }
     }
 }
 
-protocol CliArgsContextFreeConvertibleType: CliArgsConvertibleType {
+public protocol CliArgsContextFreeConvertibleType: CliArgsConvertibleType {
     init?(args: [Any]) throws(CliParseError)
 }
 extension CliArgsContextFreeConvertibleType {
-    init?(args: [Any], context: CliArgsConversionContext) throws(CliParseError) {
+    public init?(args: [Any], context: CliArgsConversionContext) throws(CliParseError) {
         try self.init(args: args)
     }
 }

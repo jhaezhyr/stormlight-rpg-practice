@@ -1,10 +1,10 @@
 import stormlight_duel
 
-enum StatusCommand {
+public enum StatusCommand {
     case general
 }
 extension StatusCommand: CliArgsConvertibleType {
-    init?(args: [Any], context: CliArgsConversionContext) throws(CliParseError) {
+    public init?(args: [Any], context: CliArgsConversionContext) throws(CliParseError) {
         if let alreadyParsed = args.first as? Self, args.count == 1 {
             self = alreadyParsed
             return
@@ -20,12 +20,13 @@ extension StatusCommand: CliArgsConvertibleType {
         self = .general
     }
 
-    static var helpText: Substring {
+    public static var helpText: Substring {
         "(s)tatus"
     }
 }
 extension StatusCommand {
-    func evaluate(in gameSnapshot: GameSnapshot, for characterRef: RpgCharacterRef) -> String {
+    public func evaluate(in gameSnapshot: GameSnapshot, for characterRef: RpgCharacterRef) -> String
+    {
         guard let character = gameSnapshot.characters[characterRef]?.core else {
             return "WHO ARE YOU?"
         }

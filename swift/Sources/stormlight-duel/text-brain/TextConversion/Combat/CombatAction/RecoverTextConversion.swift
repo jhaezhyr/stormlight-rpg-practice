@@ -1,7 +1,7 @@
 import stormlight_duel
 
 extension Recover: CliArgsContextFreeConvertibleType {
-    init?(args: [Any]) throws(CliParseError) {
+    public init?(args: [Any]) throws(CliParseError) {
         if let alreadyParsed = args.first as? Self, args.count == 1 {
             self = alreadyParsed
             return
@@ -17,7 +17,7 @@ extension Recover: CliArgsContextFreeConvertibleType {
         self.init()
     }
 
-    static var helpText: Substring {
+    public static var helpText: Substring {
         "(r)ecover"
     }
 }

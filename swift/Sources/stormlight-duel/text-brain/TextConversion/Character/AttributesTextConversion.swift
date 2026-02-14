@@ -1,7 +1,7 @@
 import stormlight_duel
 
 extension CoreSkillName: CliArgsContextFreeConvertibleType {
-    init?(args: [Any]) throws(CliParseError) {
+    public init?(args: [Any]) throws(CliParseError) {
         if let alreadyParsedSkill = args.first as? Self, args.count == 1 {
             self = alreadyParsedSkill
             return
@@ -15,7 +15,7 @@ extension CoreSkillName: CliArgsContextFreeConvertibleType {
         throw CliParseError("\(args) is not a core skill")
     }
 
-    static var helpText: Substring {
+    public static var helpText: Substring {
         "<core skill>"
     }
 }

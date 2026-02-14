@@ -1,7 +1,7 @@
 import stormlight_duel
 
 extension DecideOrOther: CliArgsConvertibleType where T: CliArgsConvertibleType {
-    init?(args: [Any], context: CliArgsConversionContext) throws(CliParseError) {
+    public init?(args: [Any], context: CliArgsConversionContext) throws(CliParseError) {
         if let result = try T.init(args: args, context: context) {
             self = .decide(result)
         } else {
@@ -9,7 +9,7 @@ extension DecideOrOther: CliArgsConvertibleType where T: CliArgsConvertibleType 
         }
     }
 
-    static var helpText: Substring {
+    public static var helpText: Substring {
         T.helpText
     }
 }

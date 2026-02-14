@@ -1,7 +1,7 @@
 import stormlight_duel
 
 extension GainAdvantage: CliArgsConvertibleType {
-    init?(args: [Any], context: CliArgsConversionContext) throws(CliParseError) {
+    public init?(args: [Any], context: CliArgsConversionContext) throws(CliParseError) {
         if let alreadyParsedGainAdvantage = args.first as? Self, args.count == 1 {
             self = alreadyParsedGainAdvantage
             return
@@ -57,7 +57,7 @@ extension GainAdvantage: CliArgsConvertibleType {
         self.init(opponent: realTarget, skill: realSkill)
     }
 
-    static var helpText: Substring {
+    public static var helpText: Substring {
         "(g)ainadv [skill] [target]"
     }
 }

@@ -1,7 +1,7 @@
 import stormlight_duel
 
 extension WeaponName: CliArgsContextFreeConvertibleType {
-    init?(args: [Any]) throws(CliParseError) {
+    public init?(args: [Any]) throws(CliParseError) {
         if let alreadyParsedName = args.first as? WeaponName, args.count == 1 {
             self = alreadyParsedName
             return
@@ -14,5 +14,5 @@ extension WeaponName: CliArgsContextFreeConvertibleType {
         }
         throw CliParseError("\(args) is not a weapon name")
     }
-    static var helpText: Substring { "<weapon>" }
+    public static var helpText: Substring { "<weapon>" }
 }

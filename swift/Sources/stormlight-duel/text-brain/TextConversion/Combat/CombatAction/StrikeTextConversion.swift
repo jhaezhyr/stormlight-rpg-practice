@@ -1,7 +1,7 @@
 import stormlight_duel
 
 extension Strike: CliArgsConvertibleType {
-    init?(args: [Any], context: CliArgsConversionContext) throws(CliParseError) {
+    public init?(args: [Any], context: CliArgsConversionContext) throws(CliParseError) {
         if let alreadyParsedStrike = args.first as? Strike, args.count == 1 {
             self = alreadyParsedStrike
             return

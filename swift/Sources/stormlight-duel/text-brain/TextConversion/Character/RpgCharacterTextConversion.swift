@@ -1,7 +1,7 @@
 import stormlight_duel
 
 extension RpgCharacterRef: CliArgsContextFreeConvertibleType {
-    init?(args: [Any]) throws(CliParseError) {
+    public init?(args: [Any]) throws(CliParseError) {
         if let alreadyParsedName = args.first as? RpgCharacterRef, args.count == 1 {
             self = alreadyParsedName
             return
@@ -12,5 +12,5 @@ extension RpgCharacterRef: CliArgsContextFreeConvertibleType {
         }
         throw CliParseError("\(args) is not a name")
     }
-    static var helpText: Substring { "<character>" }
+    public static var helpText: Substring { "<character>" }
 }

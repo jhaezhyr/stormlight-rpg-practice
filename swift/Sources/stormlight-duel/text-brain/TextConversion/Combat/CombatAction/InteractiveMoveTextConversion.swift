@@ -1,7 +1,7 @@
 import stormlight_duel
 
 extension InteractiveMove: CliArgsContextFreeConvertibleType {
-    init?(args: [Any]) throws(CliParseError) {
+    public init?(args: [Any]) throws(CliParseError) {
         if let alreadyParsedMove = args.first as? InteractiveMove, args.count == 1 {
             self = alreadyParsedMove
             return
@@ -17,11 +17,11 @@ extension InteractiveMove: CliArgsContextFreeConvertibleType {
         self.init()
     }
 
-    static var helpText: Substring { "(m)ove" }
+    public static var helpText: Substring { "(m)ove" }
 }
 
 extension Direction1D: CliArgsContextFreeConvertibleType {
-    init?(args: [Any]) throws(CliParseError) {
+    public init?(args: [Any]) throws(CliParseError) {
         if let alreadyParsed = args.first as? Self, args.count == 1 {
             self = alreadyParsed
             return
@@ -37,7 +37,7 @@ extension Direction1D: CliArgsContextFreeConvertibleType {
         self = firstArgAsString == "r" ? .right : .left
     }
 
-    static var helpText: Substring {
+    public static var helpText: Substring {
         "R|L"
     }
 }

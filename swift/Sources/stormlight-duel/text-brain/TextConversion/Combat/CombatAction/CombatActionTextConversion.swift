@@ -1,7 +1,7 @@
 import stormlight_duel
 
 extension CombatAction {
-    static var parserOpt: CliArgsParser<Self>? {
+    public static var parserOpt: CliArgsParser<Self>? {
         guard let parser = Self.self as? (any CliArgsConvertibleType.Type) else {
             return nil
         }
@@ -11,7 +11,7 @@ extension CombatAction {
             return result.map { $0 as! Self }
         }
     }
-    static var combatChoiceParserOpt: CliArgsParser<CombatChoice>? {
+    public static var combatChoiceParserOpt: CliArgsParser<CombatChoice>? {
         Self.parserOpt.map { x in
             CliArgsParser(parsers: [x]) { action in
                 CombatChoice.action(action as! any CombatAction)
@@ -21,7 +21,8 @@ extension CombatAction {
 }
 
 struct EndTurn {}
-@MainActor let endTurnParser = CliArgsParser<CombatChoice>(helpText: "(e)nd") { args, context in
+@MainActor public let endTurnParser = CliArgsParser<CombatChoice>(helpText: "(e)nd") {
+    args, context in
     if let alreadyParsedMove = args.first as? CombatChoice,
         args.count == 1,
         case .endTurn = alreadyParsedMove

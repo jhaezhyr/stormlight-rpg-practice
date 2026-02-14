@@ -1,7 +1,7 @@
 import stormlight_duel
 
 extension DisengageAction: CliArgsContextFreeConvertibleType {
-    init?(args: [Any]) throws(CliParseError) {
+    public init?(args: [Any]) throws(CliParseError) {
         if let alreadyParsedGainAdvantage = args.first as? Self, args.count == 1 {
             self = alreadyParsedGainAdvantage
             return
@@ -28,7 +28,7 @@ extension DisengageAction: CliArgsContextFreeConvertibleType {
         self.init(direction: direction)
     }
 
-    static var helpText: Substring {
+    public static var helpText: Substring {
         "(d)isengage \(Direction1D.helpText)"
     }
 }
