@@ -14,6 +14,8 @@ let package = Package(
         .package(url: "https://github.com/juri/terminal-ansi.git", from: "0.3.0"),
         .package(url: "https://github.com/mickmaccallum/CountedSet.git", from: "2.0.1"),
         .package(url: "https://github.com/swiftlang/swift-testing.git", from: "0.1.0"),
+        .package(url: "https://github.com/hummingbird-project/hummingbird.git", from: "2.0.0"),
+        .package(url: "https://github.com/hummingbird-project/hummingbird-websocket.git", from: "2.2.0"),
     ],
     targets: [
         // Signals
@@ -69,6 +71,16 @@ let package = Package(
                 .target(name: "stormlight-duel"),
                 .target(name: "text-brain"),
             ],
+        ),
+
+        .executableTarget(
+            name: "stormlight-duel-service",
+            dependencies: [
+                .target(name: "stormlight-duel"),
+                .target(name: "text-brain"),
+                .product(name: "Hummingbird", package: "hummingbird"),
+                .product(name: "HummingbirdWebSocket", package: "hummingbird-websocket"),
+            ]
         ),
     ],
 )
