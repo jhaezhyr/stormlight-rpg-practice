@@ -18,8 +18,11 @@ export class PromptDisplayComponent {
 
     onSubmit(ev: Event) {
         ev.preventDefault();
-        if (!this.answer?.trim()) return;
-        this.state.sendAnswer(this.answer.trim());
+        if (!this.answer?.trim()) {
+            this.state.sendSkip();
+        } else {
+            this.state.sendAnswer(this.answer.trim());
+        }
         this.answer = '';
         requestAnimationFrame(() => this.answerInput.nativeElement.focus());
     }

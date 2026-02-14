@@ -11,7 +11,7 @@ import {
 
 @Injectable({ providedIn: 'root' })
 export class GameStateService {
-    public playerInterface$ = new BehaviorSubject<InterfaceData>({});
+    public playerInterface$ = new BehaviorSubject<InterfaceData>("");
     public currentPromptOrHint$ = new BehaviorSubject<GameMessageBase | null>(null);
     public eventLog$ = new BehaviorSubject<EventMessage[]>([]);
     public isInputLocked$ = new BehaviorSubject<boolean>(true);
@@ -33,17 +33,22 @@ export class GameStateService {
 
     sendAnswer(answer: string) {
         this.isInputLocked$.next(true);
-        this.socket.sendMessage(answer);
+        this.socket.sendMessage('answer', answer);
+    }
+
+    sendSkip() {
+        this.socket.sendMessage('skip', 'plz');
     }
 
     private handleMessage(msg: GameMessageBase) {
         if (msg.interface) {
-            this.playerInterface$.next({ ...this.playerInterface$.value, ...msg.interface });
+            this.playerInterface$.next(msg.interface);
         }
 
         switch (msg.type) {
             case 'event':
                 this.prependEvent(msg as EventMessage);
+                this.currentPromptOrHint$.next(msg as EventMessage)
                 break;
             case 'hint':
                 this.currentPromptOrHint$.next(msg as HintMessage);

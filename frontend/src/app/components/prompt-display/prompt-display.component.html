@@ -9,6 +9,6 @@
 
     <form (submit)="onSubmit($event)" class="input-row">
         <input #answerInput type="text" [(ngModel)]="answer" name="answer" autocomplete="off" />
-        <button type="submit" [disabled]="(state.isInputLocked$ | async)">Submit</button>
+        <button type="submit">Submit</button>
     </form>
 </section>

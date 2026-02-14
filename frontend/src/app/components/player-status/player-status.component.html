@@ -1,12 +1,6 @@
 <section class="player-status">
     <h3>Player Interface</h3>
     <div class="status-content">
-        <div><strong>Health:</strong> {{ (state.playerInterface$ | async)?.health ?? '—' }}</div>
-        <div><strong>Weapons:</strong>
-            <span>
-                {{ ((state.playerInterface$ | async)?.weapons ?? []).join(', ') || '—' }}
-            </span>
-        </div>
-        <pre class="raw" *ngIf="(state.playerInterface$ | async) as data">{{ data | json }}</pre>
+        <pre class="raw" *ngIf="(state.playerInterface$ | async) as data">{{ data }}</pre>
     </div>
 </section>

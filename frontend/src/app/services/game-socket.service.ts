@@ -36,12 +36,12 @@ export class GameSocketService {
         });
     }
 
-    sendMessage(answer: string) {
+    sendMessage(type: string, answer: string) {
         if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
             console.warn('WebSocket not open; cannot send message');
             return;
         }
-        const payload = JSON.stringify({ type: 'answer', message: answer });
+        const payload = JSON.stringify({ type, message: answer });
         this.ws.send(payload);
     }
 

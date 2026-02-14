@@ -24,17 +24,17 @@ describe('GameStateService', () => {
     });
 
     it('handles event messages by prepending to event log and updating interface', () => {
-        messages$.next({ type: 'event', message: 'an event', interface: { health: 42 } });
+        messages$.next({ type: 'event', message: 'an event', interface: "health: 42" });
         expect(service.eventLog$.value.length).toBe(1);
         expect(service.eventLog$.value[0].message).toBe('an event');
-        expect(service.playerInterface$.value.health).toBe(42);
+        expect(service.playerInterface$.value).toBe("health: 42");
     });
 
     it('handles hint by setting currentPromptOrHint and locking input', () => {
-        messages$.next({ type: 'hint', message: 'a hint', interface: { weapons: ['knife'] } });
+        messages$.next({ type: 'hint', message: 'a hint', interface: "weapon is a knife" });
         expect(service.currentPromptOrHint$.value?.message).toBe('a hint');
         expect(service.isInputLocked$.value).toBe(true);
-        expect(service.playerInterface$.value.weapons).toEqual(['knife']);
+        expect(service.playerInterface$.value).toEqual("weapon is a knife");
     });
 
     it('handles prompt by setting prompt and unlocking input', () => {

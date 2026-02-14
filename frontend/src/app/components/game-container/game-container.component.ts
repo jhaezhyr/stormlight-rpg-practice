@@ -14,7 +14,7 @@ import { GameStateService } from '../../services/game-state.service';
     styleUrls: ['./game-container.component.scss'],
 })
 export class GameContainerComponent {
-    public wsUrl = 'ws://localhost:4000';
+    public wsUrl = 'ws://localhost:10101/ws';
 
     constructor(private state: GameStateService) { }
 
