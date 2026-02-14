@@ -37,7 +37,7 @@ public struct ReactiveStrikeProvider: Responder {
                 guard wasTouching && !myReach.touchesOrOverlaps(other.combatState!.space) else {
                     return
                 }
-                let choice = await me.brain.decide(
+                let choice = try await me.brain.decide(
                     .reactiveStrikeChoice, options: ReactiveStrikeDecision.allCases,
                     in: gameSession.game.snapshot)
                 guard choice == .shouldStrikeReactively else {
@@ -45,7 +45,8 @@ public struct ReactiveStrikeProvider: Responder {
                 }
                 me.focus.value -= 1
                 me.combatState!.reactionsRemaining -= 1
-                await Strike(other.primaryKey, with: meleeWeaponToUse.primaryKey).action(by: meRef)
+                try await Strike(other.primaryKey, with: meleeWeaponToUse.primaryKey).action(
+                    by: meRef)
             }
         ]
     }

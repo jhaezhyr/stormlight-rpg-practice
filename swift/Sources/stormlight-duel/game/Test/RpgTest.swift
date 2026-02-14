@@ -1,3 +1,5 @@
+import KeyedSet
+
 public protocol RpgTestSharedProtocol: Keyed where Key == RpgTestRef {
     var id: Int { get }
 
@@ -38,7 +40,7 @@ public protocol RpgTest: AnyObject, RpgTestSharedProtocol, SendableMetatype {
     var snapshot: any RpgTestSnapshot { get }
 
     associatedtype ResultType: RpgTestResultProtocol
-    func roll(in gameSession: isolated GameSession) async -> ResultType
+    func roll(in gameSession: isolated GameSession) async throws -> ResultType
 
 }
 extension RpgTest where Self: RpgTestSnapshot {
@@ -87,7 +89,7 @@ public class AnyRpgTest: RpgTest {
     }
 
     public typealias ResultType = RpgSimpleTestResult
-    public func roll(in gameSession: isolated GameSession) async -> RpgSimpleTestResult {
+    public func roll(in gameSession: isolated GameSession) async throws -> RpgSimpleTestResult {
         fatalError("This really isn't how you're supposed to use a test, man.")
     }
 }

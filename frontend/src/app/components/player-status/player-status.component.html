@@ -1,0 +1,6 @@
+<section class="player-status">
+    <h3>Player Interface</h3>
+    <div class="status-content">
+        <pre class="raw" *ngIf="(state.playerInterface$ | async) as data">{{ data }}</pre>
+    </div>
+</section>

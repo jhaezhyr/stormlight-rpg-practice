@@ -1,3 +1,6 @@
+import CompleteDictionary
+import KeyedSet
+
 public protocol RpgCharacterSnapshot: RpgCharacterSharedProtocol, Sendable {
     var combatState: RpgCharacterCombatStateSnapshot? { get }
     var conditions: KeyedSet<AnyConditionSnapshot> { get }

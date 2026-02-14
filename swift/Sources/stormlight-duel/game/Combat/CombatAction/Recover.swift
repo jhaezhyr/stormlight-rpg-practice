@@ -6,7 +6,7 @@ public struct Recover: CombatAction {
 
     public func action(
         by characterRef: RpgCharacterRef, in gameSession: isolated GameSession = #isolation
-    ) async {
+    ) async throws {
         guard let character = gameSession.game.characters[characterRef] else {
             return
         }
@@ -43,7 +43,7 @@ public struct Recover: CombatAction {
                     character.health.restore(amountToPut)
                 }
             default:
-                let decision = await character.brain.decide(
+                let decision = try await character.brain.decide(
                     .howToRecover, options: options, in: gameSession.game.snapshot)
                 switch decision {
                 case .recoverFocus:

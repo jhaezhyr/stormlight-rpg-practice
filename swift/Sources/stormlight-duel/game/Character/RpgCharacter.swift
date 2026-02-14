@@ -1,3 +1,6 @@
+import CompleteDictionary
+import KeyedSet
+
 public struct RpgCharacterRef: Sendable, Hashable {
     public var name: String
 

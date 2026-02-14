@@ -1,3 +1,5 @@
+import CompleteDictionary
+
 public struct Damage: Equatable, Hashable, Sendable {
     public var amount: Int
     public var type: DamageType
@@ -86,7 +88,7 @@ public struct Combat: Scene {
         }
     }
 
-    public func run(in gameSession: isolated GameSession = #isolation) async {
+    public func run(in gameSession: isolated GameSession = #isolation) async throws {
         let game = gameSession.game
         let players = game.characters.filter { $0.isPlayer }.map { $0.core }
         let nonPlayers = game.characters.filter { !$0.isPlayer }.map { $0.core }
@@ -115,14 +117,14 @@ public struct Combat: Scene {
                         {
                             options.append(.waitForOthers)
                         }
-                        let initiativeChoice = await character.brain.decide(
+                        let initiativeChoice = try await character.brain.decide(
                             .initiative,
                             options: options,
                             in: game.snapshot
                         )
                         switch initiativeChoice {
                         case .goNow:
-                            if await self.doCharacterTurn(character) {
+                            if try await self.doCharacterTurn(character) {
                                 break rounds
                             }
                             charactersPerPhase[initiativePhase].removeAll(where: {
@@ -159,7 +161,7 @@ public struct Combat: Scene {
     /// Returns whether the game is over.
     public func doCharacterTurn(
         _ character: any RpgCharacter, in gameSession: isolated GameSession = #isolation
-    ) async -> Bool {
+    ) async throws -> Bool {
         let game = gameSession.game
         character.combatState!.reactionsRemaining = 1
         character.combatState!.actionsRemaining =
@@ -167,13 +169,13 @@ public struct Combat: Scene {
         await game.broadcaster.tellAll(
             SingleTargetMessage(
                 w1: "It's $1's turn.", wU: "It's your turn.", as1: character.primaryKey))
-        await game.dispatch(CombatPhaseEvent(phase: .startOfTurn, character: character))
+        try await game.dispatch(CombatPhaseEvent(phase: .startOfTurn, character: character))
         actions: while true {
             if isOver(in: game) {
                 return true
             }
 
-            let choice = await character.brain.decide(
+            let choice = try await character.brain.decide(
                 .combatChoice,
                 type: CombatChoice.self, in: game.snapshot)
             guard case .action(let action) = choice else {
@@ -186,10 +188,10 @@ public struct Combat: Scene {
             {
                 character.focus.value -= action.focusCost
                 character.combatState!.actionsRemaining -= action.actionCost
-                await action.action(by: character.primaryKey, in: gameSession)
+                try await action.action(by: character.primaryKey, in: gameSession)
             }
         }
-        await game.dispatch(CombatPhaseEvent(phase: .endOfTurn, character: character))
+        try await game.dispatch(CombatPhaseEvent(phase: .endOfTurn, character: character))
         character.combatState!.weaponsUsed = []
         return false
     }

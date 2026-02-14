@@ -14,14 +14,15 @@ let package = Package(
         .package(url: "https://github.com/juri/terminal-ansi.git", from: "0.3.0"),
         .package(url: "https://github.com/mickmaccallum/CountedSet.git", from: "2.0.1"),
         .package(url: "https://github.com/swiftlang/swift-testing.git", from: "0.1.0"),
+        .package(url: "https://github.com/hummingbird-project/hummingbird.git", from: "2.0.0"),
+        .package(url: "https://github.com/hummingbird-project/hummingbird-websocket.git", from: "2.2.0"),
     ],
     targets: [
-        // Signals Library
+        // Signals
         .target(
             name: "Signals",
+            path: "Sources/lib/Signals/"
         ),
-
-        // Signals Tests
         .testTarget(
             name: "SignalsTests",
             dependencies: [
@@ -30,13 +31,19 @@ let package = Package(
             ],
         ),
 
+        .target(name: "KeyedSet", path: "Sources/lib/KeyedSet/"),
+        .target(name: "CompleteDictionary", path: "Sources/lib/CompleteDictionary/"),
+
+        // Main RPG logic
         .target(
             name: "stormlight-duel",
             dependencies: [
-                .product(name: "CountedSet", package: "CountedSet")
-            ]),
-
-        // RPG Tests
+                .product(name: "CountedSet", package: "CountedSet"),
+                .target(name: "KeyedSet"),
+                .target(name: "CompleteDictionary"),
+            ],
+            path: "Sources/stormlight-duel/game/",
+        ),
         .testTarget(
             name: "StormlightDuelTests",
             dependencies: [
@@ -45,9 +52,16 @@ let package = Package(
             ],
         ),
 
-        // Main executable
-        // Targets are the basic building blocks of a package, defining a module or a test suite.
-        // Targets can depend on other targets in this package and products from dependencies.
+        // Text brain
+        .target(
+            name: "text-brain",
+            dependencies: [
+                .target(name: "stormlight-duel")
+            ],
+            path: "Sources/stormlight-duel/text-brain",
+        ),
+
+        // CLI
         .executableTarget(
             name: "stormlight-duel-cli",
             dependencies: [
@@ -55,7 +69,18 @@ let package = Package(
                 .product(name: "TerminalANSI", package: "terminal-ansi"),
                 .product(name: "TerminalWidgets", package: "terminal-widgets"),
                 .target(name: "stormlight-duel"),
+                .target(name: "text-brain"),
             ],
+        ),
+
+        .executableTarget(
+            name: "stormlight-duel-service",
+            dependencies: [
+                .target(name: "stormlight-duel"),
+                .target(name: "text-brain"),
+                .product(name: "Hummingbird", package: "hummingbird"),
+                .product(name: "HummingbirdWebSocket", package: "hummingbird-websocket"),
+            ]
         ),
     ],
 )

@@ -1,0 +1,14 @@
+<section class="prompt-area">
+    <div class="prompt-message">
+        <div *ngIf="(state.currentPromptOrHint$ | async) as msg">
+            <div class="type">{{ msg.type | uppercase }}</div>
+            <div class="text">{{ msg.message }}</div>
+        </div>
+        <div *ngIf="!(state.currentPromptOrHint$ | async)">No prompt yet.</div>
+    </div>
+
+    <form (submit)="onSubmit($event)" class="input-row">
+        <input #answerInput type="text" [(ngModel)]="answer" name="answer" autocomplete="off" />
+        <button type="submit">Submit</button>
+    </form>
+</section>

@@ -1,16 +1,16 @@
 public protocol Scene: Sendable {
-    func run(in gameSession: isolated GameSession) async
+    func run(in gameSession: isolated GameSession) async throws
 }
 extension Scene {
-    func run(isolatedIn gameSession: isolated GameSession = #isolation) async {
+    func run(isolatedIn gameSession: isolated GameSession = #isolation) async throws {
         gameSession.game.scene = self
-        await self.run(in: gameSession)
+        try await self.run(in: gameSession)
     }
 }
 
 extension GameSession {
-    public func `switch`(to newScene: Scene) async {
-        await newScene.run()
+    public func `switch`(to newScene: Scene) async throws {
+        try await newScene.run()
     }
 }
 

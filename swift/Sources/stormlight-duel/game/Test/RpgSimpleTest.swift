@@ -48,15 +48,15 @@ public class RpgSimpleTest: RpgTest {
     }
 
     /// Make sure to dispatch an "afterSuccess" or "afterFailure"
-    public func roll(in gameSession: isolated GameSession) async -> RpgSimpleTestResult {
+    public func roll(in gameSession: isolated GameSession) async throws -> RpgSimpleTestResult {
         let game = gameSession.game
         let character = game.anyCharacter(at: tester)!
-        await game.dispatch(TestEvent(TestHookType.beforeRoll, test: self))
+        try await game.dispatch(TestEvent(TestHookType.beforeRoll, test: self))
         let (
             advantagesApplied,
             disadvantagesApplied,
             dieRoleCounts
-        ) = await assignAdvantagesAndDisadvantages(
+        ) = try await assignAdvantagesAndDisadvantages(
             advantagesAvailable: advantagesAvailable,
             disadvantagesAvailable: disadvantagesAvailable,
             disadvantageBrain: opponent.map { game.anyCharacter(at: $0)!.brain }
@@ -70,7 +70,7 @@ public class RpgSimpleTest: RpgTest {
             rng: &game.rng
         )
 
-        await game.dispatch(TestEvent(TestHookType.beforeResolution, test: self))
+        try await game.dispatch(TestEvent(TestHookType.beforeResolution, test: self))
 
         //let testDieRollOpportunity = testDieRoll == 20
         //let testDieRollComplication = testDieRoll == 1

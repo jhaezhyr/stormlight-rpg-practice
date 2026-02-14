@@ -1,3 +1,5 @@
+import KeyedSet
+
 public protocol ItemSharedProtocol: Keyed where Key == ItemRef {
     var name: String { get }
     var price: Money? { get }

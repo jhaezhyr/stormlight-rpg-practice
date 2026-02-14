@@ -57,7 +57,7 @@ public struct Strike: CombatAction {
     public func action(
         by characterRef: RpgCharacterRef,
         in gameSession: isolated GameSession = #isolation,
-    ) async {
+    ) async throws {
         let game = gameSession.game
         guard let character = game.characters[characterRef] else {
             fatalError("Bad character reference \(characterRef)")
@@ -98,26 +98,26 @@ public struct Strike: CombatAction {
                 wU2: "You target $2 for a strike with your \(weaponToStrikeWith.name)",
                 w1U: "$1 targets you for a strike with your \(weaponToStrikeWith.name)",
                 as1: characterRef, as2: target))
-        await game.dispatch(TestEvent(StrikePhase.aboutToAttemptStrike, test: test))
-        let result = await test.roll(in: gameSession)
+        try await game.dispatch(TestEvent(StrikePhase.aboutToAttemptStrike, test: test))
+        let result = try await test.roll(in: gameSession)
         let weaponModifier = character.modifiers[weaponSkill, default: 0]
         let damageMinAmount = result.damage
         let damageFullAmount = result.damage + weaponModifier
-        await game.dispatch(TestEvent(TestHookType.beforeResolution, test: test))
+        try await game.dispatch(TestEvent(TestHookType.beforeResolution, test: test))
         let damageToDo: Int
         let verbOfStrike: (thirdPerson: Substring, secondPerson: Substring)
         if result.testResult {
-            await game.dispatch(TestEvent(TestHookType.afterSuccess, test: test))
+            try await game.dispatch(TestEvent(TestHookType.afterSuccess, test: test))
             damageToDo = damageFullAmount
             verbOfStrike = ("strikes", "strike")
         } else {
-            await game.dispatch(TestEvent(TestHookType.afterFailure, test: test))
+            try await game.dispatch(TestEvent(TestHookType.afterFailure, test: test))
             if character.focus.value >= 1 {
                 await game.broadcaster.tellHint(
                     "You can graze for \(damageMinAmount). Focus: \(character.focus.value)/\(character.focus.maxValue)",
                     to: character.primaryKey)
                 let shouldGraze =
-                    await character.brain.decide(
+                    try await character.brain.decide(
                         .shouldGraze, options: GrazeChoice.allCases, in: game.snapshot)
                     == .shouldGraze
                 if shouldGraze {
@@ -133,9 +133,9 @@ public struct Strike: CombatAction {
                 verbOfStrike = ("misses", "miss")
             }
         }
-        await game.dispatch(TestEvent(StrikePhase.aboutToDealDamage, test: test))
+        try await game.dispatch(TestEvent(StrikePhase.aboutToDealDamage, test: test))
         targetCharacter.takeDamage(Damage(damageToDo, type: weapon.damageType))
-        await game.dispatch(TestEvent(StrikePhase.dealtDamage, test: test))
+        try await game.dispatch(TestEvent(StrikePhase.dealtDamage, test: test))
         await game.broadcaster.tellAll(
             DoubleTargetMessage(
                 w12:

@@ -25,7 +25,7 @@ public struct DodgeProvider: Responder {
                 else {
                     return
                 }
-                let choice = await me.brain.decide(
+                let choice = try await me.brain.decide(
                     .shouldDodge,
                     options: ShouldDodgeChoice.allCases,
                     in: session.game.snapshot

@@ -10,7 +10,7 @@ public protocol CombatAction: Sendable {
     var actionCost: Int { get }
     var focusCost: Int { get }
     func canTakeAction(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot) -> Bool
-    func action(by characterRef: RpgCharacterRef, in gameSession: isolated GameSession) async
+    func action(by characterRef: RpgCharacterRef, in gameSession: isolated GameSession) async throws
     static func canMaybeTakeAction(
         by character: RpgCharacterRef, in gameSnapshot: GameSnapshot
     ) -> Bool

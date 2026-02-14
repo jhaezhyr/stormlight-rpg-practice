@@ -1,3 +1,6 @@
+import CompleteDictionary
+import KeyedSet
+
 /// Many characters have stat blocks, but only full characters have expertises, money, and paths.
 public protocol PlayerRpgCharacterProtocol: RpgCharacter {
     var expertises: Set<Expertise> { get }

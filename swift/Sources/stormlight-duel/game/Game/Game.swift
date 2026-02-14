@@ -1,3 +1,5 @@
+import KeyedSet
+
 public protocol GameSharedProtocol {
     associatedtype CharacterType: RpgCharacterSharedProtocol
     associatedtype TestType: RpgTestSharedProtocol
@@ -88,9 +90,11 @@ extension Game: Responder {
         characters.map { $0.core }
     }
 
-    public func dispatch(_ event: Event?, in gameSession: isolated GameSession = #isolation) async {
+    public func dispatch(_ event: Event?, in gameSession: isolated GameSession = #isolation)
+        async throws
+    {
         if let event {
-            await respondAndPassOn(to: event, in: gameSession)
+            try await respondAndPassOn(to: event, in: gameSession)
         }
     }
 }
