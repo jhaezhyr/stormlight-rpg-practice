@@ -3,16 +3,19 @@ public protocol Responder {
     var childResponders: [any Responder] { get }
 }
 extension Responder {
-    public func respondAndPassOn(to event: any Event, in gameSession: isolated GameSession) async {
-        await respondIfListening(to: event, in: gameSession)
+    public func respondAndPassOn(to event: any Event, in gameSession: isolated GameSession)
+        async throws
+    {
+        try await respondIfListening(to: event, in: gameSession)
         for child in childResponders {
-            await child.respondAndPassOn(to: event, in: gameSession)
+            try await child.respondAndPassOn(to: event, in: gameSession)
         }
     }
-    private func respondIfListening(to event: any Event, in gameSession: isolated GameSession) async
+    private func respondIfListening(to event: any Event, in gameSession: isolated GameSession)
+        async throws
     {
         for handler in handlers {
-            await handler.handleIfOfRightType(event, in: gameSession)
+            try await handler.handleIfOfRightType(event, in: gameSession)
         }
     }
     private var allChildResponders: [any Responder] {
@@ -28,25 +31,26 @@ public protocol Event {}
 
 public protocol EventHandlerProtocol {
     associatedtype Event
-    func handle(_ event: Event, in gameSession: isolated GameSession) async
+    func handle(_ event: Event, in gameSession: isolated GameSession) async throws
 }
 extension EventHandlerProtocol {
-    func handleIfOfRightType(_ event: Any, in gameSession: isolated GameSession) async {
+    func handleIfOfRightType(_ event: Any, in gameSession: isolated GameSession) async throws {
         if let event = event as? Event {
-            await handle(event, in: gameSession)
+            try await handle(event, in: gameSession)
         }
     }
 }
 
 public struct EventHandler<Event>: EventHandlerProtocol {
-    private let handler: (_ event: Event, _ gameSession: isolated GameSession) async -> Void
+    private let handler: (_ event: Event, _ gameSession: isolated GameSession) async throws -> Void
     public init(
-        handler: @escaping (_ event: Event, _ gameSession: isolated GameSession) async -> Void
+        handler:
+            @escaping (_ event: Event, _ gameSession: isolated GameSession) async throws -> Void
     ) {
         self.handler = handler
     }
 
-    public func handle(_ event: Event, in gameSession: isolated GameSession) async {
-        await self.handler(event, gameSession)
+    public func handle(_ event: Event, in gameSession: isolated GameSession) async throws {
+        try await self.handler(event, gameSession)
     }
 }

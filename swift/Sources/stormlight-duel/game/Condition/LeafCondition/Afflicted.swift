@@ -15,7 +15,7 @@ public struct Afflicted: Condition {
         self.damagePerTurn = damagePerTurn
         self.handlers = [
             EventHandler<CombatPhaseEvent> {
-                (event: CombatPhaseEvent, game: isolated GameSession) in
+                (event: CombatPhaseEvent, game: isolated GameSession) async throws in
                 guard event.phase == .endOfTurn,
                     meRef == event.character.primaryKey
                 else {

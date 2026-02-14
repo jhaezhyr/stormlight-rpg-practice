@@ -7,7 +7,7 @@ func assignAdvantagesAndDisadvantages<Role>(
     advantageBrain: RpgCharacterBrain,
     dieRoleCounts: CountedSet<Role>,
     in gameSession: isolated GameSession = #isolation
-) async -> (
+) async throws -> (
     advantagesApplied: Int,
     disadvantagesApplied: Int,
     dieRoleCounts: CountedSet<RoleWithAdvantageNumber<Role>>
@@ -22,7 +22,7 @@ func assignAdvantagesAndDisadvantages<Role>(
         _ brain: RpgCharacterBrain,
         toAllocate rollModifier: RollModifier,
         in gameSession: isolated GameSession = #isolation
-    ) async -> Bool {
+    ) async throws -> Bool {
         let options =
             result.filterToCountedSet { die, count in
                 die.advantageNumber != rollModifier ? 1 : 0
@@ -30,7 +30,7 @@ func assignAdvantagesAndDisadvantages<Role>(
             + [
                 .other("ignore")
             ]
-        let choice = await brain.decide(
+        let choice = try await brain.decide(
             .whichDieToModify(rollModifier), options: options, in: gameSession.game.snapshot)
         guard case .decide(let choice) = choice else {
             return false
@@ -46,14 +46,14 @@ func assignAdvantagesAndDisadvantages<Role>(
     }
 
     for _ in 0..<disadvantagesAvailable {
-        if await !allow(disadvantageBrain, toAllocate: .disadvantage) {
+        if try await !allow(disadvantageBrain, toAllocate: .disadvantage) {
             break
         } else {
             disadvantagesApplied += 1
         }
     }
     for _ in 0..<advantagesAvailable {
-        if await !allow(advantageBrain, toAllocate: .advantage) {
+        if try await !allow(advantageBrain, toAllocate: .advantage) {
             break
         } else {
             advantagesApplied += 1

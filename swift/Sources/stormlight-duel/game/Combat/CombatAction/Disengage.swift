@@ -62,7 +62,8 @@ public struct DisengageAction: CombatAction {
         }
         return true
     }
-    public func action(by characterRef: RpgCharacterRef, in gameSession: isolated GameSession) async
+    public func action(by characterRef: RpgCharacterRef, in gameSession: isolated GameSession)
+        async throws
     {
         guard let me = gameSession.game.anyCharacter(at: characterRef),
             let mySpace = me.combatState?.space
@@ -71,7 +72,7 @@ public struct DisengageAction: CombatAction {
         }
         let newSpace = mySpace + (direction == .right ? 5 : -5)
         me.combatState!.space = newSpace
-        await gameSession.game.dispatch(
+        try await gameSession.game.dispatch(
             MovementStepEvent(subject: me, direction: direction, carefully: true),
             in: gameSession
         )

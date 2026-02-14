@@ -3,16 +3,18 @@
 
 import Foundation
 import stormlight_duel
+import text_brain
 
 @MainActor
 @main
 public struct MyCLI {
-    static func main() async {
+    static func main() async throws {
         let session = GameSession()
         let broadcaster = Broadcaster()
 
+        let player1Ref = RpgCharacterRef(name: "Kal")
         let player1 = PlayerRpgCharacter(
-            name: "Kal",
+            name: player1Ref.name,
             expertises: [],
             equipment: [await Readyable(basicWeapons[.axe]!(session), isReady: true)],
             attributes: .init { _ in 2 },
@@ -23,8 +25,9 @@ public struct MyCLI {
             investiture: .init(maxValue: 0),
             reach: 0,
             conditions: [],
-            brain: await CliRpgCharacterBrain(
-                characterRef: RpgCharacterRef(name: "Kal")
+            brain: try await TextBrain(
+                characterRef: player1Ref,
+                ui: TextInterfaceProxy(connection: CliInterfaceConnection(for: player1Ref))
             ),
             isPlayer: true
         )
@@ -52,6 +55,6 @@ public struct MyCLI {
                     for: RpgCharacterRef(name: "GM EN")
                 )))
 
-        await session.switch(to: Combat(map: Map.emptyDuel))
+        try await session.switch(to: Combat(map: Map.emptyDuel))
     }
 }

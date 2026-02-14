@@ -2,7 +2,9 @@ public struct InteractiveMove: CombatAction {
     public static var actionCost: Int { 1 }
     public init() {
     }
-    public func action(by character: RpgCharacterRef, in gameSession: isolated GameSession) async {
+    public func action(by character: RpgCharacterRef, in gameSession: isolated GameSession)
+        async throws
+    {
         let me = gameSession.game.characters[character]!.core
         var map: Map { (gameSession.game.scene as! Combat).map }
         let totalMovement = me.movementRate
@@ -21,7 +23,7 @@ public struct InteractiveMove: CombatAction {
                         return (direction, newSpace)
                     }
                 })
-            let choice = await me.brain.decide(
+            let choice = try await me.brain.decide(
                 .directionToMove5Ft,
                 options: choiceMap.keys.map { DecideOrOther.decide($0) } + [.other("stop")],
                 in: gameSession.game.snapshot
@@ -30,7 +32,7 @@ public struct InteractiveMove: CombatAction {
             case .decide(let direction):
                 me.combatState!.space = choiceMap[direction]!
                 movementRemaining -= 5
-                await gameSession.game.dispatch(
+                try await gameSession.game.dispatch(
                     MovementStepEvent(subject: me, direction: direction, carefully: false),
                     in: gameSession
                 )

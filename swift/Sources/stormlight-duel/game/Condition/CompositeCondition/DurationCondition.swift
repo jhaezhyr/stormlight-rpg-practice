@@ -22,7 +22,7 @@ public struct DurationCondition<C: Condition>: CompositeCondition {
         self.durationRemainingInTurns = duration
         self.handlers = [
             EventHandler<CombatPhaseEvent> {
-                event, gameSession in
+                (event, gameSession) async throws in
                 guard event.phase == .endOfTurn, character == event.character.primaryKey else {
                     return
                 }

@@ -14,13 +14,14 @@ public final class RpgCharacterDummyBrain: RpgCharacterBrain {
     /// If we have a valid premade answer, return it!
     ///
     /// Only checks for type info; doesn't check whether it's in the option list.
+    @MainActor
     public func decide<C>(_ code: DecisionCode, options: C, in gameSnapshot: GameSnapshot)
-        async -> C.Element
+        -> C.Element
     where C: Collection, C.Element: Sendable {
-        if let answer = await getPremadeAnswer(ofType: C.Element.self) {
+        if let answer = getPremadeAnswer(ofType: C.Element.self) {
             return answer
         }
-        if await !onlyGivePremadeAnswers {
+        if !onlyGivePremadeAnswers {
             return options.first!
         }
         fatalError(
@@ -28,10 +29,11 @@ public final class RpgCharacterDummyBrain: RpgCharacterBrain {
         )
     }
 
+    @MainActor
     public func decide<T: Sendable>(
         _ code: DecisionCode, type: T.Type, in gameSnapshot: GameSnapshot
-    ) async -> T {
-        if let answer = await getPremadeAnswer(ofType: type) {
+    ) -> T {
+        if let answer = getPremadeAnswer(ofType: type) {
             return answer
         }
         fatalError("\(self.characterRef.name) is too much of a dummy to decide on a \(T.self)")

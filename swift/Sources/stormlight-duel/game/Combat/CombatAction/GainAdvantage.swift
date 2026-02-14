@@ -9,7 +9,8 @@ public struct GainAdvantage: CombatAction {
         self.chosenSkill = chosenSkill
     }
 
-    public func action(by characterRef: RpgCharacterRef, in gameSession: isolated GameSession) async
+    public func action(by characterRef: RpgCharacterRef, in gameSession: isolated GameSession)
+        async throws
     {
         guard
             let (me: me, opponent: opponent, game: game) = try? resolveReferences(me: characterRef)
@@ -26,7 +27,7 @@ public struct GainAdvantage: CombatAction {
             in: gameSession
         )
         game.updateTest(test)
-        let result = await test.roll(in: gameSession)
+        let result = try await test.roll(in: gameSession)
         if result.testResult {
             me.conditions.upsert(
                 AnyCondition(
@@ -43,7 +44,7 @@ public struct GainAdvantage: CombatAction {
                     w1: "$1 failed to gain advantage.", wU: "You failed to gain advantage",
                     as1: characterRef))
         }
-        await game.dispatch(
+        try await game.dispatch(
             TestEvent(
                 result.testResult ? TestHookType.afterSuccess : TestHookType.afterFailure,
                 test: test,

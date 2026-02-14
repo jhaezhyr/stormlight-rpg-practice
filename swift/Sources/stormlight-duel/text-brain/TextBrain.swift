@@ -1,13 +1,14 @@
 import Foundation
 import stormlight_duel
 
-struct CliRpgCharacterBrain: RpgCharacterBrain {
+public actor TextBrain<Connection: TextInterfaceConnection>: RpgCharacterBrain {
     let characterRef: RpgCharacterRef
+    private var ui: TextInterfaceProxy<Connection>
 
-    @MainActor
-    init(characterRef: RpgCharacterRef) async {
+    public init(characterRef: RpgCharacterRef, ui: TextInterfaceProxy<Connection>) async throws {
         self.characterRef = characterRef
-        _ = await self.decideBetweenOptions(
+        self.ui = ui
+        _ = try await self.decideBetweenOptions(
             UnderstandingChoice.allCases,
             prompt: """
                 Welcome to STORMLIGHT DUEL!
@@ -38,7 +39,8 @@ struct CliRpgCharacterBrain: RpgCharacterBrain {
     }
 
     @MainActor
-    func decide<C: Sendable>(_ code: DecisionCode, options: C, in gameSnapshot: GameSnapshot) async
+    public func decide<C: Sendable>(_ code: DecisionCode, options: C, in gameSnapshot: GameSnapshot)
+        async throws
         -> C.Element
     where C: Collection, C.Element: Sendable {
         if let option = options.first, options.count == 1 {
@@ -50,9 +52,9 @@ struct CliRpgCharacterBrain: RpgCharacterBrain {
         } else {
             parsers = []
         }
-        let extraInterface: [String] = getExtraInterfaceForDecision(
+        let extraInterface: [String]? = getExtraInterfaceForDecision(
             code, type: C.Element.self, in: gameSnapshot)
-        return await decideBetweenOptions(
+        return try await decideBetweenOptions(
             Array(options),
             prompt: "\(code)",
             extraInterface: extraInterface,
@@ -69,39 +71,37 @@ struct CliRpgCharacterBrain: RpgCharacterBrain {
     private func decideBetweenOptions<T: Sendable>(
         _ options: [T]?,
         prompt: String,
-        extraInterface: [String] = [],
+        extraInterface: [String]? = nil,
         parsers: [any CliArgsParserProtocol] = [],
         displayParseableClassesInHud: Bool = false,
         in gameSnapshot: GameSnapshot,
-    ) async -> T {
-        await printHUD(prompt)
-        for extra in extraInterface {
-            await printHUD(extra)
-        }
-        if let options {
-            for (i, x) in options.enumerated() {
-                await printHUD(":\(i + 1) \(x)")
-            }
-        }
+    ) async throws -> T {
+        var message = prompt
+        message +=
+            (options?.enumerated().map { (i, x) in "\n:\(i + 1) \(x)" }.joined()
+                ?? "")
         if displayParseableClassesInHud {
-            for parser in parsers {
-                await printHUD(":\(parser.helpText)")
-            }
+            message += parsers.map { "\n:\($0.helpText)" }.joined()
         }
         choiceLoop: while true {
-            guard let aLine = read()?.trimmingCharacters(in: .whitespacesAndNewlines) else {
-                await printHUD("Couldn't read that input.")
+            guard
+                let aLine = try await read(
+                    message,
+                    interface: extraInterface?.joined(separator: "\n") ?? nil
+                )?.trimmingCharacters(in: .whitespacesAndNewlines)
+            else {
+                await printHint("Couldn't read that input.")
                 continue
             }
             let (args, context) = (aLine.split(separator: " "), (gameSnapshot, characterRef))
             do {
                 if let statusCommand = try StatusCommand.parser.parse(args: args, context: context)
                 {
-                    await printHUD(statusCommand.evaluate(in: gameSnapshot, for: characterRef))
+                    await printHint(statusCommand.evaluate(in: gameSnapshot, for: characterRef))
                     continue choiceLoop
                 }
             } catch {
-                await printHUD(error.description)
+                await printHint(error.description)
                 continue choiceLoop
             }
             var result: T?
@@ -121,7 +121,7 @@ struct CliRpgCharacterBrain: RpgCharacterBrain {
                             }
                         }
                     } catch {
-                        await printHUD(
+                        await printHint(
                             "\"\(aLine)\" is an invalid \(parser.helpText). \(error.description)")
                     }
                 }
@@ -131,10 +131,10 @@ struct CliRpgCharacterBrain: RpgCharacterBrain {
                     if let optionsWithContains = options as? ContainsAny,
                         optionsWithContains.containsAny(result)
                     {
-                        await printHUD("You chose \(result)")
+                        await printHint("You chose \(result)")
                         return result
                     } else {
-                        await printHUD("You chose \(result), but that is not a valid choice.")
+                        await printHint("You chose \(result), but that is not a valid choice.")
                         continue
                     }
                 } else {
@@ -142,32 +142,33 @@ struct CliRpgCharacterBrain: RpgCharacterBrain {
                 }
             } else {
                 if let options {
-                    await printHUD(
+                    await printHint(
                         "\(aLine) is not a valid choice. Pick a number from 1 to \(options.count)."
                     )
                 } else {
-                    await printHUD("\(aLine) is not a valid choice.")
+                    await printHint("\(aLine) is not a valid choice.")
                 }
             }
         }
     }
 
-    @MainActor
-    func read() -> String? {
-        print("  > ", terminator: "")
-        return readLine()
+    func read(_ message: String, interface: String? = nil) async throws -> String? {
+        let answer = try await ui.prompt(message, interface: interface)
+        return answer
     }
 
     @MainActor
-    func decide<T: Sendable>(_ code: DecisionCode, type: T.Type, in gameSnapshot: GameSnapshot)
-        async -> T
+    public func decide<T: Sendable>(
+        _ code: DecisionCode, type: T.Type, in gameSnapshot: GameSnapshot
+    )
+        async throws -> T
     where T: Sendable {
         switch code {
         case .combatChoice:
-            return await decideCombatChoice(in: gameSnapshot) as! T
+            return try await decideCombatChoice(in: gameSnapshot) as! T
         default:
             if let allCases = (T.self as? (any CaseIterable.Type))?.allCases {
-                return await decide(code, options: allCases.map { $0 as! T }, in: gameSnapshot)
+                return try await decide(code, options: allCases.map { $0 as! T }, in: gameSnapshot)
             }
             fatalError("I don't know how to decide when asked for \(type)")
         }
@@ -176,37 +177,38 @@ struct CliRpgCharacterBrain: RpgCharacterBrain {
     @MainActor
     func getExtraInterfaceForDecision<T>(
         _ code: DecisionCode, type: T.Type, in gameSnapshot: GameSnapshot
-    ) -> [String] {
+    ) -> [String]? {
         switch code {
         case .directionToMove5Ft:
             return [(gameSnapshot.scene as! Combat).map.oneLineDescription(in: gameSnapshot)]
-        default: return []
+        default: return nil
         }
     }
 
     @MainActor
-    private func printForCharacter(_ thing: Any) async {
-        try? await Task.sleep(for: .seconds(0.05))
-        print("\(characterRef.name): \(thing)")
+    private func printEvent(_ thing: Any, interface: String? = nil) async {
+        await ui.event("\(thing)", interface: interface)
     }
 
     @MainActor
-    private func printHUD(_ thing: Any) async {
-        try? await Task.sleep(for: .seconds(0.05))
-        print("\(thing)")
+    private func printHint(_ thing: Any, interface: String? = nil) async {
+        await ui.hint("\(thing)", interface: interface)
     }
 
     @MainActor
-    func hear<M>(_ message: M, in gameSnapshot: GameSnapshot) async where M: Message {
+    public func hear<M>(_ message: M, in gameSnapshot: GameSnapshot) async where M: Message {
         let messageDescription = message.description(for: characterRef)
-        await printForCharacter(messageDescription)
+        let interface: String?
         if messageDescription.contains("ROUND") {
-            await printHUD(StatusCommand.general.evaluate(in: gameSnapshot, for: characterRef))
+            interface = StatusCommand.general.evaluate(in: gameSnapshot, for: characterRef)
+        } else {
+            interface = nil
         }
+        await printEvent(messageDescription, interface: interface)
     }
 
-    @MainActor func hearHint(_ message: String, in gameSnapshot: GameSnapshot) async {
-        await printForCharacter(message)
+    @MainActor public func hearHint(_ message: String, in gameSnapshot: GameSnapshot) async {
+        await printHint(message)
     }
 }
 
@@ -223,10 +225,9 @@ extension Array: ContainsAny where Element: Equatable {
     }
 }
 
-extension CliRpgCharacterBrain {
-
+extension TextBrain {
     @MainActor
-    private func decideCombatChoice(in gameSnapshot: GameSnapshot) async -> CombatChoice {
+    private func decideCombatChoice(in gameSnapshot: GameSnapshot) async throws -> CombatChoice {
         guard let character = gameSnapshot.characters[characterRef] else {
             fatalError("Bad character ref \(characterRef)")
         }
@@ -238,7 +239,7 @@ extension CliRpgCharacterBrain {
             } + [endTurnParser.asAny]
 
         while true {
-            let answer: CombatChoice = await decideBetweenOptions(
+            let answer: CombatChoice = try await decideBetweenOptions(
                 nil,
                 prompt:
                     "You have \(character.combatState!.actionsRemaining) actions. What is your combat choice?",
@@ -248,11 +249,11 @@ extension CliRpgCharacterBrain {
             )
             if case CombatChoice.action(let action) = answer {
                 guard action.canTakeAction(by: characterRef, in: gameSnapshot) else {
-                    await self.printHUD("\(answer) is not a valid combat action.")
+                    await self.printHint("\(answer) is not a valid combat action.")
                     continue
                 }
             }
-            await printHUD("You chose \(answer)")
+            await printHint("You chose \(answer)")
             return answer
         }
     }
@@ -261,12 +262,12 @@ extension CliRpgCharacterBrain {
     func makeInteractiveMoveStep(
         _ options: [DecideOrOther<Direction1D>],
         in gameSnapshot: GameSnapshot
-    ) async
+    ) async throws
         -> DecideOrOther<Direction1D>
     {
-        await printHUD((gameSnapshot.scene as! Combat).map.oneLineDescription(in: gameSnapshot))
+        await printHint((gameSnapshot.scene as! Combat).map.oneLineDescription(in: gameSnapshot))
         //await printHUD("You have \(movementRemaining) movement remaining.")
-        let answer: DecideOrOther<Direction1D> = await decideBetweenOptions(
+        let answer: DecideOrOther<Direction1D> = try await decideBetweenOptions(
             options,
             prompt: "Which direction will you step 5ft?",
             parsers: [
