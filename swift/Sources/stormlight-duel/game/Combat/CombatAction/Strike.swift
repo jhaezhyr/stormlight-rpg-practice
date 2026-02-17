@@ -134,17 +134,20 @@ public struct Strike: CombatAction {
             }
         }
         try await game.dispatch(TestEvent(StrikePhase.aboutToDealDamage, test: test))
-        targetCharacter.takeDamage(Damage(damageToDo, type: weapon.damageType))
+        let damageDone = await doDamage(
+            Damage(damageToDo, type: weapon.damageType), to: targetCharacter.primaryKey)
         try await game.dispatch(TestEvent(StrikePhase.dealtDamage, test: test))
         await game.broadcaster.tellAll(
             DoubleTargetMessage(
                 w12:
-                    "$1 \(verbOfStrike.thirdPerson) $2 and deals \(damageToDo) \(weapon.damageType.rawValue) damage.",
+                    "$1 \(verbOfStrike.thirdPerson) $2 and deals \(damageDone.amount) \(damageDone.type.rawValue) damage.",
                 wU2:
-                    "You \(verbOfStrike.secondPerson) $2 and deal \(damageToDo) \(weapon.damageType.rawValue) damage.",
+                    "You \(verbOfStrike.secondPerson) $2 and deal \(damageDone.amount) \(damageDone.type.rawValue) damage.",
                 w1U:
-                    "$1 \(verbOfStrike.thirdPerson) you and deals \(damageToDo) \(weapon.damageType.rawValue) damage.",
-                as1: characterRef, as2: target)
+                    "$1 \(verbOfStrike.thirdPerson) you and deals \(damageDone.amount) \(damageDone.type.rawValue) damage.",
+                as1: characterRef,
+                as2: target
+            )
         )
         character.combatState?.weaponsUsed.insert(weapon.weaponName)
         // TODO Give lots of opportunities to resolve complications and opportunities, but those should all be spent by this point.

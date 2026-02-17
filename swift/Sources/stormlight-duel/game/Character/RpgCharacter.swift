@@ -138,15 +138,49 @@ extension RpgCharacter {
     }
 
     public var deflect: Int {
-        0
+        // TODO Decentralize this logic. Make a "modified value" object.
+        equipment.map { readyable in
+            readyable.isReady ? (readyable.core.core as? any Armor)?.deflect ?? 0 : 0
+        }.reduce(0, +)
     }
 }
 
-extension RpgCharacter {
-    public func takeDamage(_ damage: Damage, in gameSession: GameSession = #isolation) {
-        let damageReduction = damage.type == .vital ? 0 : deflect
-        health.value = max(0, health.value - max(0, damage.amount - damageReduction))
+/// Returns the damage actually taken.
+public func doDamage(
+    _ damage: Damage, to characterRef: RpgCharacterRef,
+    in gameSession: isolated GameSession = #isolation
+)
+    async -> Damage
+{
+    guard let character = gameSession.game.anyCharacter(at: characterRef) else {
+        return Damage(0, type: damage.type)
     }
+    let damageReduction: Int
+    if character.deflect > 0 {
+        if damage.type == .vital {
+            await gameSession.game.broadcaster.tellAll(
+                SingleTargetMessage(
+                    w1: "$1 can't deflect vital damage.", wU: "You can't deflect vital damage.",
+                    as1: character.primaryKey))
+            damageReduction = 0
+        } else {
+            await gameSession.game.broadcaster.tellAll(
+                SingleTargetMessage(
+                    w1:
+                        "$1 deflects \(character.deflect > damage.amount ? "all" : "\(character.deflect)") of the incoming \(damage.type) damage.",
+                    wU:
+                        "You deflect \(character.deflect > damage.amount ? "all" : "\(character.deflect)") of the incoming \(damage.type) damage.",
+                    as1: character.primaryKey)
+            )
+            damageReduction = character.deflect
+        }
+    } else {
+        damageReduction = 0
+    }
+    let oldHealth = character.health.value
+    character.health.value = max(
+        0, character.health.value - max(0, damage.amount - damageReduction))
+    return Damage(character.health.value - oldHealth, type: damage.type)
 }
 
 // TODO Figure out how to allow all conditions, item traits, environmental factors, and context affect the effective value of all of these numbers. Some conditions should even be contextually determined.

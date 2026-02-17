@@ -29,7 +29,10 @@ public actor GameSession {
         let player1 = PlayerRpgCharacter(
             name: player1Ref.name,
             expertises: [],
-            equipment: [await Readyable(basicWeapons[.axe]!(session), isReady: true)],
+            equipment: [
+                await Readyable(basicWeapons[.axe]!(session), isReady: true),
+                await Readyable(BasicArmorTypes.leather(in: session), isReady: true),
+            ],
             attributes: .init { _ in 2 },
             ranksInCoreSkills: .init { _ in 0 },
             ranksInOtherSkills: [:],

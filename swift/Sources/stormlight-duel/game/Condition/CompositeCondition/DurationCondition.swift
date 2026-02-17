@@ -18,6 +18,7 @@ public struct DurationCondition<C: Condition>: CompositeCondition {
         in gameSession: isolated GameSession
     ) {
         let id = core.id
+        let coreName = "\(core)"
         self.core = core
         self.durationRemainingInTurns = duration
         self.handlers = [
@@ -34,6 +35,10 @@ public struct DurationCondition<C: Condition>: CompositeCondition {
                 me.durationRemainingInTurns -= 1
                 if me.durationRemainingInTurns <= 0 {
                     character.conditions.remove(id)
+                    await gameSession.game.broadcaster.tellAll(
+                        SingleTargetMessage(
+                            w1: "$1 loses the \(coreName) condition.",
+                            wU: "You lose the \(coreName) condition.", as1: character.primaryKey))
                 } else {
                     character.conditions[id] = AnyCondition(me)
                 }

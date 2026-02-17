@@ -22,7 +22,15 @@ public struct Afflicted: Condition {
                     return
                 }
                 let me = event.character
-                me.takeDamage(damagePerTurn, in: gameSession)
+                let damageDone = await doDamage(damagePerTurn, to: me.primaryKey, in: gameSession)
+                await game.game.broadcaster.tellAll(
+                    SingleTargetMessage(
+                        w1:
+                            "$1 takes \(damageDone.amount) \(damageDone.type.rawValue) damage from being afflicted.",
+                        wU:
+                            "You take \(damageDone.amount) \(damageDone.type.rawValue) damage from being afflicted.",
+                        as1: me.primaryKey)
+                )
             }
         ]
     }
