@@ -167,9 +167,9 @@ public func doDamage(
             await gameSession.game.broadcaster.tellAll(
                 SingleTargetMessage(
                     w1:
-                        "$1 deflects \(character.deflect > damage.amount ? "all" : "\(character.deflect)") of the incoming \(damage.type) damage.",
+                        "$1 deflects \(character.deflect >= damage.amount ? "all" : "\(character.deflect)") of the incoming \(damage.type) damage.",
                     wU:
-                        "You deflect \(character.deflect > damage.amount ? "all" : "\(character.deflect)") of the incoming \(damage.type) damage.",
+                        "You deflect \(character.deflect >= damage.amount ? "all" : "\(character.deflect)") of the incoming \(damage.type) damage.",
                     as1: character.primaryKey)
             )
             damageReduction = character.deflect
@@ -180,7 +180,7 @@ public func doDamage(
     let oldHealth = character.health.value
     character.health.value = max(
         0, character.health.value - max(0, damage.amount - damageReduction))
-    return Damage(character.health.value - oldHealth, type: damage.type)
+    return Damage(oldHealth - character.health.value, type: damage.type)
 }
 
 // TODO Figure out how to allow all conditions, item traits, environmental factors, and context affect the effective value of all of these numbers. Some conditions should even be contextually determined.
