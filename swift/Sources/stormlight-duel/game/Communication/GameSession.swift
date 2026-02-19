@@ -30,7 +30,7 @@ public actor GameSession {
             name: player1Ref.name,
             expertises: [],
             equipment: [
-                await Readyable(basicWeapons[.axe]!(session), isReady: true),
+                await Readyable(basicWeapons[.crossbow]!(session), isReady: true),
                 await Readyable(BasicArmorTypes.leather(in: session), isReady: true),
             ],
             attributes: .init { _ in 2 },
