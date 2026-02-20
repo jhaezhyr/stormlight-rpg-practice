@@ -94,7 +94,7 @@ public struct Strike: CombatAction {
             DoubleTargetMessage(
                 w12: "$1 targets $2 for a strike with their \(weaponToStrikeWith.name)",
                 wU2: "You target $2 for a strike with your \(weaponToStrikeWith.name)",
-                w1U: "$1 targets you for a strike with your \(weaponToStrikeWith.name)",
+                w1U: "$1 targets you for a strike with their \(weaponToStrikeWith.name)",
                 as1: characterRef, as2: target))
         try await game.dispatch(TestEvent(StrikePhase.aboutToAttemptStrike, test: test))
         let result = try await test.roll(in: gameSession)
