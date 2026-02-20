@@ -19,7 +19,7 @@ public struct Level1CpuBrain: RpgCharacterBrain {
             for enemy in gameSnapshot.enemies(of: meRef) {
                 for weapon in me.readyItems.compactMap({ $0.core as? any WeaponSnapshot }) {
                     let strike = Strike(enemy, with: weapon.primaryKey)
-                    if strike.canTakeAction(by: meRef, in: gameSnapshot) {
+                    if strike.canReallyTakeAction(by: meRef, in: gameSnapshot) {
                         return CombatChoice.action(strike) as! T
                     }
                 }

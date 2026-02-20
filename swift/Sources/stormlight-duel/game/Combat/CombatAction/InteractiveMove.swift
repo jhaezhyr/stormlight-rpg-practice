@@ -1,5 +1,6 @@
 public struct InteractiveMove: CombatAction {
     public static var actionCost: Int { 1 }
+    public static var canBeTakenMoreThanOncePerTurn: Bool { true }
     public init() {
     }
     public func action(by character: RpgCharacterRef, in gameSession: isolated GameSession)

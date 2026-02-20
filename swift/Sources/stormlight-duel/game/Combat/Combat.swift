@@ -181,18 +181,16 @@ public struct Combat: Scene {
             guard case .action(let action) = choice else {
                 break actions
             }
-            if character.combatState!.actionsRemaining >= action.actionCost
-                && character.focus.value >= action.focusCost
-                && action.canTakeAction(by: character.primaryKey, in: game.snapshot)
-                && !character.combatState!.actionsTaken.contains(action.actionName)
-            {
+            if action.canReallyTakeAction(by: character.primaryKey, in: game.snapshot) {
                 character.focus.value -= action.focusCost
                 character.combatState!.actionsRemaining -= action.actionCost
+                character.combatState!.actionsTaken.insert(action.actionName)
                 try await action.action(by: character.primaryKey, in: gameSession)
             }
         }
         try await game.dispatch(CombatPhaseEvent(phase: .endOfTurn, character: character))
         character.combatState!.weaponsUsed = []
+        character.combatState!.actionsTaken = []
         return false
     }
 

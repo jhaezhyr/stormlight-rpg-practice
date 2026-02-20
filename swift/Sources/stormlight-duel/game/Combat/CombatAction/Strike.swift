@@ -1,5 +1,6 @@
 public struct Strike: CombatAction {
     public static var actionCost: Int { 1 }
+    public static var canBeTakenMoreThanOncePerTurn: Bool { true }
     public var weaponToStrikeWith: ItemRef
     public var target: RpgCharacterRef
 
@@ -34,9 +35,6 @@ public struct Strike: CombatAction {
             return false
         }
         if character.combatState!.weaponsUsed.contains(weapon.weaponName) {
-            return false
-        }
-        if !canAffordAction(by: characterRef, in: gameSnapshot) {
             return false
         }
         let availableRange =

@@ -66,12 +66,6 @@ public struct Recover: CombatAction {
         }
     }
 
-    public func canTakeAction(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot)
-        -> Bool
-    {
-        Self.canMaybeTakeAction(by: characterRef, in: gameSnapshot)
-    }
-
     public static func canMaybeTakeAction(
         by character: RpgCharacterRef, in gameSnapshot: GameSnapshot
     ) -> Bool {

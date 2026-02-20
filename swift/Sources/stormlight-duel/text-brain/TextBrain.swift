@@ -228,12 +228,12 @@ extension Array: ContainsAny where Element: Equatable {
 extension TextBrain {
     @MainActor
     private func decideCombatChoice(in gameSnapshot: GameSnapshot) async throws -> CombatChoice {
-        guard let character = gameSnapshot.characters[characterRef] else {
+        guard let character = gameSnapshot.characters[characterRef]?.core else {
             fatalError("Bad character ref \(characterRef)")
         }
         let parsers =
-            allCombatActions.compactMap {
-                $0.canMaybeTakeAction(by: character.primaryKey, in: gameSnapshot)
+            character.actions.compactMap {
+                $0.canReallyMaybeTakeAction(by: character.primaryKey, in: gameSnapshot)
                     ? $0.combatChoiceParserOpt?.asAny
                     : nil
             } + [endTurnParser.asAny]
@@ -248,7 +248,7 @@ extension TextBrain {
                 in: gameSnapshot
             )
             if case CombatChoice.action(let action) = answer {
-                guard action.canTakeAction(by: characterRef, in: gameSnapshot) else {
+                guard action.canReallyTakeAction(by: characterRef, in: gameSnapshot) else {
                     await self.printHint("\(answer) is not a valid combat action.")
                     continue
                 }
