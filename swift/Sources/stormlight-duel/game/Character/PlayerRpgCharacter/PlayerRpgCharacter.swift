@@ -59,6 +59,9 @@ public class PlayerRpgCharacter: PlayerRpgCharacterProtocol {
     public var brain: any RpgCharacterBrain
 
     public var combatState: RpgCharacterCombatState?
+    public var actions: [any CombatAction.Type] {
+        allCombatActions + self.features.flatMap { $0.actionsProvided }
+    }
 
     public var isPlayer: Bool
 
@@ -84,6 +87,7 @@ public class PlayerRpgCharacter: PlayerRpgCharacterProtocol {
             reach: reach,
             combatState: combatState?.snapshot,
             features: .init(features.map { AnyCharacterFeatureSnapshot($0.snapshot) }),
+            actions: actions,
             isPlayer: isPlayer,
         )
     }

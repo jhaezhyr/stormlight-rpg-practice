@@ -36,6 +36,7 @@ public protocol RpgCharacterSharedProtocol: Keyed where Key == RpgCharacterRef {
     var combatState: CombatState? { get }
     associatedtype CharacterFeatureType: CharacterFeatureSharedProtocol
     var features: KeyedSet<CharacterFeatureType> { get }
+    var actions: [CombatAction.Type] { get }
 
     /// Whether this character is controlled by a game player, instead of the game master.
     var isPlayer: Bool { get }
@@ -226,6 +227,7 @@ public class AnyRpgCharacter: RpgCharacter {
         set { core.combatState = newValue }
     }
     public var features: KeyedSet<AnyCharacterFeature> { core.features }
+    public var actions: [any CombatAction.Type] { core.actions }
     public var brain: any RpgCharacterBrain { core.brain }
     public var equipment: KeyedSet<Readyable<AnyItem>> {
         get { core.equipment }
