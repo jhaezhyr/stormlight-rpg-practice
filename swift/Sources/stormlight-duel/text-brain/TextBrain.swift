@@ -19,10 +19,8 @@ public actor TextBrain<Connection: TextInterfaceConnection>: RpgCharacterBrain {
 
                             * ** INSTRUCTIONS ** * 
 
-                You play as a player character named Kal. You are in a one-on-one combat
-                with Shallan, an NPC. Bring her down.
-
-                You have no armor, no talents, and level 0 skills. You also have an axe.
+                You play as a player character named Archer Kal. You are in a one-on-one
+                combat with an NPC Archer, Shallan. Bring her down.
 
                 Anytime you are prompted to make a choice, you type in your answer and
                 press ENTER. In some cases, you are given multiple numbered options. In
@@ -159,7 +157,7 @@ public actor TextBrain<Connection: TextInterfaceConnection>: RpgCharacterBrain {
 
     @MainActor
     public func decide<T: Sendable>(
-        _ code: DecisionCode, type: T.Type, in gameSnapshot: GameSnapshot
+        _ code: DecisionCode, nonIterableType: T.Type, in gameSnapshot: GameSnapshot
     )
         async throws -> T
     where T: Sendable {
@@ -170,7 +168,7 @@ public actor TextBrain<Connection: TextInterfaceConnection>: RpgCharacterBrain {
             if let allCases = (T.self as? (any CaseIterable.Type))?.allCases {
                 return try await decide(code, options: allCases.map { $0 as! T }, in: gameSnapshot)
             }
-            fatalError("I don't know how to decide when asked for \(type)")
+            fatalError("I don't know how to decide when asked for \(nonIterableType)")
         }
     }
 
@@ -228,12 +226,12 @@ extension Array: ContainsAny where Element: Equatable {
 extension TextBrain {
     @MainActor
     private func decideCombatChoice(in gameSnapshot: GameSnapshot) async throws -> CombatChoice {
-        guard let character = gameSnapshot.characters[characterRef] else {
+        guard let character = gameSnapshot.characters[characterRef]?.core else {
             fatalError("Bad character ref \(characterRef)")
         }
         let parsers =
-            allCombatActions.compactMap {
-                $0.canMaybeTakeAction(by: character.primaryKey, in: gameSnapshot)
+            character.actions.compactMap {
+                $0.canReallyMaybeTakeAction(by: character.primaryKey, in: gameSnapshot)
                     ? $0.combatChoiceParserOpt?.asAny
                     : nil
             } + [endTurnParser.asAny]
@@ -248,7 +246,7 @@ extension TextBrain {
                 in: gameSnapshot
             )
             if case CombatChoice.action(let action) = answer {
-                guard action.canTakeAction(by: characterRef, in: gameSnapshot) else {
+                guard action.canReallyTakeAction(by: characterRef, in: gameSnapshot) else {
                     await self.printHint("\(answer) is not a valid combat action.")
                     continue
                 }

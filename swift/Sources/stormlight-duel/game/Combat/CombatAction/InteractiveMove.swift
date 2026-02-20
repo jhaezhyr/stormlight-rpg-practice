@@ -1,15 +1,23 @@
 public struct InteractiveMove: CombatAction {
     public static var actionCost: Int { 1 }
+    public static var canBeTakenMoreThanOncePerTurn: Bool { true }
     public init() {
+    }
+    public static func canMaybeTakeAction(
+        by character: RpgCharacterRef, in gameSnapshot: GameSnapshot
+    ) -> Bool {
+        guard let character = gameSnapshot.characters[character]?.core else {
+            fatalError("Stop asking about a character that doesn't exist.")
+        }
+        return character.movementRate > 0
     }
     public func action(by character: RpgCharacterRef, in gameSession: isolated GameSession)
         async throws
     {
         let me = gameSession.game.characters[character]!.core
         var map: Map { (gameSession.game.scene as! Combat).map }
-        let totalMovement = me.movementRate
-        var movementRemaining = totalMovement
-        movementLoop: while movementRemaining > 0 {
+        var amountMoved = 0
+        movementLoop: while amountMoved < me.movementRate {
             // TODO When we have teamates, this will need to be changed
             let opponents = gameSession.game.characters.filter { $0.primaryKey != character }
             let impassableSpaces = opponents.map { $0.combatState!.space } + map.staticObstacles
@@ -31,7 +39,7 @@ public struct InteractiveMove: CombatAction {
             switch choice {
             case .decide(let direction):
                 me.combatState!.space = choiceMap[direction]!
-                movementRemaining -= 5
+                amountMoved += 5
                 try await gameSession.game.dispatch(
                     MovementStepEvent(subject: me, direction: direction, carefully: false),
                     in: gameSession

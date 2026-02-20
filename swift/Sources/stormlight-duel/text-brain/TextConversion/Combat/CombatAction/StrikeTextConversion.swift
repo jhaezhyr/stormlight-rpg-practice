@@ -26,7 +26,7 @@ extension Strike: CliArgsConvertibleType {
                 weaponToStrikeWith == nil
             {
                 let weaponToStrikeWithCandidates = contextCharacter.equipment.filter {
-                    ($0.core as? any Weapon)?.weaponName == weaponArg
+                    ($0.core.core as? any Weapon)?.weaponName == weaponArg
                 }
                 if weaponToStrikeWithCandidates.count == 0 {
                     throw CliParseError("\(arg) is not a weapon that \(contextCharacter.name) has")

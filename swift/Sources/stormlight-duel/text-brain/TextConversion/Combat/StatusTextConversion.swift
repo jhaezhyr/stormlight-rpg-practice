@@ -27,9 +27,6 @@ extension StatusCommand: CliArgsConvertibleType {
 extension StatusCommand {
     public func evaluate(in gameSnapshot: GameSnapshot, for characterRef: RpgCharacterRef) -> String
     {
-        guard let character = gameSnapshot.characters[characterRef]?.core else {
-            return "WHO ARE YOU?"
-        }
         var result = ""
         result += (gameSnapshot.scene as! Combat).map.oneLineDescription(in: gameSnapshot) + "\n"
         var isFirst = true
@@ -49,8 +46,8 @@ extension StatusCommand {
                 .sorted { (lh, rh) in lh.0 < rh.0 }[0]
             result +=
                 "\(someCharacter.primaryKey == characterRef ? "Your" : "\(someCharacter.name)'s") stats:\n"
-                + "  Health: \(someCharacter.health.value)/\(character.health.maxValue)\n"
-                + "  Focus: \(someCharacter.focus.value)/\(character.focus.maxValue)\n"
+                + "  Health: \(someCharacter.health.value)/\(someCharacter.health.maxValue)\n"
+                + "  Focus: \(someCharacter.focus.value)/\(someCharacter.focus.maxValue)\n"
                 + "  Conditions: \(someCharacter.conditions.map { "\($0.core)" }.joined(separator: ","))\n"
                 + "  Space controlled: \(someCharacter.combatState!.space.lo)...\(someCharacter.combatState!.space.hi)\n"
                 + "  Distance to \(nearestOpponent.name): \(distanceToNearestOppontent)"

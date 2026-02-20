@@ -1,5 +1,6 @@
 public struct Strike: CombatAction {
     public static var actionCost: Int { 1 }
+    public static var canBeTakenMoreThanOncePerTurn: Bool { true }
     public var weaponToStrikeWith: ItemRef
     public var target: RpgCharacterRef
 
@@ -34,9 +35,6 @@ public struct Strike: CombatAction {
             return false
         }
         if character.combatState!.weaponsUsed.contains(weapon.weaponName) {
-            return false
-        }
-        if !canAffordAction(by: characterRef, in: gameSnapshot) {
             return false
         }
         let availableRange =
@@ -96,7 +94,7 @@ public struct Strike: CombatAction {
             DoubleTargetMessage(
                 w12: "$1 targets $2 for a strike with their \(weaponToStrikeWith.name)",
                 wU2: "You target $2 for a strike with your \(weaponToStrikeWith.name)",
-                w1U: "$1 targets you for a strike with your \(weaponToStrikeWith.name)",
+                w1U: "$1 targets you for a strike with their \(weaponToStrikeWith.name)",
                 as1: characterRef, as2: target))
         try await game.dispatch(TestEvent(StrikePhase.aboutToAttemptStrike, test: test))
         let result = try await test.roll(in: gameSession)
@@ -134,17 +132,20 @@ public struct Strike: CombatAction {
             }
         }
         try await game.dispatch(TestEvent(StrikePhase.aboutToDealDamage, test: test))
-        targetCharacter.takeDamage(Damage(damageToDo, type: weapon.damageType))
+        let damageDone = await doDamage(
+            Damage(damageToDo, type: weapon.damageType), to: targetCharacter.primaryKey)
         try await game.dispatch(TestEvent(StrikePhase.dealtDamage, test: test))
         await game.broadcaster.tellAll(
             DoubleTargetMessage(
                 w12:
-                    "$1 \(verbOfStrike.thirdPerson) $2 and deals \(damageToDo) \(weapon.damageType.rawValue) damage.",
+                    "$1 \(verbOfStrike.thirdPerson) $2 and deals \(damageDone.amount) \(damageDone.type.rawValue) damage.",
                 wU2:
-                    "You \(verbOfStrike.secondPerson) $2 and deal \(damageToDo) \(weapon.damageType.rawValue) damage.",
+                    "You \(verbOfStrike.secondPerson) $2 and deal \(damageDone.amount) \(damageDone.type.rawValue) damage.",
                 w1U:
-                    "$1 \(verbOfStrike.thirdPerson) you and deals \(damageToDo) \(weapon.damageType.rawValue) damage.",
-                as1: characterRef, as2: target)
+                    "$1 \(verbOfStrike.thirdPerson) you and deals \(damageDone.amount) \(damageDone.type.rawValue) damage.",
+                as1: characterRef,
+                as2: target
+            )
         )
         character.combatState?.weaponsUsed.insert(weapon.weaponName)
         // TODO Give lots of opportunities to resolve complications and opportunities, but those should all be spent by this point.

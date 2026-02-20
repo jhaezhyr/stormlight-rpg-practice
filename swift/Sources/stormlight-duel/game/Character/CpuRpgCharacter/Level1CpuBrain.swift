@@ -11,7 +11,11 @@ public struct Level1CpuBrain: RpgCharacterBrain {
         return options.first!
     }
 
-    public func decide<T>(_ code: DecisionCode, type: T.Type, in gameSnapshot: GameSnapshot) async
+    public func decide<T>(
+        _ code: DecisionCode,
+        nonIterableType: T.Type,
+        in gameSnapshot: GameSnapshot
+    ) async
         -> T
     where T: Sendable {
         let me = gameSnapshot.characters[meRef]!
@@ -19,14 +23,14 @@ public struct Level1CpuBrain: RpgCharacterBrain {
             for enemy in gameSnapshot.enemies(of: meRef) {
                 for weapon in me.readyItems.compactMap({ $0.core as? any WeaponSnapshot }) {
                     let strike = Strike(enemy, with: weapon.primaryKey)
-                    if strike.canTakeAction(by: meRef, in: gameSnapshot) {
+                    if strike.canReallyTakeAction(by: meRef, in: gameSnapshot) {
                         return CombatChoice.action(strike) as! T
                     }
                 }
             }
             return CombatChoice.endTurn as! T
         }
-        fatalError("Level 1 brain doesn't know how to decide on \(type) values")
+        fatalError("Level 1 brain doesn't know how to decide on \(nonIterableType) values")
     }
 
     public func hear<M>(_ message: M, in gameSnapshot: GameSnapshot) async where M: Message {

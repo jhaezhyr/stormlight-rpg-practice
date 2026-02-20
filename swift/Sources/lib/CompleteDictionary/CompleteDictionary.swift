@@ -78,5 +78,11 @@ extension Dictionary {
     }
 }
 
+extension Dictionary where Key: CaseIterable {
+    public func complete(_ fillMissingValue: (Key) -> Value) -> CompleteDictionary<Key, Value> {
+        CompleteDictionary { self[$0] ?? fillMissingValue($0) }
+    }
+}
+
 extension CompleteDictionary: Sendable where Value: Sendable, Key: Sendable {
 }

@@ -52,11 +52,16 @@ public class PlayerRpgCharacter: PlayerRpgCharacterProtocol {
 
     public var reach: Distance
 
+    public var features: KeyedSet<AnyCharacterFeature>
+
     public var conditions: KeyedSet<AnyCondition>
 
     public var brain: any RpgCharacterBrain
 
     public var combatState: RpgCharacterCombatState?
+    public var actions: [any CombatAction.Type] {
+        allCombatActions + self.features.flatMap { $0.actionsProvided }
+    }
 
     public var isPlayer: Bool
 
@@ -81,6 +86,8 @@ public class PlayerRpgCharacter: PlayerRpgCharacterProtocol {
             equipment: .init(equipment.map { $0.snapshot }),
             reach: reach,
             combatState: combatState?.snapshot,
+            features: .init(features.map { AnyCharacterFeatureSnapshot($0.snapshot) }),
+            actions: actions,
             isPlayer: isPlayer,
         )
     }
@@ -99,6 +106,7 @@ public class PlayerRpgCharacter: PlayerRpgCharacterProtocol {
         focus: Resource,
         investiture: Resource,
         reach: Distance,
+        features: KeyedSet<AnyCharacterFeature>,
         conditions: KeyedSet<AnyCondition>,
         brain: any RpgCharacterBrain,
         combatState: RpgCharacterCombatState? = nil,
@@ -117,6 +125,7 @@ public class PlayerRpgCharacter: PlayerRpgCharacterProtocol {
         self.focus = focus
         self.investiture = investiture
         self.reach = reach
+        self.features = features
         self.conditions = conditions
         self.brain = brain
         self.combatState = combatState
@@ -145,6 +154,7 @@ extension PlayerRpgCharacter {
             focus: .init(value: 4, maxValue: 4),
             investiture: .init(value: 0, maxValue: 0),
             reach: 0,
+            features: [],
             conditions: [],
             brain: brain,
             isPlayer: true

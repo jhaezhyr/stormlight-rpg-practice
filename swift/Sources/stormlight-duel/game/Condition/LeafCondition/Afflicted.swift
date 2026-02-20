@@ -1,5 +1,7 @@
 public struct Afflicted: Condition {
     public let id: Int
+    public var type: ConditionTypeRef = Self.type
+    public static let type: ConditionTypeRef = "Afflicted"
     public let damagePerTurn: Damage
     public var snapshot: any ConditionSnapshot {
         AfflictedSnapshot(id: id, damagePerTurn: damagePerTurn)
@@ -22,7 +24,15 @@ public struct Afflicted: Condition {
                     return
                 }
                 let me = event.character
-                me.takeDamage(damagePerTurn, in: gameSession)
+                let damageDone = await doDamage(damagePerTurn, to: me.primaryKey, in: gameSession)
+                await game.game.broadcaster.tellAll(
+                    SingleTargetMessage(
+                        w1:
+                            "$1 takes \(damageDone.amount) \(damageDone.type.rawValue) damage from being afflicted.",
+                        wU:
+                            "You take \(damageDone.amount) \(damageDone.type.rawValue) damage from being afflicted.",
+                        as1: me.primaryKey)
+                )
             }
         ]
     }
@@ -30,5 +40,6 @@ public struct Afflicted: Condition {
 
 public struct AfflictedSnapshot: ConditionSnapshot {
     public var id: Int
+    public var type: ConditionTypeRef = Afflicted.type
     public var damagePerTurn: Damage
 }

@@ -1,5 +1,7 @@
 public struct Determined: Condition {
     public let id: Int
+    public var type: ConditionTypeRef = Self.type
+    public static let type: ConditionTypeRef = "Determined"
     public let handlers: [any EventHandlerProtocol]
     public var snapshot: any ConditionSnapshot {
         DeterminedSnapshot(id: id)
@@ -14,8 +16,9 @@ public struct Determined: Condition {
                 guard event.tester.primaryKey == meRef else {
                     return
                 }
+                var tester = event.tester  // TODO var is a bug
                 test.opportunitiesAvailable += 1
-                event.tester.conditions.remove(id)
+                tester.conditions.remove(id)
             }
         ]
     }
@@ -23,4 +26,5 @@ public struct Determined: Condition {
 
 public struct DeterminedSnapshot: ConditionSnapshot {
     public let id: Int
+    public var type: ConditionTypeRef = Determined.type
 }

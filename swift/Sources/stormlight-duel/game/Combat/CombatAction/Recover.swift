@@ -66,12 +66,6 @@ public struct Recover: CombatAction {
         }
     }
 
-    public func canTakeAction(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot)
-        -> Bool
-    {
-        Self.canMaybeTakeAction(by: characterRef, in: gameSnapshot)
-    }
-
     public static func canMaybeTakeAction(
         by character: RpgCharacterRef, in gameSnapshot: GameSnapshot
     ) -> Bool {
@@ -79,9 +73,6 @@ public struct Recover: CombatAction {
             return false
         }
         guard let combatState = character.combatState else {
-            return false
-        }
-        if combatState.actionsRemaining < actionCost {
             return false
         }
         if combatState.recoveriesRemaining < 1 {

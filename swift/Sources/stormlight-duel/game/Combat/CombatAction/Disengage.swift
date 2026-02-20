@@ -36,9 +36,6 @@ public struct DisengageAction: CombatAction {
     public func canTakeAction(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot)
         -> Bool
     {
-        guard canAffordAction(by: characterRef, in: gameSnapshot) else {
-            return false
-        }
         guard let me = gameSnapshot.characters[characterRef],
             let mySpace = me.combatState?.space
         else {
