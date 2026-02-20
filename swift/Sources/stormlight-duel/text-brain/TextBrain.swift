@@ -19,10 +19,8 @@ public actor TextBrain<Connection: TextInterfaceConnection>: RpgCharacterBrain {
 
                             * ** INSTRUCTIONS ** * 
 
-                You play as a player character named Kal. You are in a one-on-one combat
-                with Shallan, an NPC. Bring her down.
-
-                You have no armor, no talents, and level 0 skills. You also have an axe.
+                You play as a player character named Archer Kal. You are in a one-on-one
+                combat with an NPC Archer, Shallan. Bring her down.
 
                 Anytime you are prompted to make a choice, you type in your answer and
                 press ENTER. In some cases, you are given multiple numbered options. In
