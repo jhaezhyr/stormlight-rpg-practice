@@ -13,10 +13,13 @@ public struct GainAdvantage: CombatAction {
         async throws
     {
         guard
-            let (me: me, opponent: opponent, game: game) = try? resolveReferences(me: characterRef)
+            let tuple = try? resolveReferences(me: characterRef)
         else {
             return
         }
+        var me = tuple.me
+        let opponent = tuple.opponent
+        let game = tuple.game
         let opponentDefense = opponent.defenses[chosenSkill.realm]
 
         let test = RpgSimpleTest(
@@ -109,7 +112,7 @@ public struct HasGainedAdvantageCondition: Condition {
         self.handlers = [
             EventHandler<TestEvent<TestHookType>> { event, game in
                 let test = event.test
-                let character = event.tester
+                var character = event.tester  // TODO var is a bug
                 guard characterRef == test.tester else {
                     return
                 }

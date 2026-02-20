@@ -28,7 +28,7 @@ public struct DurationCondition<C: Condition>: CompositeCondition {
                 guard event.phase == .endOfTurn, character == event.character.primaryKey else {
                     return
                 }
-                let character = event.character
+                var character = event.character  // TODO var is a bug
                 guard var me = character.conditions[id]?.core as? Self else {
                     fatalError(
                         "Why is this condition happening to a character without this condition?")

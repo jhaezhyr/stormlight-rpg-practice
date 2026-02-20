@@ -4,6 +4,9 @@ import KeyedSet
 public protocol RpgCharacterSnapshot: RpgCharacterSharedProtocol, Sendable
 where
     CharacterFeatureType == AnyCharacterFeatureSnapshot,
+    ItemType == AnyItemSnapshot,
+    ConditionType == AnyConditionSnapshot,
+    CombatState == RpgCharacterCombatStateSnapshot
 {
 }
 
@@ -24,10 +27,18 @@ public struct AnyRpgCharacterSnapshot: RpgCharacterSnapshot {
     public var health: Resource { core.health }
     public var focus: Resource { core.focus }
     public var investiture: Resource { core.investiture }
-    public var conditions: KeyedSet<AnyConditionSnapshot> { core.conditions }
+    public var conditions: KeyedSet<AnyConditionSnapshot> {
+        get { core.conditions }
+        set { core.conditions = newValue }
+    }
     public var size: CharacterSize { core.size }
     public var combatState: RpgCharacterCombatStateSnapshot? { core.combatState }
     public var features: KeyedSet<AnyCharacterFeatureSnapshot> { core.features }
+    public var actions: [any CombatAction.Type] { core.actions }
+    public var equipment: KeyedSet<Readyable<AnyItemSnapshot>> {
+        get { core.equipment }
+        set { core.equipment = newValue }
+    }
     public var reach: Distance { core.reach }
     public var isPlayer: Bool { core.isPlayer }
     public var core: any RpgCharacterSnapshot

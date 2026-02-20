@@ -42,9 +42,9 @@ public protocol RpgCharacterSharedProtocol: Keyed where Key == RpgCharacterRef {
     var isPlayer: Bool { get }
 
     associatedtype ConditionType: ConditionSharedProtocol
-    var conditions: KeyedSet<ConditionType> { get }
+    var conditions: KeyedSet<ConditionType> { get set }
     associatedtype ItemType: ItemSharedProtocol
-    var equipment: KeyedSet<Readyable<ItemType>> { get }
+    var equipment: KeyedSet<Readyable<ItemType>> { get set }
 }
 extension RpgCharacterSharedProtocol {
     public var primaryKey: RpgCharacterRef {
@@ -65,6 +65,8 @@ public protocol RpgCharacter: AnyObject,
     Responder
 where
     CharacterFeatureType == AnyCharacterFeature,
+    ConditionType == AnyCondition,
+    ItemType == AnyItem
 {
     var brain: any RpgCharacterBrain { get }
     var snapshot: any RpgCharacterSnapshot { get }
@@ -72,8 +74,6 @@ where
     var health: Resource { get set }
     var focus: Resource { get set }
     var investiture: Resource { get set }
-    var conditions: KeyedSet<AnyCondition> { get set }
-    var equipment: KeyedSet<Readyable<AnyItem>> { get set }
 
     var combatState: RpgCharacterCombatState? { get set }
 }

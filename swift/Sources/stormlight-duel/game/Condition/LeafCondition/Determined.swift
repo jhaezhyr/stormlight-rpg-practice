@@ -16,8 +16,9 @@ public struct Determined: Condition {
                 guard event.tester.primaryKey == meRef else {
                     return
                 }
+                var tester = event.tester  // TODO var is a bug
                 test.opportunitiesAvailable += 1
-                event.tester.conditions.remove(id)
+                tester.conditions.remove(id)
             }
         ]
     }
