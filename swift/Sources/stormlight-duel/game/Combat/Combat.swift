@@ -185,6 +185,9 @@ public struct Combat: Scene {
                 try await action.reallyTakeAction(by: character.primaryKey, in: gameSession)
             }
         }
+        await game.broadcaster.tellAll(
+            SingleTargetMessage(
+                w1: "$1 ended their turn.", wU: "You ended your turn.", as1: character.primaryKey))
         try await game.dispatch(CombatPhaseEvent(phase: .endOfTurn, character: character))
         character.combatState!.turnsTaken += 1
         character.combatState!.weaponsUsed = []
