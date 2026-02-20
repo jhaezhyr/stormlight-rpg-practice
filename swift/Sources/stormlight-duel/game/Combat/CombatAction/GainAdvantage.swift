@@ -78,6 +78,8 @@ extension GainAdvantage: CustomStringConvertible {
 
 public struct HasGainedAdvantageCondition: Condition {
     public let id: Int
+    public var type: ConditionTypeRef = Self.type
+    public static let type: ConditionTypeRef = "HasGainedAdvantage"
     public var snapshot: any ConditionSnapshot {
         HasGainedAdvantageConditionSnapshot(
             id: id,
@@ -141,6 +143,7 @@ extension HasGainedAdvantageConditionSnapshot: CustomStringConvertible {
 
 public struct HasGainedAdvantageConditionSnapshot: ConditionSnapshot {
     public let id: Int
+    public var type: ConditionTypeRef = HasGainedAdvantageCondition.type
     public let skill: CoreSkillName
     public let characterRef: RpgCharacterRef
     public let opponentRef: RpgCharacterRef

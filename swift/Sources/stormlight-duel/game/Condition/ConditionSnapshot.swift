@@ -6,6 +6,7 @@ public protocol ConditionSnapshot: Sendable, ConditionSharedProtocol {
 public struct AnyConditionSnapshot: ConditionSnapshot {
     public var core: any ConditionSnapshot
     public var id: Int { core.id }
+    public var type: ConditionTypeRef { core.type }
     private init(notUnwrapping conditionSnapshot: any ConditionSnapshot) {
         self.core = conditionSnapshot
     }

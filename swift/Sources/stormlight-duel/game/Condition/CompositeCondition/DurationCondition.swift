@@ -1,6 +1,7 @@
 public struct DurationCondition<C: Condition>: CompositeCondition {
     public var core: C
     public var durationRemainingInTurns: Int
+    public var type: ConditionTypeRef { core.type }
 
     public var handlers: [any EventHandlerProtocol]
 
@@ -49,6 +50,7 @@ public struct DurationCondition<C: Condition>: CompositeCondition {
 
 public struct DurationConditionSnapshot<T: ConditionSnapshot>: ConditionSnapshot {
     public var id: Int { core.id }
+    public var type: ConditionTypeRef { core.type }
     public let core: T
     public let durationRemainingInTurns: Int
 }

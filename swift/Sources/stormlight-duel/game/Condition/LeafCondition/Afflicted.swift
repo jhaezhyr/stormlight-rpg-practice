@@ -1,5 +1,7 @@
 public struct Afflicted: Condition {
     public let id: Int
+    public var type: ConditionTypeRef = Self.type
+    public static let type: ConditionTypeRef = "Afflicted"
     public let damagePerTurn: Damage
     public var snapshot: any ConditionSnapshot {
         AfflictedSnapshot(id: id, damagePerTurn: damagePerTurn)
@@ -38,5 +40,6 @@ public struct Afflicted: Condition {
 
 public struct AfflictedSnapshot: ConditionSnapshot {
     public var id: Int
+    public var type: ConditionTypeRef = Afflicted.type
     public var damagePerTurn: Damage
 }

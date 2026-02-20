@@ -1,5 +1,7 @@
 public struct Determined: Condition {
     public let id: Int
+    public var type: ConditionTypeRef = Self.type
+    public static let type: ConditionTypeRef = "Determined"
     public let handlers: [any EventHandlerProtocol]
     public var snapshot: any ConditionSnapshot {
         DeterminedSnapshot(id: id)
@@ -23,4 +25,5 @@ public struct Determined: Condition {
 
 public struct DeterminedSnapshot: ConditionSnapshot {
     public let id: Int
+    public var type: ConditionTypeRef = Determined.type
 }
