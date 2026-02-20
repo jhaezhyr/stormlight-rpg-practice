@@ -6,6 +6,8 @@ public protocol RpgCharacterCombatStateSharedProtocol {
     var actionsTaken: Set<CombatActionName> { get }
     var reactionsRemaining: Int { get }
     var recoveriesRemaining: Int { get }
+
+    var turnsTaken: Int { get }
 }
 
 public struct RpgCharacterCombatState: RpgCharacterCombatStateSharedProtocol {
@@ -16,6 +18,8 @@ public struct RpgCharacterCombatState: RpgCharacterCombatStateSharedProtocol {
     public var actionsTaken: Set<CombatActionName> = []
     public var reactionsRemaining: Int = 1
     public var recoveriesRemaining: Int = 1
+
+    public var turnsTaken: Int = 0
 
     public var reactionProviders: [any Responder]
 
@@ -51,6 +55,7 @@ public struct RpgCharacterCombatState: RpgCharacterCombatStateSharedProtocol {
             actionsTaken: actionsTaken,
             reactionsRemaining: reactionsRemaining,
             recoveriesRemaining: recoveriesRemaining,
+            turnsTaken: turnsTaken,
         )
     }
 }
@@ -63,6 +68,8 @@ public struct RpgCharacterCombatStateSnapshot: RpgCharacterCombatStateSharedProt
     public var actionsTaken: Set<CombatActionName>
     public var reactionsRemaining: Int
     public var recoveriesRemaining: Int
+
+    public var turnsTaken: Int
 }
 
 public typealias Vector1D = Int
