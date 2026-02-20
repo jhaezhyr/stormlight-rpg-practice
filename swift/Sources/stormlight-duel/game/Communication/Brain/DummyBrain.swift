@@ -31,9 +31,11 @@ public final class RpgCharacterDummyBrain: RpgCharacterBrain {
 
     @MainActor
     public func decide<T: Sendable>(
-        _ code: DecisionCode, type: T.Type, in gameSnapshot: GameSnapshot
+        _ code: DecisionCode,
+        nonIterableType: T.Type,
+        in gameSnapshot: GameSnapshot
     ) -> T {
-        if let answer = getPremadeAnswer(ofType: type) {
+        if let answer = getPremadeAnswer(ofType: nonIterableType) {
             return answer
         }
         fatalError("\(self.characterRef.name) is too much of a dummy to decide on a \(T.self)")

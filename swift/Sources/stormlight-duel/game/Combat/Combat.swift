@@ -177,7 +177,7 @@ public struct Combat: Scene {
 
             let choice = try await character.brain.decide(
                 .combatChoice,
-                type: CombatChoice.self, in: game.snapshot)
+                nonIterableType: CombatChoice.self, in: game.snapshot)
             guard case .action(let action) = choice else {
                 break actions
             }

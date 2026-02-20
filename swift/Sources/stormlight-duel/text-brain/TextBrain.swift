@@ -159,7 +159,7 @@ public actor TextBrain<Connection: TextInterfaceConnection>: RpgCharacterBrain {
 
     @MainActor
     public func decide<T: Sendable>(
-        _ code: DecisionCode, type: T.Type, in gameSnapshot: GameSnapshot
+        _ code: DecisionCode, nonIterableType: T.Type, in gameSnapshot: GameSnapshot
     )
         async throws -> T
     where T: Sendable {
@@ -170,7 +170,7 @@ public actor TextBrain<Connection: TextInterfaceConnection>: RpgCharacterBrain {
             if let allCases = (T.self as? (any CaseIterable.Type))?.allCases {
                 return try await decide(code, options: allCases.map { $0 as! T }, in: gameSnapshot)
             }
-            fatalError("I don't know how to decide when asked for \(type)")
+            fatalError("I don't know how to decide when asked for \(nonIterableType)")
         }
     }
 
