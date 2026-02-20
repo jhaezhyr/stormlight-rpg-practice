@@ -1,10 +1,10 @@
 import CompleteDictionary
 import KeyedSet
 
-public protocol RpgCharacterSnapshot: RpgCharacterSharedProtocol, Sendable {
-    var combatState: RpgCharacterCombatStateSnapshot? { get }
-    var conditions: KeyedSet<AnyConditionSnapshot> { get }
-    var equipment: KeyedSet<Readyable<AnyItemSnapshot>> { get }
+public protocol RpgCharacterSnapshot: RpgCharacterSharedProtocol, Sendable
+where
+    CharacterFeatureType == AnyCharacterFeatureSnapshot,
+{
 }
 
 public struct AnyRpgCharacterSnapshot: RpgCharacterSnapshot {
@@ -27,7 +27,7 @@ public struct AnyRpgCharacterSnapshot: RpgCharacterSnapshot {
     public var conditions: KeyedSet<AnyConditionSnapshot> { core.conditions }
     public var size: CharacterSize { core.size }
     public var combatState: RpgCharacterCombatStateSnapshot? { core.combatState }
-    public var equipment: KeyedSet<Readyable<AnyItemSnapshot>> { core.equipment }
+    public var features: KeyedSet<AnyCharacterFeatureSnapshot> { core.features }
     public var reach: Distance { core.reach }
     public var isPlayer: Bool { core.isPlayer }
     public var core: any RpgCharacterSnapshot

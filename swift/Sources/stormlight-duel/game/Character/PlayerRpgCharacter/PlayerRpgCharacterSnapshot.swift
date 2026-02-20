@@ -21,5 +21,6 @@ public struct PlayerRpgCharacterSnapshot: RpgCharacterSnapshot {
     public var equipment: KeyedSet<Readyable<AnyItemSnapshot>>
     public var reach: Distance
     public var combatState: RpgCharacterCombatStateSnapshot?
+    public var features: KeyedSet<AnyCharacterFeatureSnapshot>
     public var isPlayer: Bool
 }

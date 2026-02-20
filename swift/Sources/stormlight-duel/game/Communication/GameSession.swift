@@ -55,6 +55,7 @@ public actor GameSession {
             focus: .init(maxValue: 4),
             investiture: .init(maxValue: 0),
             reach: 0,
+                features: [],
             conditions: [],
             brain: Level1CpuBrain(
                 for: RpgCharacterRef(name: "Shallan")

@@ -34,6 +34,8 @@ public protocol RpgCharacterSharedProtocol: Keyed where Key == RpgCharacterRef {
 
     associatedtype CombatState: RpgCharacterCombatStateSharedProtocol
     var combatState: CombatState? { get }
+    associatedtype CharacterFeatureType: CharacterFeatureSharedProtocol
+    var features: KeyedSet<CharacterFeatureType> { get }
 
     /// Whether this character is controlled by a game player, instead of the game master.
     var isPlayer: Bool { get }
@@ -60,6 +62,8 @@ public protocol RpgCharacter: AnyObject,
     RpgCharacterSharedProtocol,
     SendableMetatype,
     Responder
+where
+    CharacterFeatureType == AnyCharacterFeature,
 {
     var brain: any RpgCharacterBrain { get }
     var snapshot: any RpgCharacterSnapshot { get }
@@ -78,6 +82,7 @@ extension RpgCharacter {
         conditions.map { $0.core as any Responder }
             + equipment.map { $0.core as any Responder }
             + (combatState?.reactionProviders ?? [])
+            + features.map { $0.core as any Responder }
         // TODO something about path progress
     }
 }
@@ -220,6 +225,7 @@ public class AnyRpgCharacter: RpgCharacter {
         get { core.combatState }
         set { core.combatState = newValue }
     }
+    public var features: KeyedSet<AnyCharacterFeature> { core.features }
     public var brain: any RpgCharacterBrain { core.brain }
     public var equipment: KeyedSet<Readyable<AnyItem>> {
         get { core.equipment }
