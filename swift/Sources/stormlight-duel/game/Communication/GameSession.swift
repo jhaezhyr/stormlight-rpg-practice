@@ -23,52 +23,45 @@ public actor GameSession {
     ) async throws {
 
         let session = GameSession()
-        let broadcaster = Broadcaster()
+        func doIt(in session: isolated GameSession) async throws {
+            let broadcaster = Broadcaster()
+            session.provideGame(
+                Game(
+                    characters: [],
+                    broadcaster: broadcaster,
+                    gameMasterBrain: Level1CpuBrain(
+                        for: RpgCharacterRef(name: "GM EN")
+                    )))
 
-        let player1Ref = RpgCharacterRef(name: "Kal")
-        let player1 = PlayerRpgCharacter(
-            name: player1Ref.name,
-            expertises: [],
-            equipment: [
-                await Readyable(basicWeapons[.crossbow]!(session), isReady: true),
-                await Readyable(BasicArmorTypes.leather(in: session), isReady: true),
-            ],
-            attributes: .init { _ in 2 },
-            ranksInCoreSkills: .init { _ in 0 },
-            ranksInOtherSkills: [:],
-            health: .init(maxValue: 12),
-            focus: .init(maxValue: 4),
-            investiture: .init(maxValue: 0),
-            reach: 0,
-            conditions: [],
-            brain: try await brainForPlayer(player1Ref),
-            isPlayer: true
-        )
-        let player2 = PlayerRpgCharacter(
-            name: "Shallan",
-            expertises: [],
-            equipment: [await Readyable(basicWeapons[.knife]!(session), isReady: true)],
-            attributes: .init { _ in 2 },
-            ranksInCoreSkills: .init { _ in 0 },
-            ranksInOtherSkills: [:],
-            health: .init(maxValue: 12),
-            focus: .init(maxValue: 4),
-            investiture: .init(maxValue: 0),
-            reach: 0,
+            let player1Ref = RpgCharacterRef(name: "Archer Kal")
+            let player1 = PrefabCharacters.archer(
+                ref: player1Ref,
+                isPlayer: true,
+                brain: try await brainForPlayer(player1Ref),
+                in: session,
+            )
+            let player2 = PlayerRpgCharacter(
+                name: "Shallan",
+                expertises: [],
+                equipment: [Readyable(basicWeapons[.knife]!(session), isReady: true)],
+                attributes: .init { _ in 2 },
+                ranksInCoreSkills: .init { _ in 0 },
+                ranksInOtherSkills: [:],
+                health: .init(maxValue: 12),
+                focus: .init(maxValue: 4),
+                investiture: .init(maxValue: 0),
+                reach: 0,
                 features: [],
-            conditions: [],
-            brain: Level1CpuBrain(
-                for: RpgCharacterRef(name: "Shallan")
-            ),
-            isPlayer: false
-        )
-        await session.provideGame(
-            Game(
-                characters: [player1, player2], broadcaster: broadcaster,
-                gameMasterBrain: Level1CpuBrain(
-                    for: RpgCharacterRef(name: "GM EN")
-                )))
-
-        try await session.switch(to: Combat(map: Map.emptyDuel))
+                conditions: [],
+                brain: Level1CpuBrain(
+                    for: RpgCharacterRef(name: "Shallan")
+                ),
+                isPlayer: false
+            )
+            session.game.characters.upsert(.init(player1))
+            session.game.characters.upsert(.init(player2))
+            try await session.switch(to: Combat(map: Map.emptyDuel))
+        }
+        try await doIt(in: session)
     }
 }
