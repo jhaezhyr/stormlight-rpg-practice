@@ -10,17 +10,17 @@ ARMOR_DATA = {
 */
 
 enum BasicArmorTypes {
-    static func uniform(in gameSession: isolated GameSession) -> BasicArmor {
+    static func uniform(in gameSession: isolated GameSession = #isolation) -> BasicArmor {
         BasicArmor(
             price: 40, weight: 5, armorType: .uniform, deflect: 0,
             traits: [(trait: Presentable(), condition: .always)], in: gameSession)
     }
-    static func leather(in gameSession: isolated GameSession) -> BasicArmor {
+    static func leather(in gameSession: isolated GameSession = #isolation) -> BasicArmor {
         BasicArmor(
             price: 60, weight: 10, armorType: .leather, deflect: 1,
             traits: [(trait: Presentable(), condition: .expert)], in: gameSession)
     }
-    static func chain(in gameSession: isolated GameSession) -> BasicArmor {
+    static func chain(in gameSession: isolated GameSession = #isolation) -> BasicArmor {
         BasicArmor(
             price: 80, weight: 25, armorType: .chain, deflect: 2,
             traits: [
@@ -28,7 +28,7 @@ enum BasicArmorTypes {
                 // TODO: Expert traits: Unique?
             ], in: gameSession)
     }
-    static func breastplate(in gameSession: isolated GameSession) -> BasicArmor {
+    static func breastplate(in gameSession: isolated GameSession = #isolation) -> BasicArmor {
         BasicArmor(
             price: 120, weight: 30, armorType: .breastplate, deflect: 1,
             traits: [
@@ -36,7 +36,7 @@ enum BasicArmorTypes {
                 (trait: Presentable(), condition: .expert),
             ], in: gameSession)
     }
-    static func halfPlate(in gameSession: isolated GameSession) -> BasicArmor {
+    static func halfPlate(in gameSession: isolated GameSession = #isolation) -> BasicArmor {
         BasicArmor(
             price: 400, weight: 40, armorType: .halfPlate, deflect: 3,
             traits: [
@@ -45,7 +45,7 @@ enum BasicArmorTypes {
                 // TODO: Expert traits: Unique?
             ], in: gameSession)
     }
-    static func fullPlate(in gameSession: isolated GameSession) -> BasicArmor {
+    static func fullPlate(in gameSession: isolated GameSession = #isolation) -> BasicArmor {
         BasicArmor(
             price: 1600, weight: 55, armorType: .fullPlate, deflect: 4,
             traits: [(trait: CumbersomeArmor(minStrength: 5), condition: .always)], in: gameSession)
