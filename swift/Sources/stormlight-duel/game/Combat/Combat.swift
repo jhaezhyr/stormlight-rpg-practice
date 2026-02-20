@@ -182,10 +182,7 @@ public struct Combat: Scene {
                 break actions
             }
             if action.canReallyTakeAction(by: character.primaryKey, in: game.snapshot) {
-                character.focus.value -= action.focusCost
-                character.combatState!.actionsRemaining -= action.actionCost
-                character.combatState!.actionsTaken.insert(action.actionName)
-                try await action.action(by: character.primaryKey, in: gameSession)
+                try await action.reallyTakeAction(by: character.primaryKey, in: gameSession)
             }
         }
         try await game.dispatch(CombatPhaseEvent(phase: .endOfTurn, character: character))

@@ -75,9 +75,6 @@ public struct Recover: CombatAction {
         guard let combatState = character.combatState else {
             return false
         }
-        if combatState.actionsRemaining < actionCost {
-            return false
-        }
         if combatState.recoveriesRemaining < 1 {
             return false
         }

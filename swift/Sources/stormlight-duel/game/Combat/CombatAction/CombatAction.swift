@@ -14,6 +14,9 @@ public protocol CombatAction: Sendable, SendableMetatype {
     ///
     /// This is for overriding only. It shouldn't be called to see if the action can be taken. That's what canReallyTakeAction is for.
     func canTakeAction(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot) -> Bool
+    /// Does the action. Does not cost actions, focus, or reactions; use `reallyTakeAction` for that.
+    ///
+    /// This is for overriding, or for special cases where the action can be taken without cost.
     func action(by characterRef: RpgCharacterRef, in gameSession: isolated GameSession) async throws
     /// Returns `true` if some instance of the type could be constructed that would satisfy `self.canTakeAction(by:character, in:gameSnapshot)`.
     ///
@@ -113,6 +116,19 @@ extension CombatAction {
         canMaybeAffordAction(by: character, in: gameSnapshot)
             && canBeTakenAgainThisTurn(by: character, in: gameSnapshot)
             && canMaybeTakeAction(by: character, in: gameSnapshot)
+    }
+    /// "Really" means it does the costs and logs the actionName. Assumes you canReallyTakeAction.
+    public func reallyTakeAction(
+        by characterRef: RpgCharacterRef,
+        in gameSession: isolated GameSession = #isolation
+    ) async throws {
+        guard let character = gameSession.game.anyCharacter(at: characterRef) else {
+            return
+        }
+        character.focus.value -= focusCost
+        character.combatState!.actionsTaken.insert(actionName)
+        character.combatState!.actionsRemaining -= actionCost
+        try await action(by: characterRef, in: gameSession)
     }
 }
 
