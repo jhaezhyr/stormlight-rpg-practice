@@ -17,11 +17,11 @@ func dodgeCreatesOneAdvantage() async throws {
                 PlayerRpgCharacter.basicCharacter(name: goodGuyRef.name),
                 PlayerRpgCharacter.basicCharacter(name: badGuyRef.name, brain: badBrain),
             ],
-            broadcaster: SilentBroadcaster(),
+            broadcaster: Broadcaster(),
             gameMasterBrain: RpgCharacterDummyBrain(characterRef: RpgCharacterRef(name: "GM"))
         )
     )
-    func doIt(in session: isolated GameSession) async {
+    func doIt(in session: isolated GameSession) async throws {
         let goodGuy = session.game.character(at: goodGuyRef, as: PlayerRpgCharacter.self)!
         let knife = basicWeapons[.knife]!(session)
         goodGuy.equipment.upsert(Readyable(knife, isReady: true))
@@ -34,9 +34,9 @@ func dodgeCreatesOneAdvantage() async throws {
                 RoleWithAdvantageNumber<AttackDieRole>(role: .testDie, advantageNumber: nil)
             )
         )
-        await action.action(by: goodGuyRef, in: session)
+        try await action.reallyTakeAction(by: goodGuyRef, in: session)
         let remainingAnswers = await badBrain.premadeAnswers
         #expect(remainingAnswers.count == 0, "The bad guy should have been asked to dodge.")
     }
-    await doIt(in: session)
+    try await doIt(in: session)
 }

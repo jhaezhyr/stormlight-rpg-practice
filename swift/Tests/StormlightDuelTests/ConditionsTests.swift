@@ -6,11 +6,11 @@ func afflicted() async throws {
     let session = GameSession(
         game: Game(
             characters: [PlayerRpgCharacter.basicCharacter()],
-            broadcaster: SilentBroadcaster(),
+            broadcaster: Broadcaster(),
             gameMasterBrain: Level1CpuBrain(for: RpgCharacterRef(name: "GM"))
         )
     )
-    func doIt(in session: isolated GameSession) async {
+    func doIt(in session: isolated GameSession) async throws {
         let player = session.game.characters.first!
         let playerRef = player.primaryKey
         session.game.characters[playerRef]!.conditions.upsert(
@@ -28,21 +28,21 @@ func afflicted() async throws {
         // Simulate the end of this character's turn
         var playerHealth: Int { session.game.characters[playerRef]!.health.value }
         #expect(playerHealth == 12)
-        await session.game.dispatch(CombatPhaseEvent(phase: .endOfTurn, character: player))
+        try await session.game.dispatch(CombatPhaseEvent(phase: .endOfTurn, character: player))
         #expect(playerHealth == 10)
-        await session.game.dispatch(CombatPhaseEvent(phase: .endOfTurn, character: player))
+        try await session.game.dispatch(CombatPhaseEvent(phase: .endOfTurn, character: player))
         #expect(playerHealth == 8)
-        await session.game.dispatch(CombatPhaseEvent(phase: .endOfTurn, character: player))
+        try await session.game.dispatch(CombatPhaseEvent(phase: .endOfTurn, character: player))
         #expect(playerHealth == 6)
-        await session.game.dispatch(CombatPhaseEvent(phase: .endOfTurn, character: player))
+        try await session.game.dispatch(CombatPhaseEvent(phase: .endOfTurn, character: player))
         // After three turns, it should remove itself
         // TODO And it does, but there's some strange ordering shenanigans.
         // Figure out how to properly order listeners within the same HookTrigger
         // Additionally, make sure that either condition types know how to check whether they've already been removed so they don't run,
         //   or figure out how to make the dispatch function not run the condition's action when the condition has already been removed.
         #expect(playerHealth == 6)
-        await session.game.dispatch(CombatPhaseEvent(phase: .endOfTurn, character: player))
+        try await session.game.dispatch(CombatPhaseEvent(phase: .endOfTurn, character: player))
         #expect(playerHealth == 6)
     }
-    await doIt(in: session)
+    try await doIt(in: session)
 }
