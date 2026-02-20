@@ -113,7 +113,10 @@ extension RpgCharacter {
             ))
     }
     public var movementRate: Distance {
-        switch attributes[.speed] {
+        guard !self.conditions.contains(where: { $0.type == Immobilized.type }) else {
+            return 0
+        }
+        return switch attributes[.speed] {
         case ...0: 20
         case 1...2: 25
         case 3...4: 30

@@ -19,7 +19,7 @@ func afflicted() async throws {
                     core: Afflicted(
                         damagePerTurn: Damage(2, type: .vital), to: playerRef, in: session),
                     duration: 3,
-                    for: playerRef,
+                    turnsFor: playerRef,
                     in: session
                 )
             )

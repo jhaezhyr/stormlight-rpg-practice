@@ -15,8 +15,9 @@ public struct DurationCondition<C: Condition>: CompositeCondition {
     public init(
         core: C,
         duration: Int,
-        for character: RpgCharacterRef,
-        in gameSession: isolated GameSession
+        turnsFor waitingCharacter: RpgCharacterRef,
+        butBelongingTo parentCharacter: RpgCharacterRef? = nil,
+        in gameSession: isolated GameSession = #isolation
     ) {
         let id = core.id
         let coreName = "\(core)"
@@ -25,10 +26,17 @@ public struct DurationCondition<C: Condition>: CompositeCondition {
         self.handlers = [
             EventHandler<CombatPhaseEvent> {
                 (event, gameSession) async throws in
-                guard event.phase == .endOfTurn, character == event.character.primaryKey else {
+                guard event.phase == .endOfTurn, waitingCharacter == event.character.primaryKey
+                else {
                     return
                 }
-                var character = event.character  // TODO var is a bug
+                guard
+                    var character = gameSession.game.anyCharacter(  // TODO var is a bug
+                        at: parentCharacter ?? waitingCharacter
+                    )
+                else {
+                    fatalError("This condition wore off but its target character is missing.")
+                }
                 guard var me = character.conditions[id]?.core as? Self else {
                     fatalError(
                         "Why is this condition happening to a character without this condition?")
