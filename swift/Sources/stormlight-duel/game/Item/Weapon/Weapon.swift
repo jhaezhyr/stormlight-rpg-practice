@@ -73,3 +73,16 @@ public enum WeaponName: String, CaseIterable, Sendable, Hashable {
 }
 
 public protocol WeaponTrait: Sendable {}
+
+extension CaseIterable where Self: RawRepresentable, RawValue == String {
+    public init?(caseInsensitiveRawValue: String) {
+        // TODO Check for duplicates
+        for candidate in Self.allCases {
+            if candidate.rawValue.lowercased() == caseInsensitiveRawValue {
+                self = candidate
+                return
+            }
+        }
+        return nil
+    }
+}

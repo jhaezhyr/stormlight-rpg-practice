@@ -9,7 +9,7 @@ extension Recover: CliArgsContextFreeConvertibleType {
         var remaining = args[...]
         guard
             let firstArg = remaining.popFirst(),
-            let firstArgAsString = firstArg as? Substring,
+            let firstArgAsString = (firstArg as? Substring)?.lowercased(),
             firstArgAsString == "r" || firstArgAsString == "recover"
         else {
             return nil

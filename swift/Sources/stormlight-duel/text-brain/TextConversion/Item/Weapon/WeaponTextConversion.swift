@@ -7,7 +7,7 @@ extension WeaponName: CliArgsContextFreeConvertibleType {
             return
         }
         if let string = args.first as? Substring,
-            let weaponName = WeaponName(rawValue: String(string))
+            let weaponName = WeaponName(caseInsensitiveRawValue: String(string))
         {
             self = weaponName
             return
@@ -15,4 +15,10 @@ extension WeaponName: CliArgsContextFreeConvertibleType {
         throw CliParseError("\(args) is not a weapon name")
     }
     public static var helpText: Substring { "<weapon>" }
+}
+
+extension BasicWeapon: CustomStringConvertible {
+    public var description: String {
+        "\(weaponName)"
+    }
 }

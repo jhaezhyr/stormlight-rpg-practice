@@ -1,6 +1,8 @@
 public struct DurationCondition<C: Condition>: CompositeCondition {
     public var core: C
     public var durationRemainingInTurns: Int
+    public let waitingCharacter: RpgCharacterRef
+    public let parentCharacter: RpgCharacterRef
     public var type: ConditionTypeRef { core.type }
 
     public var handlers: [any EventHandlerProtocol]
@@ -8,7 +10,9 @@ public struct DurationCondition<C: Condition>: CompositeCondition {
     public var snapshot: any ConditionSnapshot {
         DurationConditionSnapshot(
             core: AnyConditionSnapshot(core.snapshot),
-            durationRemainingInTurns: durationRemainingInTurns
+            waitingCharacter: waitingCharacter,
+            parentCharacter: parentCharacter,
+            durationRemainingInTurns: durationRemainingInTurns,
         )
     }
 
@@ -23,6 +27,8 @@ public struct DurationCondition<C: Condition>: CompositeCondition {
         let coreName = "\(core)"
         self.core = core
         self.durationRemainingInTurns = duration
+        self.waitingCharacter = waitingCharacter
+        self.parentCharacter = parentCharacter ?? waitingCharacter
         self.handlers = [
             EventHandler<CombatPhaseEvent> {
                 (event, gameSession) async throws in
@@ -60,5 +66,7 @@ public struct DurationConditionSnapshot<T: ConditionSnapshot>: ConditionSnapshot
     public var id: Int { core.id }
     public var type: ConditionTypeRef { core.type }
     public let core: T
+    public let waitingCharacter: RpgCharacterRef
+    public let parentCharacter: RpgCharacterRef
     public let durationRemainingInTurns: Int
 }

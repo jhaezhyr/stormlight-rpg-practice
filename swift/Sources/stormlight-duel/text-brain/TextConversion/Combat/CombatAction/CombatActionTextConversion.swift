@@ -32,7 +32,7 @@ struct EndTurn {}
     var remaining = args[...]
     guard
         let firstArg = remaining.popFirst(),
-        let firstArgAsString = firstArg as? Substring,
+        let firstArgAsString = (firstArg as? Substring)?.lowercased(),
         firstArgAsString == "e" || firstArgAsString == "end"
     else {
         return nil

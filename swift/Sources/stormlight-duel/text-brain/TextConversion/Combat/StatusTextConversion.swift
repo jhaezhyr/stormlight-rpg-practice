@@ -44,11 +44,12 @@ extension StatusCommand {
                     ($0.combatState!.space.distance(to: someCharacter.combatState!.space), $0)
                 }
                 .sorted { (lh, rh) in lh.0 < rh.0 }[0]
+            let conditions = someCharacter.conditions.filter { $0.type != TempCondition.type }
             result +=
                 "\(someCharacter.primaryKey == characterRef ? "Your" : "\(someCharacter.name)'s") stats:\n"
                 + "  Health: \(someCharacter.health.value)/\(someCharacter.health.maxValue)\n"
                 + "  Focus: \(someCharacter.focus.value)/\(someCharacter.focus.maxValue)\n"
-                + "  Conditions: \(someCharacter.conditions.map { "\($0.core)" }.joined(separator: ","))\n"
+                + "  Conditions: \(conditions.map { "\($0.core)" }.joined(separator: ","))\n"
                 + "  Space controlled: \(someCharacter.combatState!.space.lo)...\(someCharacter.combatState!.space.hi)\n"
                 + "  Distance to \(nearestOpponent.name): \(distanceToNearestOppontent)"
         }

@@ -7,7 +7,7 @@ extension CoreSkillName: CliArgsContextFreeConvertibleType {
             return
         }
         if let string = args.first as? Substring,
-            let skill = CoreSkillName(rawValue: String(string))
+            let skill = CoreSkillName(caseInsensitiveRawValue: String(string))
         {
             self = skill
             return

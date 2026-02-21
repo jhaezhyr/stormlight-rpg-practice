@@ -9,7 +9,7 @@ extension DisengageAction: CliArgsContextFreeConvertibleType {
         var remaining = args[...]
         guard
             let firstArg = remaining.popFirst(),
-            let firstArgAsString = firstArg as? Substring,
+            let firstArgAsString = (firstArg as? Substring)?.lowercased(),
             firstArgAsString == "d" || firstArgAsString == "disengage"
         else {
             return nil
