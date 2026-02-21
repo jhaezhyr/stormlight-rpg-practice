@@ -2,7 +2,6 @@
     <h4>Event Log</h4>
     <ul>
         <li *ngFor="let e of (state.eventLog$ | async)">
-            <div class="msg-type">{{ e.type }}</div>
             <div class="msg-text">{{ e.message }}</div>
         </li>
     </ul>

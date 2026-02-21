@@ -1,9 +1,10 @@
 :host {
     display: block;
+    height: 250px;
 }
 
 .player-status {
-    height: 20vh;
+    height: 100%;
     overflow-y: auto;
     padding: 0.5rem;
     border-bottom: 1px solid #ddd;
@@ -17,4 +18,5 @@
     margin-top: 0.5rem;
     font-size: 0.8rem;
     color: #444;
+    text-wrap: wrap;
 }
