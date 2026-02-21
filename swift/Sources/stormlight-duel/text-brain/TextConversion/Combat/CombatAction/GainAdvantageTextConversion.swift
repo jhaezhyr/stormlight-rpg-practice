@@ -9,7 +9,7 @@ extension GainAdvantage: CliArgsConvertibleType {
         var remaining = args[...]
         guard
             let firstArg = remaining.popFirst(),
-            let firstArgAsString = firstArg as? Substring,
+            let firstArgAsString = (firstArg as? Substring)?.lowercased(),
             firstArgAsString == "g" || firstArgAsString == "gainadv"
         else {
             return nil

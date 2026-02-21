@@ -197,11 +197,7 @@ public actor TextBrain<Connection: TextInterfaceConnection>: RpgCharacterBrain {
     public func hear<M>(_ message: M, in gameSnapshot: GameSnapshot) async where M: Message {
         let messageDescription = message.description(for: characterRef)
         let interface: String?
-        if messageDescription.contains("ROUND") {
-            interface = StatusCommand.general.evaluate(in: gameSnapshot, for: characterRef)
-        } else {
-            interface = nil
-        }
+        interface = StatusCommand.general.evaluate(in: gameSnapshot, for: characterRef)
         await printEvent(messageDescription, interface: interface)
     }
 

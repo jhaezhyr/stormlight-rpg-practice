@@ -1,13 +1,13 @@
-struct TempCondition: Condition {
-    var id: Int
-    var type: ConditionTypeRef = Self.type
-    static let type: ConditionTypeRef = "TempCondition"
-    let handlers: [any EventHandlerProtocol]
+public struct TempCondition: Condition {
+    public var id: Int
+    public var type: ConditionTypeRef = Self.type
+    public static let type: ConditionTypeRef = "TempCondition"
+    public let handlers: [any EventHandlerProtocol]
     init(handlers: [any EventHandlerProtocol], in gameSession: isolated GameSession = #isolation) {
         self.id = gameSession.nextId()
         self.handlers = handlers
     }
-    var snapshot: any ConditionSnapshot {
+    public var snapshot: any ConditionSnapshot {
         DummyConditionSnapshot(id: id, type: type)
     }
 }

@@ -9,7 +9,7 @@ extension InteractiveMove: CliArgsContextFreeConvertibleType {
         var remaining = args[...]
         guard
             let firstArg = remaining.popFirst(),
-            let firstArgAsString = firstArg as? Substring,
+            let firstArgAsString = (firstArg as? Substring)?.lowercased(),
             firstArgAsString == "m" || firstArgAsString == "move"
         else {
             return nil
@@ -40,4 +40,8 @@ extension Direction1D: CliArgsContextFreeConvertibleType {
     public static var helpText: Substring {
         "R|L"
     }
+}
+
+extension InteractiveMove: CustomStringConvertible {
+    public var description: String { "move" }
 }

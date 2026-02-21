@@ -9,7 +9,7 @@ extension Strike: CliArgsConvertibleType {
         var remaining = args[...]
         guard
             let firstArg = remaining.popFirst(),
-            let firstArgAsString = firstArg as? Substring,
+            let firstArgAsString = (firstArg as? Substring)?.lowercased(),
             firstArgAsString == "k" || firstArgAsString == "strike"
         else {
             return nil
@@ -47,41 +47,59 @@ extension Strike: CliArgsConvertibleType {
             }
         }
         // What if the target wasn't provided?
-        let realTarget: RpgCharacterRef = try
+        let targetCandidates: [RpgCharacterRef] = try
             ({ (x: ()) throws(CliParseError) in
                 if let target {
-                    return target
+                    return [target]
                 } else {
                     let characters = context.game.characters
                     let viableTargets = characters.filter {
                         $0.primaryKey != contextCharacter.primaryKey && $0.health.value > 0
                     }
-                    if viableTargets.count != 1 {
-                        throw CliParseError(
-                            "It seems \(contextCharacter.name) has \(viableTargets.count) available targets: \(viableTargets)"
-                        )
-                    }
-                    return viableTargets[0].primaryKey
+                    return viableTargets.map { $0.primaryKey }
                 }
             })(())
-        let realWeapon: ItemRef = try
+        let weaponCandidates: [ItemRef] = try
             ({ (x: ()) throws(CliParseError) in
                 if let weaponToStrikeWith {
-                    return weaponToStrikeWith
+                    return [weaponToStrikeWith]
                 } else {
                     let equipment = contextCharacter.equipment
-                    let viableWeapons = equipment.filter {
-                        $0.isReady && $0.core.core is any WeaponSnapshot
+                    let viableWeapons = equipment.compactMap { x -> (any WeaponSnapshot)? in
+                        guard x.isReady else {
+                            return nil
+                        }
+                        return x.core.core as? any WeaponSnapshot
                     }
-                    if viableWeapons.count != 1 {
-                        throw CliParseError(
-                            "It seems \(contextCharacter.name) has \(viableWeapons.count) ready weapons: \(viableWeapons)"
-                        )
-                    }
-                    return viableWeapons[0].primaryKey
+                    return viableWeapons.map { $0.primaryKey }
                 }
             })(())
-        self.init(realTarget, with: realWeapon)
+        var possibleStrikes: [Strike] = []
+        for target in targetCandidates {
+            for weapon in weaponCandidates {
+                let possibleStrike = Strike(target, with: weapon)
+                if possibleStrike.canTakeAction(by: contextCharacter.primaryKey, in: context.game) {
+                    possibleStrikes.append(possibleStrike)
+                }
+            }
+        }
+        if possibleStrikes.isEmpty {
+            if weaponCandidates.isEmpty {
+                throw CliParseError("You have no ready weapons.")
+            }
+            if targetCandidates.isEmpty {
+                throw CliParseError("You have no potential targets.")
+            }
+            throw CliParseError(
+                "You have at least one weapon and target, but you cannot strike them with it at this time."
+            )
+        } else if possibleStrikes.count > 1 {
+            throw CliParseError(
+                "It seems \(contextCharacter.name) has \(possibleStrikes.count) possible strikes:\(possibleStrikes.map { "\n- \($0)" }.joined())\n\nTo specify a weapon and a target, include them in the command, like this:\n  strike longbow Shallan"
+            )
+        } else {
+            self = possibleStrikes[0]
+        }
     }
 
     public static var helpText: Substring { "stri(k)e [target] [weapon]" }

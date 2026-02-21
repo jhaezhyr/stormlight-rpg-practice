@@ -18,3 +18,9 @@ extension TakeAimAction: CliArgsConvertibleType {
         "takeaim \(CoreSkillName.helpText) [\(RpgCharacterRef.helpText)]"
     }
 }
+
+extension TakeAimAction: CustomStringConvertible {
+    public var description: String {
+        "take aim at \(self.opponent.name) using \(self.skill)"
+    }
+}
