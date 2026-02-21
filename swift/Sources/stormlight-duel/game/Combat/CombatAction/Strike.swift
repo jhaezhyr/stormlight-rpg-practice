@@ -57,7 +57,7 @@ public struct Strike: CombatAction {
         in gameSession: isolated GameSession = #isolation,
     ) async throws {
         let game = gameSession.game
-        guard let character = game.characters[characterRef] else {
+        guard let character = game.anyCharacter(at: characterRef) else {
             fatalError("Bad character reference \(characterRef)")
         }
         guard
@@ -67,14 +67,11 @@ public struct Strike: CombatAction {
             return
         }
         guard
-            game.anyCharacter(at: target) != nil,
+            let targetCharacter = game.anyCharacter(at: target),
             target != RpgCharacterRef(of: character)
         else {
             return
         }
-        // TODO Do things for ranged weapons.
-        let myCharacter: any RpgCharacter = game.anyCharacter(at: character.primaryKey)!
-        let targetCharacter: any RpgCharacter = game.anyCharacter(at: target)!
         // Run the damage test
         let weaponSkill = weapon.type.skill
         let targetPhysicalDefense = targetCharacter.defenses[.physical]
@@ -89,6 +86,37 @@ public struct Strike: CombatAction {
             disadvantagesAvailable: 0,
             in: gameSession
         )
+        if case .ranged(_, _) = weapon.range {
+            let opponentsWhoCanReachMe = game.characters.filter {
+                $0.primaryKey != characterRef
+                    && $0.combatState!.space.expanded(by: $0.reach).touchesOrOverlaps(
+                        character.combatState!.space
+                    )
+            }
+            if !opponentsWhoCanReachMe.isEmpty {
+                await game.broadcaster.tellAll(
+                    DoubleTargetMessage(
+                        w12:
+                            "Because $1 is within $2's reach, $1 has to avoid giving the enemy an opening.",
+                        wU2:
+                            "Because you are within $2's reach, you have to avoid giving the enemy an opening.",
+                        w1U:
+                            "Because $1 is within your reach, $1 has to avoid giving you an opening.",
+                        as1: characterRef,
+                        as2: opponentsWhoCanReachMe[0].primaryKey,
+                    )
+                )
+                test.disadvantagesAvailable += 1
+            }
+            let alliesNearTarget = game.characters.filter {
+                $0.primaryKey != target
+                    && $0.primaryKey != characterRef
+                    && $0.combatState!.space.touchesOrOverlaps(targetCharacter.combatState!.space)
+            }
+            if alliesNearTarget.isEmpty {
+                // TODO Raise the stakes
+            }
+        }
         game.updateTest(test)
         await game.broadcaster.tellAll(
             DoubleTargetMessage(
@@ -119,7 +147,7 @@ public struct Strike: CombatAction {
                         .shouldGraze, options: GrazeChoice.allCases, in: game.snapshot)
                     == .shouldGraze
                 if shouldGraze {
-                    myCharacter.focus.value -= 1
+                    character.focus.value -= 1
                     damageToDo = damageMinAmount
                     verbOfStrike = ("grazes", "graze")
                 } else {
