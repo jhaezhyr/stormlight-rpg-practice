@@ -9,12 +9,18 @@ public class RpgAttackTest: RpgTest {
     public var difficulty: Int  // In a head to head, this is the opponent's total number.
 
     public var damageDice: [NumberDie]
-    public var damageModifiers: Int = 0
 
     public var advantagesAvailable: Int = 0
     public var disadvantagesAvailable: Int = 0
     public var opportunitiesAvailable: Int = 0
     public var complicationsAvailable: Int = 0
+
+    public var result: RpgAttackTestResult? = nil
+
+    public func modifier(in gameSession: isolated GameSession = #isolation) -> Int {
+        let character = gameSession.game.anyCharacter(at: tester)!
+        return character.modifiers[skill] ?? 0
+    }
 
     public init(
         tester: RpgCharacterRef,
@@ -23,7 +29,6 @@ public class RpgAttackTest: RpgTest {
         otherModifiers: Int? = nil,
         difficulty: Int,
         damageDice: [NumberDie],
-        damageModifiers: Int? = 0,
         advantagesAvailable: Int? = nil,
         disadvantagesAvailable: Int? = nil,
         opportunitiesAvailable: Int? = nil,
@@ -37,7 +42,6 @@ public class RpgAttackTest: RpgTest {
         self.difficulty = difficulty
         if let otherModifiers { self.otherModifiers = otherModifiers }
         self.damageDice = damageDice
-        if let damageModifiers { self.damageModifiers = damageModifiers }
         if let advantagesAvailable { self.advantagesAvailable = advantagesAvailable }
         if let disadvantagesAvailable { self.disadvantagesAvailable = disadvantagesAvailable }
         if let opportunitiesAvailable { self.opportunitiesAvailable = opportunitiesAvailable }
@@ -76,7 +80,7 @@ public class RpgAttackTest: RpgTest {
             NumberDie.d20.roll(
                 withModifier: $0.advantageNumber, rng: &game.rng)
         }[0]
-        let damageDieRolls = dieRoleCounts.compactMap {
+        let originalDamageDieRolls = dieRoleCounts.compactMap {
             if case .damageDie(let numberDie) = $0.role {
                 (
                     die: numberDie, modifier: $0.advantageNumber,
@@ -89,12 +93,35 @@ public class RpgAttackTest: RpgTest {
 
         try await game.dispatch(TestEvent(TestHookType.beforeResolution, test: self))
 
-        //let testDieRollOpportunity = testDieRoll == 20
-        //let testDieRollComplication = testDieRoll == 1
-        // TODO Opportunities and complications
+        self.result = {
+            (gameSession: isolated GameSession) in
+            let testModifier = modifier()
+            let damageModifier = testModifier
+            let testResult = testDieRoll + testModifier + otherModifiers >= difficulty
+            let dieRollResults: [Int] = originalDamageDieRolls.map { $0.result }
+            let grazeDamage = dieRollResults.reduce(0, +)
+            return RpgAttackTestResult(
+                testDieRoll: testDieRoll,
+                testResult: testResult,
+                advantagesApplied: advantagesApplied,
+                disadvantagesApplied: disadvantagesApplied,
+                opportunitiesApplied: 0,
+                complicationsApplied: 0,
+                damageDieRolls: dieRollResults,
+                grazeDamage: grazeDamage,
+                fullDamage: grazeDamage + damageModifier
+            )
+        }(gameSession)
 
-        let testModifier = character.modifiers[skill] ?? 0
-        let testResult = testDieRoll + testModifier + otherModifiers >= difficulty
+        let testDieRollOpportunity = testDieRoll == 20
+        if testDieRollOpportunity {
+            self.opportunitiesAvailable += 1
+        }
+        let testDieRollComplication = testDieRoll == 1
+        if testDieRollComplication {
+            self.complicationsAvailable += 1
+        }
+        try await self.resolveOpportunitiesAndComplications()
 
         let modifierBit =
             if let modifier = dieRoleCounts.first(where: { roleWithAdvantageNumber in
@@ -104,6 +131,8 @@ public class RpgAttackTest: RpgTest {
             } else {
                 ""
             }
+        let testModifier = modifier()
+        let testResult = self.result!.testResult
         await gameSession.game.broadcaster.tellAll(
             SingleTargetMessage(
                 w1:
@@ -113,7 +142,7 @@ public class RpgAttackTest: RpgTest {
                 as1: tester)
         )
 
-        let (dice:dice, result:result) = describeDice(damageDieRolls)
+        let (dice:dice, result:result) = describeDice(originalDamageDieRolls)
         let modifiers = dieRoleCounts.compactMap {
             if case .damageDie(_) = $0.role {
                 $0.advantageNumber
@@ -138,17 +167,7 @@ public class RpgAttackTest: RpgTest {
                 wU: "You rolled \(dice)\(damageModifierBit) for your damage and got \(result).",
                 as1: tester))
 
-        let dieRollResults = damageDieRolls.map { $0.result }
-        return RpgAttackTestResult(
-            testDieRoll: testDieRoll,
-            testResult: testResult,
-            advantagesApplied: advantagesApplied,
-            disadvantagesApplied: disadvantagesApplied,
-            opportunitiesApplied: 0,
-            complicationsApplied: 0,
-            damageDieRolls: dieRollResults,
-            damage: dieRollResults.reduce(0, +) + damageModifiers
-        )
+        return self.result!
     }
 }
 
@@ -235,16 +254,17 @@ extension AttackDieRole: CustomStringConvertible {
 }
 
 public struct RpgAttackTestResult: RpgTestResultProtocol {
-    public let testDieRoll: Int
-    public let testResult: Bool
+    public var testDieRoll: Int
+    public var testResult: Bool
 
-    public let advantagesApplied: Int
-    public let disadvantagesApplied: Int
-    public let opportunitiesApplied: Int
-    public let complicationsApplied: Int
+    public var advantagesApplied: Int
+    public var disadvantagesApplied: Int
+    public var opportunitiesApplied: Int
+    public var complicationsApplied: Int
 
-    public let damageDieRolls: [Int]
-    public let damage: Int
+    public var damageDieRolls: [Int]
+    public var grazeDamage: Int
+    public var fullDamage: Int
 }
 
 public typealias RpgAttackTestSnapshot = RpgSimpleTestSnapshot

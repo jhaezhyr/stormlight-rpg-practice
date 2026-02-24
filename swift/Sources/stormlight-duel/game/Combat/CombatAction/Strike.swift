@@ -81,7 +81,6 @@ public struct Strike: CombatAction {
             skill: weaponSkill,
             difficulty: targetPhysicalDefense,
             damageDice: weapon.damage.asArray,
-            damageModifiers: 0,
             advantagesAvailable: 0,
             disadvantagesAvailable: 0,
             in: gameSession
@@ -114,7 +113,7 @@ public struct Strike: CombatAction {
                     && $0.combatState!.space.touchesOrOverlaps(targetCharacter.combatState!.space)
             }
             if alliesNearTarget.isEmpty {
-                // TODO Raise the stakes
+                // TODO Raise the stakes and allow for a nearby target to be grazed on a complication.
             }
         }
         game.updateTest(test)
@@ -126,21 +125,17 @@ public struct Strike: CombatAction {
                 as1: characterRef, as2: target))
         try await game.dispatch(TestEvent(StrikePhase.aboutToAttemptStrike, test: test))
         let result = try await test.roll(in: gameSession)
-        let weaponModifier = character.modifiers[weaponSkill, default: 0]
-        let damageMinAmount = result.damage
-        let damageFullAmount = result.damage + weaponModifier
-        try await game.dispatch(TestEvent(TestHookType.beforeResolution, test: test))
         let damageToDo: Int
         let verbOfStrike: (thirdPerson: Substring, secondPerson: Substring)
         if result.testResult {
             try await game.dispatch(TestEvent(TestHookType.afterSuccess, test: test))
-            damageToDo = damageFullAmount
+            damageToDo = result.fullDamage
             verbOfStrike = ("strikes", "strike")
         } else {
             try await game.dispatch(TestEvent(TestHookType.afterFailure, test: test))
             if character.focus.value >= 1 {
                 await game.broadcaster.tellHint(
-                    "You can graze for \(damageMinAmount). Focus: \(character.focus.value)/\(character.focus.maxValue)",
+                    "You can graze for \(result.grazeDamage). Focus: \(character.focus.value)/\(character.focus.maxValue)",
                     to: character.primaryKey)
                 let shouldGraze =
                     try await character.brain.decide(
@@ -148,7 +143,7 @@ public struct Strike: CombatAction {
                     == .shouldGraze
                 if shouldGraze {
                     character.focus.value -= 1
-                    damageToDo = damageMinAmount
+                    damageToDo = result.grazeDamage
                     verbOfStrike = ("grazes", "graze")
                 } else {
                     damageToDo = 0
@@ -176,7 +171,6 @@ public struct Strike: CombatAction {
             )
         )
         character.combatState?.weaponsUsed.insert(weapon.weaponName)
-        // TODO Give lots of opportunities to resolve complications and opportunities, but those should all be spent by this point.
     }
 }
 

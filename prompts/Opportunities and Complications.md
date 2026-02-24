@@ -1,0 +1,139 @@
+# Opportunities and Complications
+
+## Opportunities
+- Critical hit: Find a weakness. All damage dice are maxed out. **(v1)** ❤️
+  - Requires editing the test results
+- Sworn Bond: A character (which you love) has a +2 to physical defense while within your reach.
+  - Requires teams and win conditions
+- Lucky Find: An object near you would make a great improvised weapon. Gain advantage on your next attack with it.
+  - Requires Improvised Weapons
+- Keen Mind: Gain an advantage on Reactive Strikes against an enemy until your next turn. **(v1)**
+- Stalwart Allies: Your allies spend no focus Aiding you for the rest of the battle.
+  - Requires teams
+  - Requires Aid
+- Spren aid: (If your current action is heroic), recover 1d4 focus or Investiture
+  - Requires Investiture, maybe
+- Reluctant Ally: Give yourself a free reaction each turn that can only be used to Aid a particular ally.
+  - Requires Aid
+  - Requires teams
+- Unbreakable: Your deflect increases by 3 till the end of your next turn. **(v1)** ❤️
+- Vigilant: Your dodge and Reactive Strike now cost 1 less focus for the rest of the battle. **(v1)**
+- Careful planning: Gain an action immediately. It can only be used on actions involving a cognitive skill test. **(v1)**
+  - Maybe requires out-of-turn actions.
+- Proving Ground: Advantage on attacks against characters with more health than you, for the rest of the scene. **(v1)** 🪳
+- One More Try: Use an action on your next turn to do an unnamed Recover action with an advantage on the recovery die, without using up this turn's recover action. **(v1)**
+  - Might be easier with "unnamed" actions.
+- Fearless: Gain advantage on Discipline and Intimidation tests until the end of your next turn. **(v1)**
+- Stormpause: Enemies begin to fight more defensively or begin to retreat.
+  - Requires win condition of retreat, or requires the AI to be overridden. Or just requires the "frightened" condition.
+- Against the Odds: If two or more enemies are within 5 feet of you, gain an advantage on attack tests until the end of your next turn.
+  - Requires teams and win conditions
+- Sow Dissent: Two enemies begin to argue. With further Persuasion or Deception, they might be turned against one another.
+  - Requires teams and win conditions
+- Charge: Until the end of your next turn, all your attacks benefit from the Momentum weapon trait. **(v1)** ❤️
+  - Requires Momentum
+  - Requires an unusual effect chain
+- United: Each ally you can influence can immediately use a reaction to recover 1d4 health, focus, or investiture.
+  - Requires teams and win conditions
+- Leap of faith: You can immediately leap up to half your movement rate as a free action, without making a test or triggering reactive strikes.
+  - May require out-of-turn actions.
+- Sworn enemy: Choose an enemy. On your next turn, your first hit or graze against that enemy deals an extra weapon die of damage. **(v1)**  ❤️
+- Audacious: Until the end of this scene, gain an advantage on deception tests. **(v1)** 🪳
+- Outmaneuver: Until the end of your next turn, your movement doesn't trigger reactive strikes. **(v1)**  ❤️
+- Lend support: One ally within reach can use an action on their next turn to gain the benefits of the recover action, rolling their recovery die with an advantage. **(v1)**
+  - Is easier to implement with "unnamed" actions
+- Vantage Point: Until the end of your next turn, your tests gain an advantage when you are targeting a character who is positioned lower than you.
+  - Requires terrain with heights
+- Call to Arms: Choose an ally you can influence. They gain an additional action on their next turn.
+  - Requires teams and win conditions.
+- Second helping: Bolstered by a delicious meal you recently ate, you can recover 1d6 health (no action required) **(v1)**
+- Harmonious: An enemy gians new respect for you. They refuse to fight you until the end of this scene, unless you attack them first.
+  - Requires win conditions
+- Reinforcements arrive
+  - Requires teams and win conditions
+- Wounded enemy flees or surrenders
+  - Requires teams and win conditions
+- A bystander escapes to safety
+  - Requires win conditions that involve bystanders
+- An enemy is distracted and attacks on them have advantage **(v1)**
+- Dramatic Flare: An enemy drops their weapon or equipment **(v1)**
+  - Requires dropping
+- You spot a vantage point or other environmental feature that you can use against your opponent
+  - Requires environmental features
+  - I say the map suddenly develops that feature in a place you haven't been, but which favors you
+- You see infused spheres in the opponent's pouch.
+  - Requires investiture
+  - Requires radiant abilities, fabrials, or shardplate
+- Your spren points something out or distracts the enemy
+  - Requires spren
+- You gain a brief respite, regain 1 focus. **(v1)**
+- You spot a hidden opponent
+  - Requires stealth, or win conditions involving hidden opponents
+- You get a bit of extra time to achieve your goal
+  - Requires win conditions of that kind.
+
+## Complications
+- Letter of the Law: Your actions just violated local laws. If you're still fighting in 2d4 turns, three angry guards will arrive to detain you.
+  - Requires teams and win conditions
+- Ravages of war: One of your companions suffers an injury, or another PC takes 1d6 damage from an unexpected source.
+  - Requires teams and win conditions
+- Run away: A friendly NPC loses their nerve and begins to flee, leaving you exposed
+  - Requires teams and win conditions
+  - Requires manipulated the AI
+- Surprise attack: Gain the surprised condition until the end of your next turn **(v1)** ❤️
+  - Requires Surprised
+- Corruption: An enemy (predicts your next move and) doesn't need to spend focus on their next Dodge or Reactive Strike against you **(v1)** ❤️
+- Divine wrath: (You experience a vision of cataclysmic destruction. Still reeling from it,) you lose your next action. **(v1)**
+- Reckless: (You're pushing yourself too hard.) Take 1d6 vital damage or take 2d6 vital damage and add +2 to the current test. **(v1)**
+- Pandemonium: An unexpected adversary, such as an axehound or a whitespine, enters the combat. It is hostile to both sides.
+  - Requires teams and win conditions
+  - Requires Axehound or Whitespine
+- The Thrill: If this is an attack, whether it hits or misses, it also grazes an ally within your reach or your weapon's range.
+  - Requires teams and win conditions
+- Unlikely Clue: (You're distracted by what you think is a clue, but it turns out to be a discarded pancake.) Lose 1 focus. **(v1)**
+- Paranoid: (You're preoccupied by anxious thoughts.) Unless you spend 2 focus to resist, you are Stunned until the end of your next turn. **(v1)**
+  - Requires Stunned
+- Haunted Past: You recall a painful memory. You must either Recover before the end of your next turn or lose 1d4 focus then. **(v1)**
+- Coming storm: (A storm is coming.) Each character must spend 1 focus or be knocked prone by high winds. **(v1)** ❤️
+  - Requires Prone.
+- Attrocity: The next time you or an ally makes an injury roll this combat, subtract 1d4 from it.
+  - Requires injuries and win conditions.
+- Weep as You Kill: Lose a focus for each character killed by you or your allies this turn.
+  - Requires the difference between kill/injure. Requires win conditions.
+- Broken Oath: Until the end of your turn, when you use an ability that costs focus, its cost is increased by 1. **(v1)**
+- Overwhelmed: You're in over your head. You can't attack next turn. **(v1)**
+- Into the Fray: Begin a negative event called "Enemy Reinforcements Arrive". The event triggers if it gains two more complications.
+  - Requires teams and win conditions.
+  - Requires Scene Events
+- Outnumbered: An enemy or shifting terrain forcibly moves you to an area of the battle that's separated from your allies.
+   - Requires terrain features
+- Last stand: On your next skill test, gain a disadvantage unless your current health is less than a third of your maximum. **(v1)**
+- Betrayal: You're betrayed by someone you thought was an ally.
+  - Requres teams and win conditions
+- Calculated: The plans of your adversaries unfold. An enemy who can sense you gains an additional action on their next turn. **(v1)** ❤️
+  - Requires sense, maybe?
+- Moral Crisis: You realize the target of your last attack doesn't deserve death. Before you next attack them, you must spend 2 focus. **(v1)**
+  - Requires us to keep track of who was the person you last attacked.
+- An ally trips and falls Prone
+  - Requires Prone
+  - Requires teams
+- A bystander is endangered
+  - Requires teams and win conditions
+  - Requires win conditions that involve bystanders
+- An enemy is alerted to your presence
+  - Requires teams and win conditions
+  - Requires stealth-based scenario effects
+- Fresh crem: You drop a weapon or piece of equipment **(v1)** ❤️
+  - Requires dropping
+- The rain picks up and makes navigating the battlefield more difficult
+  - Requires environmental features
+- Or your spheres go dun
+  - Requires investiture
+  - Requires radiant abilities, fabrials, or shardplate
+- You are shaken and lose 1 focus. **(v1)**
+- Your spren points something out or distracts the enemy, or your spren gets distracted when you need them
+  - Requires spren
+  - Requires actions to be suppressed, tests to fail and abort, etc.
+- You're distracted and an opponent can slip away without triggering a Reactive Strike **(v1)**
+- You accidentally finish off an enemy you were trying to leave alive for questioning
+  - Requires win conditions that are of that kind.

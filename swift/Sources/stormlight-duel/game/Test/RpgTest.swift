@@ -42,14 +42,75 @@ public protocol RpgTest: AnyObject, RpgTestSharedProtocol, SendableMetatype {
     associatedtype ResultType: RpgTestResultProtocol
     func roll(in gameSession: isolated GameSession) async throws -> ResultType
 
+    var trueSelf: any RpgTest { get }
+}
+extension RpgTest {
+    public var trueSelf: any RpgTest { self }
 }
 extension RpgTest where Self: RpgTestSnapshot {
     public var snapshot: some RpgTestSnapshot { self }
 }
 
+extension RpgTest {
+    public func resolveOpportunitiesAndComplications(
+        in gameSession: isolated GameSession = #isolation
+    ) async throws {
+        typealias IsOpportunity = Bool
+        let complicationBrain = gameSession.game.gameMasterBrain
+        let opportunityBrain = gameSession.game.anyCharacter(at: tester)!.brain
+        while true {
+            let remaining =
+                [Bool](repeating: true, count: opportunitiesAvailable)
+                + [Bool](repeating: false, count: complicationsAvailable)
+            guard let next = remaining.randomElement(using: &gameSession.game.rng) else {
+                return
+            }
+            let allOptions =
+                next
+                ? gameSession.game.opportunities(test: trueSelf)
+                : gameSession.game.complications(test: trueSelf)
+            var mutatableSelf = self
+            if next {
+                mutatableSelf.opportunitiesAvailable -= 1
+            } else {
+                mutatableSelf.complicationsAvailable -= 1
+            }
+            if allOptions.isEmpty {
+                await gameSession.game.broadcaster.tellAll(
+                    NoTargetMessage(
+                        "Sorry, there are no more \(next ? "opportunities" : "complications") for you to choose from."
+                    )
+                )
+                if next {
+                    mutatableSelf.opportunitiesAvailable = 0
+                } else {
+                    mutatableSelf.complicationsAvailable = 0
+                }
+                continue
+            }
+            // TODO Narrow the options.
+            let brain = next ? opportunityBrain : complicationBrain
+            var decision: any OpComp
+            while true {
+                decision = try await brain.decide(
+                    next ? .opportunityChoice : .complicationChoice,
+                    options: allOptions,
+                    in: gameSession.game.snapshot
+                )
+
+                if decision.canRun(on: trueSelf, in: gameSession) {
+                    break
+                }
+            }
+            try await decision.run(decider: brain, on: trueSelf, in: gameSession)
+        }
+    }
+}
+
 /// Use this in places where `any RpgTest` doesn't work.
 public class AnyRpgTest: RpgTest {
     public var core: any RpgTest
+    public var trueSelf: any RpgTest { core }
     public init(_ test: any RpgTest) {
         self.core = test
     }
