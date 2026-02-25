@@ -84,7 +84,7 @@ public class PlayerRpgCharacter: PlayerRpgCharacterProtocol {
             conditions: .init(conditions.isolatedMap { AnyConditionSnapshot($0.snapshot(in: $1)) }),
             movementRate: movementRate,
             size: size,
-            deflect: deflect,
+            deflect: deflect(),
             equipment: .init(equipment.isolatedMap { $0.snapshot(in: $1) }),
             reach: reach,
             combatState: combatState?.snapshot(),
