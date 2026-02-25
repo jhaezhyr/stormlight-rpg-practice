@@ -30,7 +30,8 @@ extension Game {
     }
 
     public static let standardOpportunities: [any Opportunity] = [
-        CriticalHitOpportunity()
+        CriticalHitOpportunity(),
+        SwornEnemyOpportunity()
     ]
     public static let standardComplications: [any Complication] = [
         SurpriseComplication()
