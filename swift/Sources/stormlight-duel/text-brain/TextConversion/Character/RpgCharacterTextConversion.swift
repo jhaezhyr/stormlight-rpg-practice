@@ -20,3 +20,7 @@ extension RpgCharacterRef: CliArgsConvertibleType {
     }
     public static var helpText: Substring { "<character>" }
 }
+
+extension RpgCharacterRef: CustomStringConvertible {
+    public var description: String { name }
+}
