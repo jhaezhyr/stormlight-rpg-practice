@@ -1,6 +1,6 @@
 import stormlight_duel
 
-extension Recover: CliArgsContextFreeConvertibleType {
+extension InteractiveRecover: CliArgsContextFreeConvertibleType {
     public init?(args: [Any]) throws(CliParseError) {
         if let alreadyParsed = args.first as? Self, args.count == 1 {
             self = alreadyParsed
@@ -19,5 +19,15 @@ extension Recover: CliArgsContextFreeConvertibleType {
 
     public static var helpText: Substring {
         "(r)ecover"
+    }
+}
+
+extension InteractiveRecover: CustomStringConvertible {
+    public var description: String { Self.actionName }
+}
+
+extension HowToRecover: CustomStringConvertible {
+    public var description: String {
+        "restore \(amountHealth) health and \(amountFocus) focus\(amountLeftover > 0 ? ", leaving \(amountLeftover) leftover" : "")"
     }
 }

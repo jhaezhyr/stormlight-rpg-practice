@@ -150,5 +150,6 @@ public let allCombatActions: [CombatAction.Type] = [
     Strike.self,
     InteractiveMove.self,
     InteractiveGainAdvantage.self,
+    InteractiveRecover.self,
     DisengageAction.self,
 ]
