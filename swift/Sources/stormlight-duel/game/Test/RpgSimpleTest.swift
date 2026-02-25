@@ -72,9 +72,15 @@ public class RpgSimpleTest: RpgTest {
 
         try await game.dispatch(TestEvent(TestHookType.beforeResolution, test: self))
 
-        //let testDieRollOpportunity = testDieRoll == 20
-        //let testDieRollComplication = testDieRoll == 1
-        // TODO Opportunities and complications
+        let testDieRollOpportunity = testDieRoll == 20
+        if testDieRollOpportunity {
+            self.opportunitiesAvailable += 1
+        }
+        let testDieRollComplication = testDieRoll == 1
+        if testDieRollComplication {
+            self.complicationsAvailable += 1
+        }
+        try await self.resolveOpportunitiesAndComplications()
 
         let testModifier = character.modifiers[skill] ?? 0
         let testResult = testDieRoll + testModifier >= difficulty
