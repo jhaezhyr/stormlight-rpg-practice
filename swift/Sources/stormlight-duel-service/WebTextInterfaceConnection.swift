@@ -49,9 +49,9 @@ actor WebTextInterfaceConnection: TextInterfaceConnection {
         do {
             switch type {
             case "hint":
-                try await waitForSkip(for: .seconds(5))
+                try await waitForSkip(for: .seconds(2.5 * min(Double(message.count) / 50, 1)))
             case "event":
-                try await waitForSkip(for: .seconds(1))
+                try await waitForSkip(for: .seconds(2.5 * min(Double(message.count) / 50, 1)))
             case "prompt":
                 break
             default:
