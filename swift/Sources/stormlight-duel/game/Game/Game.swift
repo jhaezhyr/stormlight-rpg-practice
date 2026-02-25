@@ -98,3 +98,22 @@ extension Game: Responder {
         }
     }
 }
+
+extension GameSharedProtocol {
+    public func opponentRefs(of character: RpgCharacterRef, conscious: Bool? = true)
+        -> [RpgCharacterRef]
+    {
+        opponents(of: character).map { $0.primaryKey }
+    }
+
+    /// Returns `target`'s opponents on the field.
+    ///
+    /// - @param conscious: If non-nil, only returns opponents that match the desired conscsiousness. Defaults to only return conscious opponents.
+    public func opponents(of character: RpgCharacterRef, conscious: Bool? = true) -> [CharacterType]
+    {
+        characters.filter { op in
+            op.primaryKey != character
+                && (conscious.map { cFlag in cFlag == (op.health.value > 0) } ?? true)
+        }
+    }
+}
