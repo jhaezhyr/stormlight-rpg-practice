@@ -25,6 +25,9 @@ public struct InteractiveGainAdvantage: CombatAction {
         }
         // Decide on an opponent and a skill
         let opponent = try await { (gameSession: isolated GameSession) async throws in
+            if let opponent = self.opponent {
+                return opponent
+            }
             let opponentOptions = GainAdvantage.opponentOptions(
                 by: characterRef,
                 in: gameSession.game.snapshot
@@ -45,6 +48,9 @@ public struct InteractiveGainAdvantage: CombatAction {
         }(gameSession)
 
         let skill = try await { (gameSession: isolated GameSession) async throws in
+            if let chosenSkill = self.chosenSkill {
+                return chosenSkill
+            }
             let skillOptions = GainAdvantage.skillOptions(
                 by: characterRef, against: opponent, in: gameSession.game.snapshot)
             switch skillOptions.count {

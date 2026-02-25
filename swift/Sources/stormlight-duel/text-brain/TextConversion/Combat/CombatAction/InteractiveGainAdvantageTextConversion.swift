@@ -34,3 +34,9 @@ extension InteractiveGainAdvantage: CliArgsConvertibleType {
         "(g)ainadv \(CoreSkillName.helpText) [target]"
     }
 }
+
+extension InteractiveGainAdvantage: CustomStringConvertible {
+    public var description: String {
+        "gain advantage\(self.opponent.map {" over \($0.name)"} ?? "")\(self.chosenSkill.map {" using \($0)"} ?? "")"
+    }
+}
