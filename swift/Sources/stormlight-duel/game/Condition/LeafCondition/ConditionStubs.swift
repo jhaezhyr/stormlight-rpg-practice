@@ -67,12 +67,6 @@ public struct Stunned: Condition, ConditionSnapshot {
         self.id = gameSession.nextId()
     }
 }
-public struct Surprised: Condition, ConditionSnapshot {
-    public let id: Int
-    public init(in gameSession: isolated GameSession = #isolation) {
-        self.id = gameSession.nextId()
-    }
-}
 public struct Unconscious: Condition, ConditionSnapshot {
     public let id: Int
     public init(in gameSession: isolated GameSession = #isolation) {
