@@ -138,18 +138,18 @@ public enum ImmobilizingShotReactionDecision: String, CaseIterable, Sendable, Ha
 
 public struct TakeAimAction: CombatAction {
     public static let actionCost: Int = 0
-    public var opponent: RpgCharacterRef
-    public var skill: CoreSkillName
-    public init(opponent: RpgCharacterRef, skill: CoreSkillName) {
+    public var opponent: RpgCharacterRef?
+    public var skill: CoreSkillName?
+    public init(opponent: RpgCharacterRef?, skill: CoreSkillName?) {
         self.opponent = opponent
         self.skill = skill
     }
     public static func canMaybeTakeAction(
-        by character: RpgCharacterRef, in gameSnapshot: GameSnapshot
+        by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot
     )
         -> Bool
     {
-        guard let character = gameSnapshot.characters[character] else {
+        guard let character = gameSnapshot.characters[characterRef] else {
             return false
         }
         guard !character.conditions.contains(where: { $0.type == Surprised.type }) else {
@@ -158,12 +158,12 @@ public struct TakeAimAction: CombatAction {
         guard character.combatState!.turnsTaken == 0 else {
             return false
         }
-        return true
+        return InteractiveGainAdvantage.canMaybeTakeAction(by: characterRef, in: gameSnapshot)
     }
     public func action(by characterRef: RpgCharacterRef, in gameSession: isolated GameSession)
         async throws
     {
-        try await GainAdvantage(opponent: opponent, skill: skill).action(
+        try await InteractiveGainAdvantage(opponent: opponent, chosenSkill: skill).action(
             by: characterRef, in: gameSession)
     }
 }

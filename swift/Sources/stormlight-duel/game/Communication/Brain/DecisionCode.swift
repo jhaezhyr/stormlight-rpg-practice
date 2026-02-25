@@ -9,6 +9,7 @@ public enum DecisionCode: Sendable, Equatable {
     case directionToMove5Ft
     case reactiveStrikeChoice
     case shouldShootImmobilizingShot
+    case targetForGainAdvantage
 }
 
 extension DecisionCode: CustomStringConvertible {
@@ -34,6 +35,8 @@ extension DecisionCode: CustomStringConvertible {
             "Your opponent is trying to flee! Will you strike?"
         case .shouldShootImmobilizingShot:
             "Your opponent has moved. Will you try to immobilize them?"
+        case .targetForGainAdvantage:
+            "Which character will you try to exploit?"
         }
     }
 }

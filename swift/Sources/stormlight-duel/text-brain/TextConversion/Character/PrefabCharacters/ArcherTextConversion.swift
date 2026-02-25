@@ -2,11 +2,11 @@ import stormlight_duel
 
 extension TakeAimAction: CliArgsConvertibleType {
     public init?(args: [Any], context: CliArgsConversionContext) throws(CliParseError) {
-        guard let firstArg = args.first as? Substring, firstArg == "takeaim" else {
+        guard let firstArg = args.first as? Substring, firstArg.lowercased() == "takeaim" else {
             return nil
         }
         guard
-            let gainAdvantageAction = try GainAdvantage.init(
+            let gainAdvantageAction = try InteractiveGainAdvantage.init(
                 args: ["g" as Substring] + args.dropFirst(), context: context)
         else {
             return nil
@@ -21,6 +21,6 @@ extension TakeAimAction: CliArgsConvertibleType {
 
 extension TakeAimAction: CustomStringConvertible {
     public var description: String {
-        "take aim at \(self.opponent.name) using \(self.skill)"
+        "take aim\(self.opponent.map {" at \($0.name)"} ?? "")\(self.skill.map {" using \($0)"} ?? "")"
     }
 }

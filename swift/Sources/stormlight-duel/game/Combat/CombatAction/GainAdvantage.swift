@@ -9,6 +9,15 @@ public struct GainAdvantage: CombatAction {
         self.chosenSkill = chosenSkill
     }
 
+    public static func canMaybeTakeAction(
+        by character: RpgCharacterRef,
+        in gameSnapshot: GameSnapshot,
+    ) -> Bool {
+        // Is there an opponent I can sense?
+        !opponentOptions(by: character, in: gameSnapshot).isEmpty
+        // Let's not waste time calculating all the possible skills and seeing if one exists.
+    }
+
     public func action(by characterRef: RpgCharacterRef, in gameSession: isolated GameSession)
         async throws
     {
@@ -71,6 +80,30 @@ public struct GainAdvantage: CombatAction {
             throw CancellationError()
         }
         return (me: me, opponent: opponent, game: gameSession.game)
+    }
+
+    public static func skillOptions(
+        by characterRef: RpgCharacterRef,
+        against opponent: RpgCharacterRef,
+        in gameSnapshot: GameSnapshot
+    ) -> [CoreSkillName] {
+        guard let character = gameSnapshot.characters[characterRef] else {
+            return []
+        }
+        let existingConditions = character.conditions.compactMap {
+            $0.core as? HasGainedAdvantageConditionSnapshot
+        }.filter { $0.opponentRef == opponent }
+        return CoreSkillName.allCases.filter { skill in
+            !existingConditions.contains { c in c.skill == skill }
+        }
+    }
+
+    public static func opponentOptions(
+        by character: RpgCharacterRef,
+        in gameSnapshot: GameSnapshot,
+    ) -> [RpgCharacterRef] {
+        // TODO Those you can sense
+        return gameSnapshot.opponentRefs(of: character)
     }
 }
 extension GainAdvantage: CustomStringConvertible {

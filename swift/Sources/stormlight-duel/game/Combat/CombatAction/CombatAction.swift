@@ -147,5 +147,8 @@ extension CombatChoice: CustomStringConvertible {
 }
 
 public let allCombatActions: [CombatAction.Type] = [
-    Strike.self, InteractiveMove.self, GainAdvantage.self, Recover.self, DisengageAction.self,
+    Strike.self,
+    InteractiveMove.self,
+    InteractiveGainAdvantage.self,
+    DisengageAction.self,
 ]
