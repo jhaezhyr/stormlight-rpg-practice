@@ -28,7 +28,6 @@ public protocol RpgCharacterSharedProtocol: Keyed where Key == RpgCharacterRef {
     var sensesRange: Distance { get }
     var movementRate: Distance { get }
     var size: CharacterSize { get }
-    var deflect: Int { get }
     /// You can only do touch/melee when your space is within `reach` of your target.
     var reach: Distance { get }
 
@@ -70,6 +69,8 @@ where
 {
     var brain: any RpgCharacterBrain { get }
     func _snapshot(in gameSession: isolated GameSession) -> any RpgCharacterSnapshot
+
+    func deflect(in gameSession: isolated GameSession) -> Int
 
     var health: Resource { get set }
     var focus: Resource { get set }
@@ -151,17 +152,24 @@ extension RpgCharacter {
         }
     }
 
-    public var deflect: Int {
-        // TODO Decentralize this logic. Make a "modified value" object.
-        equipment.map { readyable in
+    public func deflect(in gameSession: isolated GameSession = #isolation) -> Int {
+        let baseDeflect = self.equipment.map { readyable in
             readyable.isReady ? (readyable.core.core as? any Armor)?.deflect ?? 0 : 0
         }.reduce(0, +)
+        return gameSession.game.dispatchCalculation(
+            CharacterPropertyCalculationEvent(baseDeflect, type: .deflect, for: self.primaryKey)
+        )
     }
+}
+
+extension CalculationEventType {
+    public static let deflect = Self("deflect")
 }
 
 /// Returns the damage actually taken.
 public func doDamage(
-    _ damage: Damage, to characterRef: RpgCharacterRef,
+    _ damage: Damage,
+    to characterRef: RpgCharacterRef,
     in gameSession: isolated GameSession = #isolation
 )
     async -> Damage
@@ -170,7 +178,8 @@ public func doDamage(
         return Damage(0, type: damage.type)
     }
     let damageReduction: Int
-    if character.deflect > 0 {
+    let deflect = character.deflect()
+    if deflect > 0 {
         if damage.type == .vital {
             await gameSession.game.broadcaster.tellAll(
                 SingleTargetMessage(
@@ -181,12 +190,12 @@ public func doDamage(
             await gameSession.game.broadcaster.tellAll(
                 SingleTargetMessage(
                     w1:
-                        "$1 deflects \(character.deflect >= damage.amount ? "all" : "\(character.deflect)") of the incoming \(damage.type) damage.",
+                        "$1 deflects \(deflect >= damage.amount ? "all" : "\(deflect)") of the incoming \(damage.type) damage.",
                     wU:
-                        "You deflect \(character.deflect >= damage.amount ? "all" : "\(character.deflect)") of the incoming \(damage.type) damage.",
+                        "You deflect \(deflect >= damage.amount ? "all" : "\(deflect)") of the incoming \(damage.type) damage.",
                     as1: character.primaryKey)
             )
-            damageReduction = character.deflect
+            damageReduction = deflect
         }
     } else {
         damageReduction = 0

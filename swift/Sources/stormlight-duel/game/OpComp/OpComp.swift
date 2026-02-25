@@ -33,6 +33,7 @@ extension Game {
         CriticalHitOpportunity(),
         SwornEnemyOpportunity(),
         OutmaneuverOpportunity(),
+        UnbreakableOpportunity(),
     ]
     public static let standardComplications: [any Complication] = [
         SurpriseComplication(),

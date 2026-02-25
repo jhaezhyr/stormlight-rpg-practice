@@ -8,6 +8,7 @@ where
     ConditionType == AnyConditionSnapshot,
     CombatState == RpgCharacterCombatStateSnapshot
 {
+    var deflect: Int { get }
 }
 
 public struct AnyRpgCharacterSnapshot: RpgCharacterSnapshot {
