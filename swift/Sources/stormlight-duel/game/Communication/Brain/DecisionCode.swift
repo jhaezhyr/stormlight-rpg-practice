@@ -12,6 +12,7 @@ public enum DecisionCode: Sendable, Equatable {
     case opportunityChoice
     case complicationChoice
     case targetForGainAdvantage
+    case shouldStandStrongInComingStorm
 }
 
 extension DecisionCode: CustomStringConvertible {
@@ -43,6 +44,8 @@ extension DecisionCode: CustomStringConvertible {
             "The test has a complication! How would you like to spend it?"
         case .targetForGainAdvantage:
             "Which character will you try to exploit?"
+        case .shouldStandStrongInComingStorm:
+            "Will you divert your focus to staying upright?"
         }
     }
 }
