@@ -139,7 +139,7 @@ public struct Strike: CombatAction {
                     to: character.primaryKey)
                 let shouldGraze =
                     try await character.brain.decide(
-                        .shouldGraze, options: GrazeChoice.allCases, in: game.snapshot)
+                        .shouldGraze, options: GrazeChoice.allCases, in: game.snapshot())
                     == .shouldGraze
                 if shouldGraze {
                     character.focus.value -= 1

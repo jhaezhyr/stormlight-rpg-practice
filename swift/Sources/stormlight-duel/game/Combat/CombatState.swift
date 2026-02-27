@@ -46,7 +46,9 @@ public struct RpgCharacterCombatState: RpgCharacterCombatStateSharedProtocol {
         ]
     }
 
-    var snapshot: RpgCharacterCombatStateSnapshot {
+    func snapshot(in gameSession: isolated GameSession = #isolation)
+        -> RpgCharacterCombatStateSnapshot
+    {
         .init(
             space: space,
             turnSpeed: turnSpeed,

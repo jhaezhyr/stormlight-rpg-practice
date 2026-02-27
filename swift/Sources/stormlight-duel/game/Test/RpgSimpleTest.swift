@@ -37,7 +37,8 @@ public class RpgSimpleTest: RpgTest {
         if let complicationsAvailable { self.complicationsAvailable = complicationsAvailable }
     }
 
-    public var snapshot: any RpgTestSnapshot {
+    public func _snapshot(in gameSession: isolated GameSession = #isolation) -> any RpgTestSnapshot
+    {
         RpgSimpleTestSnapshot(
             id: id, skill: skill, otherModifiers: otherModifiers, difficulty: difficulty,
             tester: tester, opponent: opponent,

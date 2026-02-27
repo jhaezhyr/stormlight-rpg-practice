@@ -39,7 +39,7 @@ public struct ReactiveStrikeProvider: Responder {
                 }
                 let choice = try await me.brain.decide(
                     .reactiveStrikeChoice, options: ReactiveStrikeDecision.allCases,
-                    in: gameSession.game.snapshot)
+                    in: gameSession.game.snapshot())
                 guard choice == .shouldStrikeReactively else {
                     return
                 }

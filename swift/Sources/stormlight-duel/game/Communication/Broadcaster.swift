@@ -3,7 +3,7 @@ public struct Broadcaster: Sendable {
     func tellAll<M: Message>(_ message: M, in gameSession: isolated GameSession = #isolation) async
     {
         for character in gameSession.game.characters {
-            await character.brain.hear(message, in: gameSession.game.snapshot)
+            await character.brain.hear(message, in: gameSession.game.snapshot())
         }
     }
 
@@ -16,7 +16,7 @@ public struct Broadcaster: Sendable {
         async
     {
         await gameSession.game.anyCharacter(at: to)?.brain.hearHint(
-            hint, in: gameSession.game.snapshot)
+            hint, in: gameSession.game.snapshot())
     }
 }
 
