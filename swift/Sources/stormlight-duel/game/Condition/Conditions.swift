@@ -35,6 +35,7 @@ public struct AnyCondition: Condition {
         -> any ConditionSnapshot
     { core.snapshot() }
     public var handlers: [any EventHandlerProtocol] { core.handlers }
+    public var syncHandlers: [any EventHandlerSyncProtocol] { core.syncHandlers }
     public var childResponders: [any Responder] { core.childResponders }
     private init(notUnwrapping condition: any Condition) {
         self.core = condition

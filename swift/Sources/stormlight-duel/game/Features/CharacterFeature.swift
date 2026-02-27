@@ -30,6 +30,7 @@ public struct AnyCharacterFeature: CharacterFeature, Keyed {
     public var actionsProvided: [any CombatAction.Type] { core.actionsProvided }
     public var childResponders: [any Responder] { core.childResponders }
     public var handlers: [any EventHandlerProtocol] { core.handlers }
+    public var syncHandlers: [any EventHandlerSyncProtocol] { core.syncHandlers }
     public func _snapshot(in gameSession: isolated GameSession = #isolation)
         -> any CharacterFeatureSnapshot
     {
