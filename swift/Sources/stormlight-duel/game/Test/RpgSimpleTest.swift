@@ -23,7 +23,7 @@ public class RpgSimpleTest: RpgTest {
         disadvantagesAvailable: Int? = nil,
         opportunitiesAvailable: Int? = nil,
         complicationsAvailable: Int? = nil,
-        in gameSession: isolated GameSession
+        in gameSession: isolated GameSession = #isolation
     ) {
         self.id = gameSession.nextId()
         self.tester = tester
@@ -49,7 +49,9 @@ public class RpgSimpleTest: RpgTest {
     }
 
     /// Make sure to dispatch an "afterSuccess" or "afterFailure"
-    public func roll(in gameSession: isolated GameSession) async throws -> RpgSimpleTestResult {
+    public func roll(in gameSession: isolated GameSession = #isolation) async throws
+        -> RpgSimpleTestResult
+    {
         let game = gameSession.game
         let character = game.anyCharacter(at: tester)!
         try await game.dispatch(TestEvent(TestHookType.beforeRoll, test: self))

@@ -33,15 +33,15 @@ public actor GameSession {
                         for: RpgCharacterRef(name: "GM EN")
                     )))
 
-            let player1Ref = RpgCharacterRef(name: "Archer Kal")
-            let player1 = PrefabCharacters.archer(
+            let player1Ref = RpgCharacterRef(name: "Kal Spearman")
+            let player1 = PrefabCharacters.spearInfantry(
                 ref: player1Ref,
                 isPlayer: true,
                 brain: try await brainForPlayer(player1Ref),
                 in: session,
             )
-            let player2Ref = RpgCharacterRef(name: "Shallan Archer")
-            let player2 = PrefabCharacters.archer(
+            let player2Ref = RpgCharacterRef(name: "Shallan Spearwoman")
+            let player2 = PrefabCharacters.spearInfantry(
                 ref: player2Ref,
                 isPlayer: false,
                 brain: Level1CpuBrain(

@@ -19,14 +19,26 @@ extension Game {
         test: any RpgTest,
         in gameSession: isolated GameSession = #isolation
     ) -> [Opportunity] {
-        Self.standardOpportunities
+        gameSession.game.dispatchCalculation(
+            OpportunitiesAvailableCalculationEvent(
+                Self.standardOpportunities,
+                type: .opportunitiesAvailable,
+                for: test.tester
+            )
+        )
     }
     /// All possible complications for a test
     func complications(
         test: any RpgTest,
         in gameSession: isolated GameSession = #isolation
     ) -> [Complication] {
-        Self.standardComplications
+        gameSession.game.dispatchCalculation(
+            ComplicationsAvailableCalculationEvent(
+                Self.standardComplications,
+                type: .complicationsAvailable,
+                for: test.tester
+            )
+        )
     }
 
     public static let standardOpportunities: [any Opportunity] = [
@@ -39,4 +51,15 @@ extension Game {
         SurpriseComplication(),
         ComingStormComplication(),
     ]
+}
+
+public typealias ComplicationsAvailableCalculationEvent = CharacterPropertyCalculationEvent<
+    [Complication]
+>
+public typealias OpportunitiesAvailableCalculationEvent = CharacterPropertyCalculationEvent<
+    [Opportunity]
+>
+extension CalculationEventType {
+    public static let opportunitiesAvailable = Self("opportunitiesAvailable")
+    public static let complicationsAvailable = Self("complicationsAvailable")
 }
