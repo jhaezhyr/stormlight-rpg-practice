@@ -70,5 +70,5 @@ public struct AnyCharacterFeatureSnapshot: CharacterFeatureSnapshot {
 
 public struct DummyCharacterFeatureSnapshot: CharacterFeatureSnapshot {
     public var name: CharacterFeatureRef
-    public var actionsProvided: [any CombatAction.Type]
+    public var actionsProvided: [any CombatAction.Type] = []
 }

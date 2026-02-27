@@ -2,11 +2,17 @@ public struct Strike: CombatAction {
     public static var actionCost: Int { 1 }
     public static var canBeTakenMoreThanOncePerTurn: Bool { true }
     public var weaponToStrikeWith: ItemRef
+    public var recordStrikeForThisHand: Bool
     public var target: RpgCharacterRef
 
-    public init(_ target: RpgCharacterRef, with weaponToStrikeWith: ItemRef) {
+    public init(
+        _ target: RpgCharacterRef,
+        with weaponToStrikeWith: ItemRef,
+        recordStrikeForThisHand: Bool = true
+    ) {
         self.target = target
         self.weaponToStrikeWith = weaponToStrikeWith
+        self.recordStrikeForThisHand = recordStrikeForThisHand
     }
 
     public func canTakeAction(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot)
@@ -170,7 +176,9 @@ public struct Strike: CombatAction {
                 as2: target
             )
         )
-        character.combatState?.weaponsUsed.insert(weapon.weaponName)
+        if recordStrikeForThisHand {
+            character.combatState?.weaponsUsed.insert(weapon.weaponName)
+        }
     }
 }
 

@@ -11,6 +11,8 @@ public struct RpgCharacterRef: Sendable, Hashable {
     public init(of character: any RpgCharacter) {
         self.name = character.name
     }
+
+    public static let gameMaster = Self(name: "GM EN")
 }
 
 public protocol RpgCharacterSharedProtocol: Keyed where Key == RpgCharacterRef {
@@ -154,7 +156,7 @@ extension RpgCharacter {
 
     public func deflect(in gameSession: isolated GameSession = #isolation) -> Int {
         let baseDeflect = self.equipment.map { readyable in
-            readyable.isReady ? (readyable.core.core as? any Armor)?.deflect ?? 0 : 0
+            readyable.isReady ? (readyable.core.trueSelf as? any Armor)?.deflect ?? 0 : 0
         }.reduce(0, +)
         return gameSession.game.dispatchCalculation(
             CharacterPropertyCalculationEvent(baseDeflect, type: .deflect, for: self.primaryKey)

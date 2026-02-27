@@ -8,6 +8,8 @@ public struct AnyItemSnapshot: ItemSnapshot {
     public var price: Money? { core.price }
     public var weight: Weight { core.weight }
 
+    public var trueSelf: any ItemSharedProtocol { core.trueSelf }
+
     public init(_ core: any ItemSnapshot) {
         if let wrappedCore = core as? Self {
             self.core = wrappedCore.core

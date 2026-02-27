@@ -74,7 +74,7 @@ public struct Combat: Scene {
         self.map = map
     }
 
-    public func start(in gameSession: isolated GameSession = #isolation) {
+    public func start(in gameSession: isolated GameSession = #isolation) async throws {
         let game = gameSession.game
         // Let everyone start the combat.
         for (position, character) in zip(map.characterStartPositions, game.characters) {
@@ -86,13 +86,14 @@ public struct Combat: Scene {
                 for: character.primaryKey
             )
         }
+        try await game.dispatch(SceneStartEvent())
     }
 
     public func run(in gameSession: isolated GameSession = #isolation) async throws {
         let game = gameSession.game
         let players = game.characters.filter { $0.isPlayer }.map { $0.core }
         let nonPlayers = game.characters.filter { !$0.isPlayer }.map { $0.core }
-        start()
+        try await start()
         rounds: for roundNum in 1... {
             await game.broadcaster.tellAll(NoTargetMessage("======= ROUND \(roundNum) ========"))
             var charactersPerPhase: CompleteDictionary<CombatTurnInitiative, [any RpgCharacter]> = [

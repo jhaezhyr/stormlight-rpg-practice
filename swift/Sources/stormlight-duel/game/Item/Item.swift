@@ -4,11 +4,14 @@ public protocol ItemSharedProtocol: Keyed where Key == ItemRef {
     var name: String { get }
     var price: Money? { get }
     var weight: Weight { get }
+
+    var trueSelf: any ItemSharedProtocol { get }
 }
 extension ItemSharedProtocol {
     public var primaryKey: ItemRef {
         ItemRef(name: self.name)
     }
+    public var trueSelf: any ItemSharedProtocol { self }
 }
 
 public struct ItemRef: Hashable, Sendable {
@@ -45,6 +48,8 @@ public struct AnyItem: Item {
     public var name: String { core.name }
     public var price: Money? { core.price }
     public var weight: Weight { core.weight }
+
+    public var trueSelf: any ItemSharedProtocol { core.trueSelf }
 
     public func _snapshot(in gameSession: isolated GameSession = #isolation) -> any ItemSnapshot {
         core.snapshot()
