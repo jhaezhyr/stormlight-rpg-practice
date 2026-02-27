@@ -3,7 +3,9 @@ public struct Afflicted: Condition {
     public var type: ConditionTypeRef = Self.type
     public static let type: ConditionTypeRef = "Afflicted"
     public let damagePerTurn: Damage
-    public var snapshot: any ConditionSnapshot {
+    public func _snapshot(in gameSession: isolated GameSession = #isolation)
+        -> any ConditionSnapshot
+    {
         AfflictedSnapshot(id: id, damagePerTurn: damagePerTurn)
     }
     public var handlers: [any EventHandlerProtocol]

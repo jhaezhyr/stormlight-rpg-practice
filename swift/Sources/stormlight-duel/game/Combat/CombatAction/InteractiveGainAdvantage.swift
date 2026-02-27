@@ -30,7 +30,7 @@ public struct InteractiveGainAdvantage: CombatAction {
             }
             let opponentOptions = GainAdvantage.opponentOptions(
                 by: characterRef,
-                in: gameSession.game.snapshot
+                in: gameSession.game.snapshot()
             )
             switch opponentOptions.count {
             case 0:
@@ -41,7 +41,7 @@ public struct InteractiveGainAdvantage: CombatAction {
                 let decision = try await character.brain.decide(
                     .targetForGainAdvantage,
                     options: opponentOptions,
-                    in: gameSession.game.snapshot
+                    in: gameSession.game.snapshot()
                 )
                 return decision
             }
@@ -52,7 +52,7 @@ public struct InteractiveGainAdvantage: CombatAction {
                 return chosenSkill
             }
             let skillOptions = GainAdvantage.skillOptions(
-                by: characterRef, against: opponent, in: gameSession.game.snapshot)
+                by: characterRef, against: opponent, in: gameSession.game.snapshot())
             switch skillOptions.count {
             case 0:
                 fatalError("Not possible. How did we get here?")
@@ -62,7 +62,7 @@ public struct InteractiveGainAdvantage: CombatAction {
                 let decision = try await character.brain.decide(
                     .skillForGainAdvantage,
                     options: skillOptions,
-                    in: gameSession.game.snapshot
+                    in: gameSession.game.snapshot()
                 )
                 return decision
             }

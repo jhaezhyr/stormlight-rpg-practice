@@ -7,9 +7,11 @@ public struct DurationCondition<C: Condition>: CompositeCondition {
 
     public var handlers: [any EventHandlerProtocol]
 
-    public var snapshot: any ConditionSnapshot {
+    public func _snapshot(in gameSession: isolated GameSession = #isolation)
+        -> any ConditionSnapshot
+    {
         DurationConditionSnapshot(
-            core: AnyConditionSnapshot(core.snapshot),
+            core: AnyConditionSnapshot(core.snapshot()),
             waitingCharacter: waitingCharacter,
             parentCharacter: parentCharacter,
             durationRemainingInTurns: durationRemainingInTurns,

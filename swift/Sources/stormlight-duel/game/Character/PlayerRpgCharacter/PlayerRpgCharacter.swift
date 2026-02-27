@@ -65,7 +65,9 @@ public class PlayerRpgCharacter: PlayerRpgCharacterProtocol {
 
     public var isPlayer: Bool
 
-    public var snapshot: any RpgCharacterSnapshot {
+    public func _snapshot(in gameSession: isolated GameSession = #isolation)
+        -> any RpgCharacterSnapshot
+    {
         PlayerRpgCharacterSnapshot(
             name: name,
             attributes: attributes,
@@ -79,14 +81,15 @@ public class PlayerRpgCharacter: PlayerRpgCharacterProtocol {
             investiture: investiture,
             recoveryDie: recoveryDie,
             sensesRange: sensesRange,
-            conditions: .init(conditions.map { AnyConditionSnapshot($0.snapshot) }),
+            conditions: .init(conditions.isolatedMap { AnyConditionSnapshot($0.snapshot(in: $1)) }),
             movementRate: movementRate,
             size: size,
             deflect: deflect,
-            equipment: .init(equipment.map { $0.snapshot }),
+            equipment: .init(equipment.isolatedMap { $0.snapshot(in: $1) }),
             reach: reach,
-            combatState: combatState?.snapshot,
-            features: .init(features.map { AnyCharacterFeatureSnapshot($0.snapshot) }),
+            combatState: combatState?.snapshot(),
+            features: .init(
+                features.isolatedMap { AnyCharacterFeatureSnapshot($0.snapshot(in: $1)) }),
             actions: actions,
             isPlayer: isPlayer,
         )

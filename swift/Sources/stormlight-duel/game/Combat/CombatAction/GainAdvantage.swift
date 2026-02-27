@@ -116,7 +116,9 @@ public struct HasGainedAdvantageCondition: Condition {
     public let id: Int
     public var type: ConditionTypeRef = Self.type
     public static let type: ConditionTypeRef = "HasGainedAdvantage"
-    public var snapshot: any ConditionSnapshot {
+    public func _snapshot(in gameSession: isolated GameSession = #isolation)
+        -> any ConditionSnapshot
+    {
         HasGainedAdvantageConditionSnapshot(
             id: id,
             skill: skill,

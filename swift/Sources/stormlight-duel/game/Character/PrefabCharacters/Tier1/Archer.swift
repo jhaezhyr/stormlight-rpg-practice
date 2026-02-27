@@ -78,7 +78,7 @@ public struct ImmobilizingShotReactionFeature: CharacterFeature {
                 let reactionDecision = try await character.brain.decide(
                     .shouldShootImmobilizingShot,
                     iterableType: ImmobilizingShotReactionDecision.self,
-                    in: gameSession.game.snapshot)
+                    in: gameSession.game.snapshot())
                 guard reactionDecision == .shouldShootImmobilizingShot else {
                     return
                 }
@@ -126,7 +126,9 @@ public struct ImmobilizingShotReactionFeature: CharacterFeature {
         ]
     }
 
-    public var snapshot: any CharacterFeatureSnapshot {
+    public func _snapshot(in gameSession: isolated GameSession = #isolation)
+        -> any CharacterFeatureSnapshot
+    {
         DummyCharacterFeatureSnapshot(name: name, actionsProvided: actionsProvided)
     }
 }

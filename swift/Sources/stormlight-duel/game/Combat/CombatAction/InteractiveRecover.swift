@@ -35,7 +35,7 @@ public struct InteractiveRecover: CombatAction {
         let decision = try await character.brain.decide(
             .howToRecover,
             options: options,
-            in: gameSession.game.snapshot
+            in: gameSession.game.snapshot()
         )
         guard decision.total <= amountToPut else {
             return

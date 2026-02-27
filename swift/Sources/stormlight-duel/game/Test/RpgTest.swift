@@ -37,7 +37,7 @@ public protocol RpgTestResultProtocol {
 ///
 /// In an attack, there will also be damage rolls. Those rolls are not part of the test structure. However, the advantages, disadvantages, opportunities, and complications from the test can affect those rolls.
 public protocol RpgTest: AnyObject, RpgTestSharedProtocol, SendableMetatype {
-    var snapshot: any RpgTestSnapshot { get }
+    func _snapshot(in gameSession: isolated GameSession) -> any RpgTestSnapshot
 
     associatedtype ResultType: RpgTestResultProtocol
     func roll(in gameSession: isolated GameSession) async throws -> ResultType
@@ -46,6 +46,9 @@ public protocol RpgTest: AnyObject, RpgTestSharedProtocol, SendableMetatype {
 }
 extension RpgTest {
     public var trueSelf: any RpgTest { self }
+    public func snapshot(in gameSession: isolated GameSession = #isolation) -> any RpgTestSnapshot {
+        self._snapshot(in: gameSession)
+    }
 }
 extension RpgTest where Self: RpgTestSnapshot {
     public var snapshot: some RpgTestSnapshot { self }
@@ -95,7 +98,7 @@ extension RpgTest {
                 decision = try await brain.decide(
                     next ? .opportunityChoice : .complicationChoice,
                     options: allOptions,
-                    in: gameSession.game.snapshot
+                    in: gameSession.game.snapshot()
                 )
 
                 if decision.canRun(on: trueSelf, in: gameSession) {
@@ -145,8 +148,9 @@ public class AnyRpgTest: RpgTest {
         set { core.complicationsAvailable = newValue }
     }
 
-    public var snapshot: any RpgTestSnapshot {
-        core.snapshot
+    public func _snapshot(in gameSession: isolated GameSession = #isolation) -> any RpgTestSnapshot
+    {
+        core.snapshot()
     }
 
     public typealias ResultType = RpgSimpleTestResult

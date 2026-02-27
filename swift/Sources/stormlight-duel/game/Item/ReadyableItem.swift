@@ -14,8 +14,10 @@ extension Readyable: Keyed {
     }
 }
 extension Readyable where T: Item {
-    public var snapshot: Readyable<AnyItemSnapshot> {
-        .init(.init(core.snapshot), isReady: isReady)
+    public func snapshot(in gameSession: isolated GameSession = #isolation) -> Readyable<
+        AnyItemSnapshot
+    > {
+        .init(.init(core.snapshot()), isReady: isReady)
     }
 }
 extension Readyable where T == AnyItem {

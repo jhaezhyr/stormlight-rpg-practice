@@ -69,7 +69,7 @@ where
     ItemType == AnyItem
 {
     var brain: any RpgCharacterBrain { get }
-    var snapshot: any RpgCharacterSnapshot { get }
+    func _snapshot(in gameSession: isolated GameSession) -> any RpgCharacterSnapshot
 
     var health: Resource { get set }
     var focus: Resource { get set }
@@ -85,6 +85,11 @@ extension RpgCharacter {
             + (combatState?.reactionProviders ?? [])
             + features.map { $0.core as any Responder }
         // TODO something about path progress
+    }
+}
+extension RpgCharacter {
+    func snapshot(in gameSession: isolated GameSession = #isolation) -> any RpgCharacterSnapshot {
+        _snapshot(in: gameSession)
     }
 }
 
@@ -238,7 +243,11 @@ public class AnyRpgCharacter: RpgCharacter {
     }
     public var reach: Distance { core.reach }
     public var isPlayer: Bool { core.isPlayer }
-    public var snapshot: any RpgCharacterSnapshot { core.snapshot }
+    public func _snapshot(in gameSession: isolated GameSession)
+        -> any RpgCharacterSnapshot
+    {
+        core.snapshot()
+    }
     public var core: any RpgCharacter
     private init(notUnwrapping character: any RpgCharacter) {
         self.core = character

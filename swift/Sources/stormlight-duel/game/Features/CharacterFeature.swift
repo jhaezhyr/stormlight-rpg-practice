@@ -9,7 +9,15 @@ public protocol CharacterFeatureSharedProtocol: Keyed where Key == CharacterFeat
 
 public protocol CharacterFeature: Responder, CharacterFeatureSharedProtocol, Keyed
 where Key == CharacterFeatureRef {
-    var snapshot: any CharacterFeatureSnapshot { get }
+    func _snapshot(in gameSession: isolated GameSession)
+        -> any CharacterFeatureSnapshot
+}
+extension CharacterFeature {
+    func snapshot(in gameSession: isolated GameSession = #isolation)
+        -> any CharacterFeatureSnapshot
+    {
+        _snapshot(in: gameSession)
+    }
 }
 extension CharacterFeatureSharedProtocol {
     public var primaryKey: Key { name }
@@ -22,7 +30,11 @@ public struct AnyCharacterFeature: CharacterFeature, Keyed {
     public var actionsProvided: [any CombatAction.Type] { core.actionsProvided }
     public var childResponders: [any Responder] { core.childResponders }
     public var handlers: [any EventHandlerProtocol] { core.handlers }
-    public var snapshot: any CharacterFeatureSnapshot { core.snapshot }
+    public func _snapshot(in gameSession: isolated GameSession = #isolation)
+        -> any CharacterFeatureSnapshot
+    {
+        core.snapshot()
+    }
     public init(_ core: any CharacterFeature) {
         if let wrappedCore = core as? Self {
             self = wrappedCore
@@ -34,7 +46,11 @@ public struct AnyCharacterFeature: CharacterFeature, Keyed {
 
 public protocol CharacterFeatureSnapshot: Sendable, CharacterFeatureSharedProtocol {}
 extension CharacterFeature where Self: CharacterFeatureSnapshot {
-    public var snapshot: any CharacterFeatureSnapshot { self }
+    public func _snapshot(in gameSession: isolated GameSession = #isolation)
+        -> any CharacterFeatureSnapshot
+    {
+        self
+    }
 }
 
 public struct AnyCharacterFeatureSnapshot: CharacterFeatureSnapshot {

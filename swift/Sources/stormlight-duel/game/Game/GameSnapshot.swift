@@ -10,14 +10,30 @@ public struct GameSnapshot: GameSharedProtocol, Sendable {
 }
 
 extension Game {
-    var snapshot: GameSnapshot {
+    func snapshot(in gameSession: isolated GameSession = #isolation) -> GameSnapshot {
         GameSnapshot(
-            characters: .init(self.characters.map { .init($0.snapshot) }),
+            characters: .init(
+                self.characters.isolatedMap(in: gameSession) {
+                    .init($0.snapshot(in: $1))
+                }),
             tests: .init(
-                self.tests.map { .init($0.snapshot) }),
+                self.tests.isolatedMap { .init($0.snapshot(in: $1)) }),
             scene: scene
 
         )
+    }
+}
+
+extension Sequence {
+    public func isolatedMap<A: Actor, U>(
+        in isolation: isolated A = #isolation,
+        _ fn: (_ x: Element, _ isolation: isolated A) -> U
+    ) -> [U] {
+        var result = [U]()
+        for x in self {
+            result.append(fn(x, isolation))
+        }
+        return result
     }
 }
 

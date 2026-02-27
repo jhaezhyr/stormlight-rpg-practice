@@ -25,7 +25,7 @@ public struct BasicArmor: Armor, Sendable {
         }
     }
 
-    public var snapshot: any ItemSnapshot {
+    public func _snapshot(in gameSession: isolated GameSession = #isolation) -> any ItemSnapshot {
         BasicArmorSnapshot(
             name: name, price: price, weight: weight, armorType: armorType, deflect: deflect)
     }
