@@ -97,6 +97,14 @@ extension Game: Responder {
             try await respondAndPassOn(to: event, in: gameSession)
         }
     }
+
+    public func dispatchCalculation<E: CalculationEventProtocol>(
+        _ event: E,
+        in gameSession: isolated GameSession = #isolation
+    ) -> E.Value {
+        respondAndPassOnSync(to: event, in: gameSession)
+        return event.value
+    }
 }
 
 extension GameSharedProtocol {
