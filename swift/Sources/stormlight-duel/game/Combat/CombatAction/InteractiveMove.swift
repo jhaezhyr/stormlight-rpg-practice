@@ -19,8 +19,7 @@ public struct InteractiveMove: CombatAction {
         var map: Map { (gameSession.game.scene as! Combat).map }
         var amountMoved = 0
         movementLoop: while amountMoved < me.movementRate {
-            // TODO When we have teamates, this will need to be changed
-            let opponents = gameSession.game.characters.filter { $0.primaryKey != character }
+            let opponents = gameSession.game.opponents(of: character)
             let impassableSpaces = opponents.map { $0.combatState!.space } + map.staticObstacles
             let mySpace = me.combatState!.space
             let choiceMap = [Direction1D: Space1D](

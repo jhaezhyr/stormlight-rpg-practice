@@ -8,7 +8,7 @@ public protocol GameSharedProtocol {
     var scene: Scene? { get }
 }
 
-public class Game {
+public class Game: GameSharedProtocol {
     public var characters: KeyedSet<AnyRpgCharacter>
     public var tests: KeyedSet<AnyRpgTest> = []
     public var scene: Scene?

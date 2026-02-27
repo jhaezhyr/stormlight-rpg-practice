@@ -86,11 +86,10 @@ public struct Strike: CombatAction {
             in: gameSession
         )
         if case .ranged(_, _) = weapon.range {
-            let opponentsWhoCanReachMe = game.characters.filter {
-                $0.primaryKey != characterRef
-                    && $0.combatState!.space.expanded(by: $0.reach).touchesOrOverlaps(
-                        character.combatState!.space
-                    )
+            let opponentsWhoCanReachMe = game.opponents(of: characterRef).filter {
+                $0.combatState!.space.expanded(by: $0.reach).touchesOrOverlaps(
+                    character.combatState!.space
+                )
             }
             if !opponentsWhoCanReachMe.isEmpty {
                 await game.broadcaster.tellAll(

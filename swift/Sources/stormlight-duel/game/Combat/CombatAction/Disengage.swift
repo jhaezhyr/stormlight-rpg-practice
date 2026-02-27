@@ -11,7 +11,7 @@ public struct DisengageAction: CombatAction {
         in gameSnapshot: GameSnapshot
     ) -> Bool {
         // Is this character in range of an enemy?
-        let opponents = gameSnapshot.characters.filter { $0.primaryKey != character }
+        let opponents = gameSnapshot.opponents(of: character)
         guard let me = gameSnapshot.characters[character],
             let mySpace = me.combatState?.space
         else {
@@ -41,7 +41,7 @@ public struct DisengageAction: CombatAction {
         else {
             return false
         }
-        let opponents = gameSnapshot.characters.filter { $0.primaryKey != characterRef }
+        let opponents = gameSnapshot.opponents(of: characterRef)
         guard
             opponents.filter({
                 $0.combatState!.space.expanded(by: $0.reach).touchesOrOverlaps(mySpace)
