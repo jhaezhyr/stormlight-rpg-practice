@@ -3,7 +3,9 @@ public struct Determined: Condition {
     public var type: ConditionTypeRef = Self.type
     public static let type: ConditionTypeRef = "Determined"
     public let handlers: [any EventHandlerProtocol]
-    public var snapshot: any ConditionSnapshot {
+    public func _snapshot(in gameSession: isolated GameSession = #isolation)
+        -> any ConditionSnapshot
+    {
         DeterminedSnapshot(id: id)
     }
     public init(for meRef: RpgCharacterRef, in gameSession: isolated GameSession) {

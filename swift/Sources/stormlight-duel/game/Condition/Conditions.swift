@@ -11,10 +11,17 @@ extension ConditionSharedProtocol {
 }
 
 public protocol Condition: ConditionSharedProtocol, Responder {
-    var snapshot: any ConditionSnapshot { get }
+    func _snapshot(in gameSession: isolated GameSession) -> any ConditionSnapshot
+}
+extension Condition {
+    func snapshot(in gameSession: isolated GameSession = #isolation) -> any ConditionSnapshot {
+        _snapshot(in: gameSession)
+    }
 }
 extension Condition where Self: ConditionSnapshot {
-    public var snapshot: any ConditionSnapshot { self }
+    public func _snapshot(in gameSession: isolated GameSession = #isolation)
+        -> any ConditionSnapshot
+    { self }
     public var type: ConditionTypeRef { "\(Self.self)" }
     public static var type: ConditionTypeRef { "\(Self.self)" }
 }
@@ -24,7 +31,9 @@ public struct AnyCondition: Condition {
     public var core: any Condition
     public var id: Int { core.id }
     public var type: ConditionTypeRef { core.type }
-    public var snapshot: any ConditionSnapshot { core.snapshot }
+    public func _snapshot(in gameSession: isolated GameSession = #isolation)
+        -> any ConditionSnapshot
+    { core._snapshot(in: gameSession) }
     public var handlers: [any EventHandlerProtocol] { core.handlers }
     public var childResponders: [any Responder] { core.childResponders }
     private init(notUnwrapping condition: any Condition) {

@@ -31,7 +31,7 @@ func assignAdvantagesAndDisadvantages<Role>(
                 .other("ignore")
             ]
         let choice = try await brain.decide(
-            .whichDieToModify(rollModifier), options: options, in: gameSession.game.snapshot)
+            .whichDieToModify(rollModifier), options: options, in: gameSession.game.snapshot())
         guard case .decide(let choice) = choice else {
             return false
         }

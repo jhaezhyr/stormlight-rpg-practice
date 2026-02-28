@@ -120,7 +120,7 @@ public struct Combat: Scene {
                         let initiativeChoice = try await character.brain.decide(
                             .initiative,
                             options: options,
-                            in: game.snapshot
+                            in: game.snapshot()
                         )
                         switch initiativeChoice {
                         case .goNow:
@@ -177,11 +177,11 @@ public struct Combat: Scene {
 
             let choice = try await character.brain.decide(
                 .combatChoice,
-                nonIterableType: CombatChoice.self, in: game.snapshot)
+                nonIterableType: CombatChoice.self, in: game.snapshot())
             guard case .action(let action) = choice else {
                 break actions
             }
-            if action.canReallyTakeAction(by: character.primaryKey, in: game.snapshot) {
+            if action.canReallyTakeAction(by: character.primaryKey, in: game.snapshot()) {
                 try await action.reallyTakeAction(by: character.primaryKey, in: gameSession)
             }
         }

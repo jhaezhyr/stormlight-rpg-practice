@@ -35,7 +35,7 @@ public struct InteractiveMove: CombatAction {
             let choice = try await me.brain.decide(
                 .directionToMove5Ft,
                 options: choiceMap.keys.map { DecideOrOther.decide($0) } + [.other("stop")],
-                in: gameSession.game.snapshot
+                in: gameSession.game.snapshot()
             )
             switch choice {
             case .decide(let direction):

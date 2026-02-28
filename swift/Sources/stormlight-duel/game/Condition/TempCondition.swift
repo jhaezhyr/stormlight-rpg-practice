@@ -7,7 +7,9 @@ public struct TempCondition: Condition {
         self.id = gameSession.nextId()
         self.handlers = handlers
     }
-    public var snapshot: any ConditionSnapshot {
+    public func _snapshot(in gameSession: isolated GameSession = #isolation)
+        -> any ConditionSnapshot
+    {
         DummyConditionSnapshot(id: id, type: type)
     }
 }
