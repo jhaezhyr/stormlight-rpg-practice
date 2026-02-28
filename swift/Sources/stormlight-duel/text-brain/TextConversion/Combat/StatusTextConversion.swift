@@ -46,7 +46,7 @@ extension StatusCommand {
                 .sorted { (lh, rh) in lh.0 < rh.0 }[0]
             let conditions = someCharacter.conditions.filter { $0.type != TempCondition.type }
             result +=
-                "\(someCharacter.primaryKey == characterRef ? "Your" : "\(someCharacter.name)'s") stats:\n"
+                "\(someCharacter.primaryKey == characterRef ? "You \(someCharacter.name)" : "\(someCharacter.name)"):\n"
                 + "  Health: \(someCharacter.health.value)/\(someCharacter.health.maxValue)\n"
                 + "  Focus: \(someCharacter.focus.value)/\(someCharacter.focus.maxValue)\n"
                 + "  Actions and Reactions: \(someCharacter.combatState!.actionsRemaining) ▶ + \(someCharacter.combatState!.reactionsRemaining) ↻\n"

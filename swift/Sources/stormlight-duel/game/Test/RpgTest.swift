@@ -69,9 +69,11 @@ extension RpgTest {
                 return
             }
             let allOptions =
-                next
+                (next
                 ? gameSession.game.opportunities(test: trueSelf)
-                : gameSession.game.complications(test: trueSelf)
+                : gameSession.game.complications(test: trueSelf)).filter {
+                    $0.canRun(on: trueSelf, in: gameSession)
+                }
             var mutatableSelf = self
             if next {
                 mutatableSelf.opportunitiesAvailable -= 1
@@ -99,10 +101,6 @@ extension RpgTest {
                 in: gameSession.game.snapshot()
             )
 
-                if decision.canRun(on: trueSelf, in: gameSession) {
-                    break
-                }
-            }
             try await decision.run(decider: brain, on: trueSelf, in: gameSession)
         }
     }

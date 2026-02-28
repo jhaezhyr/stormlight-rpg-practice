@@ -58,7 +58,8 @@ actor WebTextInterfaceConnection: TextInterfaceConnection {
                 fatalError("WHAT IS A \(type) EVENT?")
             }
         } catch {
-            fatalError("\(error)")
+            print("Error: \(error)")
+            // Don't kill the program due to that.
         }
     }
 

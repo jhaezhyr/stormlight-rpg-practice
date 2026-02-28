@@ -116,14 +116,14 @@ public class RpgAttackTest: RpgTest {
 
         self.opportunitiesAvailable += gameSession.game.dispatchCalculation(
             CharacterPropertyCalculationEvent(
-                testDieRoll > 10 ? 1 : 0,
+                testDieRoll == 20 ? 1 : 0,
                 type: .numOpportunitiesForHighTestDie,
                 for: character.primaryKey
             )
         )
         self.complicationsAvailable += gameSession.game.dispatchCalculation(
             CharacterPropertyCalculationEvent(
-                testDieRoll <= 10 ? 1 : 0,
+                testDieRoll == 1 ? 1 : 0,
                 type: .numComplicationsForLowTestDie,
                 for: character.primaryKey
             )

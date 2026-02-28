@@ -48,12 +48,12 @@ extension PrefabCharacters {
             focus: Resource(maxValue: 3),
             investiture: Resource(maxValue: 0),
             reach: 0,
-            features: [
-                .init(MinionFeature(for: ref)),
-                .init(MartialDrillFeature(for: ref)),
-                .init(MilitaryTacticsFeature(for: ref)),
-                .init(ShieldBashActionFeature(for: ref)),
-            ],
+            features: .init(
+                (isPlayer ? [] : [.init(MinionFeature(for: ref))]) + [
+                    .init(MartialDrillFeature(for: ref)),
+                    .init(MilitaryTacticsFeature(for: ref)),
+                    .init(ShieldBashActionFeature(for: ref)),
+                ]),
             conditions: [],
             brain: brain,
             isPlayer: isPlayer,

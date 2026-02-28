@@ -160,9 +160,14 @@ public struct Strike: CombatAction {
             }
         }
         try await game.dispatch(TestEvent(StrikePhase.aboutToDealDamage, test: test))
-        let damageDone = await doDamage(
-            Damage(damageToDo, type: weapon.damageType), to: targetCharacter.primaryKey)
-        try await game.dispatch(TestEvent(StrikePhase.dealtDamage, test: test))
+        let damageDone: Damage
+        if damageToDo > 0 {
+            damageDone = await doDamage(
+                Damage(damageToDo, type: weapon.damageType), to: targetCharacter.primaryKey)
+            try await game.dispatch(TestEvent(StrikePhase.dealtDamage, test: test))
+        } else {
+            damageDone = Damage(0, type: .vital)
+        }
         await game.broadcaster.tellAll(
             DoubleTargetMessage(
                 w12:
