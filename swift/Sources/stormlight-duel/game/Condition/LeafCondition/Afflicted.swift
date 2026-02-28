@@ -19,7 +19,7 @@ public struct Afflicted: Condition {
         self.damagePerTurn = damagePerTurn
         self.handlers = [
             EventHandler<CombatPhaseEvent> {
-                (event: CombatPhaseEvent, game: isolated GameSession) async throws in
+                event, gameSession in
                 guard event.phase == .endOfTurn,
                     meRef == event.character.primaryKey
                 else {
@@ -27,7 +27,7 @@ public struct Afflicted: Condition {
                 }
                 let me = event.character
                 let damageDone = await doDamage(damagePerTurn, to: me.primaryKey, in: gameSession)
-                await game.game.broadcaster.tellAll(
+                await gameSession.game.broadcaster.tellAll(
                     SingleTargetMessage(
                         w1:
                             "$1 takes \(damageDone.amount) \(damageDone.type.rawValue) damage from being afflicted.",

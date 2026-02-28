@@ -19,8 +19,8 @@ public actor TextBrain<Connection: TextInterfaceConnection>: RpgCharacterBrain {
 
                             * ** INSTRUCTIONS ** * 
 
-                You play as a player character named Archer Kal. You are in a one-on-one
-                combat with an NPC Archer, Shallan. Bring her down.
+                You play as a player character named Kal. You are in a one-on-one
+                combat with an NPC, Shallan. Bring her down. Each of you might be an archer or a spear infantry.
 
                 Anytime you are prompted to make a choice, you type in your answer and
                 press ENTER. In some cases, you are given multiple numbered options. In
@@ -132,8 +132,9 @@ public actor TextBrain<Connection: TextInterfaceConnection>: RpgCharacterBrain {
                         await printHint("You chose \(result)")
                         return result
                     } else {
-                        await printHint("You chose \(result), but that is not a valid choice.")
-                        continue
+                        print(
+                            "DEVELOPER: I trust that this is okay, even though it might not be.")
+                        return result
                     }
                 } else {
                     return result

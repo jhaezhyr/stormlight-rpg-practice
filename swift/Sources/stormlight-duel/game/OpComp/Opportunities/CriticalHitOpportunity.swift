@@ -1,4 +1,7 @@
 public struct CriticalHitOpportunity: Opportunity {
+    public var name: String {
+        "Critical Hit"
+    }
     public func canRun(on test: any RpgTest, in gameSession: isolated GameSession) -> Bool {
         guard test is RpgAttackTest else {
             return false

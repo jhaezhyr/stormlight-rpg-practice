@@ -33,6 +33,7 @@ public struct Surprised: Condition {
                 var me = event.character
                 me.conditions.remove(id)
             },
+            // TODO Test further. Might not be working.
         ]
     }
 }

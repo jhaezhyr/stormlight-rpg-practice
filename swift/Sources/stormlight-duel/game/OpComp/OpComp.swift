@@ -1,4 +1,5 @@
-public protocol OpComp: Sendable {
+public protocol OpComp: Sendable, CustomStringConvertible {
+    var name: String { get }
     func canRun(on test: any RpgTest, in gameSession: isolated GameSession) -> Bool
     func run(
         decider: any RpgCharacterBrain,
@@ -10,7 +11,13 @@ public typealias Opportunity = OpComp
 public typealias Complication = OpComp
 
 extension OpComp {
-    func canRun(on test: any RpgTest, in gameSession: isolated GameSession) -> Bool { true }
+    public func canRun(on test: any RpgTest, in gameSession: isolated GameSession) -> Bool { true }
+    public var name: String {
+        "\(type(of: self))"
+    }
+    public var description: String {
+        name
+    }
 }
 
 extension Game {
