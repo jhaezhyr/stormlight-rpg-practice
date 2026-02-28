@@ -13,6 +13,7 @@ extension PrefabCharacters {
         return PlayerRpgCharacter(
             name: ref.name, expertises: [.weapon(.knife), .weapon(.longbow)],
             equipment: [
+                .init(BasicArmorTypes.leather(), isReady: true),
                 .init(basicWeapons[.knife]!(gameSession), isReady: true),
                 .init(basicWeapons[.longbow]!(gameSession), isReady: true),
             ],
