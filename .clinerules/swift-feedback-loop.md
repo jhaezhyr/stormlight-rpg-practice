@@ -1,0 +1,1 @@
+When you are manipulating .swift files, there's a way to check to see if your code sucessfully compiles. It's this: (cd swift && swift build). That will build all the projects in the folder. If you want to run the tests, you instead run (cd swift && swift test). No task is complete unless you've checked that the build passes and the tests succeed.
