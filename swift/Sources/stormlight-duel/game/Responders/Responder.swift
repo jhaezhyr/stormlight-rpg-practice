@@ -1,5 +1,6 @@
 public protocol Responder {
     var handlers: [any EventHandlerProtocol] { get }
+    var syncHandlers: [any EventHandlerSyncProtocol] { get }
     var childResponders: [any Responder] { get }
 }
 extension Responder {
