@@ -12,6 +12,7 @@ public enum DecisionCode: Sendable, Equatable {
     case opportunityChoice
     case complicationChoice
     case targetForGainAdvantage
+    case shouldUseMilitaryTactics
     case shouldStandStrongInComingStorm
 }
 
@@ -44,6 +45,8 @@ extension DecisionCode: CustomStringConvertible {
             "The test has a complication! How would you like to spend it?"
         case .targetForGainAdvantage:
             "Which character will you try to exploit?"
+        case .shouldUseMilitaryTactics:
+            "You can use your military tactics once per round to Aid or Reactive Strike by spending an extra focus instead of your reaction."
         case .shouldStandStrongInComingStorm:
             "Will you divert your focus to staying upright?"
         }

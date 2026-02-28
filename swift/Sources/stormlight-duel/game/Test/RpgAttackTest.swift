@@ -114,14 +114,20 @@ public class RpgAttackTest: RpgTest {
             )
         }(gameSession)
 
-        let testDieRollOpportunity = testDieRoll == 20
-        if testDieRollOpportunity {
-            self.opportunitiesAvailable += 1
-        }
-        let testDieRollComplication = testDieRoll == 1
-        if testDieRollComplication {
-            self.complicationsAvailable += 1
-        }
+        self.opportunitiesAvailable += gameSession.game.dispatchCalculation(
+            CharacterPropertyCalculationEvent(
+                testDieRoll > 10 ? 1 : 0,
+                type: .numOpportunitiesForHighTestDie,
+                for: character.primaryKey
+            )
+        )
+        self.complicationsAvailable += gameSession.game.dispatchCalculation(
+            CharacterPropertyCalculationEvent(
+                testDieRoll <= 10 ? 1 : 0,
+                type: .numComplicationsForLowTestDie,
+                for: character.primaryKey
+            )
+        )
         try await self.resolveOpportunitiesAndComplications()
 
         let modifierBit =
@@ -170,6 +176,11 @@ public class RpgAttackTest: RpgTest {
 
         return self.result!
     }
+}
+
+extension CalculationEventType {
+    public static let numComplicationsForLowTestDie = Self("complicationsForLowTestDie")
+    public static let numOpportunitiesForHighTestDie = Self("opportunitiesForHighTestDie")
 }
 
 public func describeDice(_ dice: [(die: NumberDie, modifier: RollModifier?, result: Int)]) -> (

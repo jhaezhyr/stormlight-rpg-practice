@@ -1,6 +1,7 @@
 public struct DurationCondition<C: Condition>: CompositeCondition {
     public var core: C
     public var durationRemainingInTurns: Int
+    public var turnsTickAtTurnEnd: Bool  // or turn beginning
     public let waitingCharacter: RpgCharacterRef
     public let parentCharacter: RpgCharacterRef
     public var type: ConditionTypeRef { core.type }
@@ -23,6 +24,7 @@ public struct DurationCondition<C: Condition>: CompositeCondition {
         duration: Int,
         turnsFor waitingCharacter: RpgCharacterRef,
         butBelongingTo parentCharacter: RpgCharacterRef? = nil,
+        tickingAtTurnEnd: Bool = true,
         in gameSession: isolated GameSession = #isolation
     ) {
         let id = core.id
@@ -31,10 +33,12 @@ public struct DurationCondition<C: Condition>: CompositeCondition {
         self.durationRemainingInTurns = duration
         self.waitingCharacter = waitingCharacter
         self.parentCharacter = parentCharacter ?? waitingCharacter
+        self.turnsTickAtTurnEnd = tickingAtTurnEnd
         self.handlers = [
             EventHandler<CombatPhaseEvent> {
                 (event, gameSession) async throws in
-                guard event.phase == .endOfTurn, waitingCharacter == event.character.primaryKey
+                guard event.phase == (tickingAtTurnEnd ? .endOfTurn : .startOfTurn),
+                    waitingCharacter == event.character.primaryKey
                 else {
                     return
                 }

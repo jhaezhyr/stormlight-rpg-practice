@@ -49,6 +49,7 @@ extension StatusCommand {
                 "\(someCharacter.primaryKey == characterRef ? "Your" : "\(someCharacter.name)'s") stats:\n"
                 + "  Health: \(someCharacter.health.value)/\(someCharacter.health.maxValue)\n"
                 + "  Focus: \(someCharacter.focus.value)/\(someCharacter.focus.maxValue)\n"
+                + "  Actions and Reactions: \(someCharacter.combatState!.actionsRemaining) ▶ + \(someCharacter.combatState!.reactionsRemaining) ↻\n"
                 + "  Conditions: \(conditions.map { "\($0.core)" }.joined(separator: ","))\n"
                 + "  Space controlled: \(someCharacter.combatState!.space.lo)...\(someCharacter.combatState!.space.hi)\n"
                 + "  Distance to \(nearestOpponent.name): \(distanceToNearestOppontent)"

@@ -67,7 +67,8 @@ extension CombatAction {
         guard let combatState = character.combatState else {
             return false
         }
-        return character.focus.value >= focusCost && combatState.actionsRemaining >= actionCost
+        return character.focus.value >= focusCost
+            && combatState.actionsRemaining >= actionCost
             && combatState.reactionsRemaining >= reactionCost
 
     }
@@ -128,6 +129,11 @@ extension CombatAction {
         character.focus.value -= focusCost
         character.combatState!.actionsTaken.insert(actionName)
         character.combatState!.actionsRemaining -= actionCost
+        character.combatState!.reactionsRemaining -= reactionCost
+
+        try await gameSession.game.dispatch(
+            CombatActionEvent(characterRef: characterRef, action: self))
+
         try await action(by: characterRef, in: gameSession)
     }
 }

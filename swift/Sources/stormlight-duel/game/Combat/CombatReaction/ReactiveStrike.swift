@@ -7,53 +7,118 @@ public struct ReactiveStrikeProvider: Responder {
         self.handlers = [
             EventHandler<MovementStepEvent> {
                 (event, gameSession) in
-                let other = event.subject
-                let direction = event.direction
-                guard !event.carefully else {
-                    return
-                }
-                // Check if the moving character has Outmaneuver condition
-                guard !other.conditions.contains(where: { $0.type == OutmaneuverCondition.type })
-                else {
-                    return
-                }
-                // TODO When teams exist, this will have to check for actual
-                guard other.primaryKey != meRef else {
-                    return
-                }
                 guard let me = gameSession.game.anyCharacter(at: meRef) else {
                     return
                 }
-                guard me.focus.value >= 1 else {
-                    return
-                }
-                guard me.combatState!.reactionsRemaining >= 1 else {
-                    return
-                }
-                guard let readyableMeleeWeaponToUse = me.equipment.filter({ $0.isReady }).first,
-                    let meleeWeaponToUse = readyableMeleeWeaponToUse.core.core as? any Weapon,
-                    case WeaponRange.melee(let extraReach) = meleeWeaponToUse.range
+                guard
+                    let reaction = try await {
+                        let reaction = ReactiveStrike(
+                            stepWasCareful: event.carefully,
+                            stepDirection: event.direction,
+                            stepper: event.subject.primaryKey
+                        )
+                        guard reaction.canTakeAction(by: meRef, in: gameSession.game.snapshot())
+                        else {
+                            return Optional<ReactiveStrike>.none
+                        }
+                        let calculation = ReactionCalculation(
+                            hook: .couldReact,
+                            for: meRef,
+                            reaction: reaction
+                        )
+                        try await gameSession.game.dispatch(
+                            calculation)
+                        return calculation.reaction
+                    }()
                 else {
                     return
                 }
-                let myReach = me.combatState!.space.expanded(by: extraReach ?? 0)
-                let oldSpace = other.combatState!.space - (direction == .right ? 5 : -5)
-                let wasTouching = myReach.touchesOrOverlaps(oldSpace)
-                guard wasTouching && !myReach.touchesOrOverlaps(other.combatState!.space) else {
+                guard reaction.canReallyTakeAction(by: meRef, in: gameSession.game.snapshot())
+                else {
                     return
                 }
                 let choice = try await me.brain.decide(
-                    .reactiveStrikeChoice, options: ReactiveStrikeDecision.allCases,
-                    in: gameSession.game.snapshot())
-                guard choice == .shouldStrikeReactively else {
-                    return
+                    .reactiveStrikeChoice,
+                    options: ReactiveStrikeDecision.allCases,
+                    in: gameSession.game.snapshot()
+                )
+                if choice == .shouldStrikeReactively {
+                    try await reaction.reallyTakeAction(by: meRef)
                 }
-                me.focus.value -= 1
-                me.combatState!.reactionsRemaining -= 1
-                try await Strike(other.primaryKey, with: meleeWeaponToUse.primaryKey).action(
-                    by: meRef)
             }
         ]
+    }
+}
+
+public struct ReactiveStrike: CombatReaction {
+    public static var canBeTakenMoreThanOncePerTurn: Bool { true }
+    public static let focusCost: Int = 1
+    public static let reactionCost: Int = 1
+    public var focusCost: Int = Self.focusCost
+    public var reactionCost: Int = Self.reactionCost
+
+    public var stepWasCareful: Bool
+    public var stepDirection: Direction1D
+    public var stepper: RpgCharacterRef
+
+    public func canTakeAction(by meRef: RpgCharacterRef, in gameSnapshot: GameSnapshot)
+        -> Bool
+    {
+        guard !stepWasCareful else {
+            return false
+        }
+        guard
+            let coward = gameSnapshot.characters[stepper],
+            let me = gameSnapshot.characters[meRef]
+        else {
+            return false
+        }
+        // Check if the moving character has Outmaneuver condition
+        guard !coward.conditions.contains(where: { $0.type == OutmaneuverCondition.type })
+        else {
+            return false
+        }
+        guard stepper != meRef else {
+            return false
+        }
+        guard let (_, extraReach) = meleeWeapon(for: me) else {
+            return false
+        }
+        let myReach = me.combatState!.space.expanded(by: extraReach ?? 0)
+        let oldSpace = coward.combatState!.space - (stepDirection == .right ? 5 : -5)
+        let wasTouching = myReach.touchesOrOverlaps(oldSpace)
+        guard wasTouching && !myReach.touchesOrOverlaps(coward.combatState!.space) else {
+            return false
+        }
+        return true
+    }
+
+    public func action(by meRef: RpgCharacterRef, in gameSession: isolated GameSession)
+        async throws
+    {
+        guard let me = gameSession.game.anyCharacter(at: meRef) else {
+            return
+        }
+        guard let (meleeWeaponToUse, _) = meleeWeapon(for: me) else {
+            return
+        }
+        try await Strike(stepper, with: meleeWeaponToUse, recordStrikeForThisHand: false).action(
+            by: meRef)
+    }
+
+    private func meleeWeapon<C: RpgCharacterSharedProtocol>(for me: C) -> (
+        ref: ItemRef, extraReach: Int?
+    )? {
+        for readyable in me.equipment {
+            if readyable.isReady {
+                if let weapon = readyable.core.trueSelf as? any Weapon {
+                    if case WeaponRange.melee(let extraReach) = weapon.range {
+                        return (ref: weapon.primaryKey, extraReach: extraReach)
+                    }
+                }
+            }
+        }
+        return nil
     }
 }
 
