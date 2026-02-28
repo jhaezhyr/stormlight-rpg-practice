@@ -12,6 +12,11 @@ public struct ReactiveStrikeProvider: Responder {
                 guard !event.carefully else {
                     return
                 }
+                // Check if the moving character has Outmaneuver condition
+                guard !other.conditions.contains(where: { $0.type == OutmaneuverCondition.type })
+                else {
+                    return
+                }
                 // TODO When teams exist, this will have to check for actual
                 guard other.primaryKey != meRef else {
                     return
