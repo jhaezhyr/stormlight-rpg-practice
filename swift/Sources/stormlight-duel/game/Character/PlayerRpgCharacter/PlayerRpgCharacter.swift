@@ -27,7 +27,6 @@ extension PlayerRpgCharacterProtocol {
 }
 
 public class PlayerRpgCharacter: PlayerRpgCharacterProtocol {
-
     public var name: String
 
     public unowned var game: Game!
@@ -95,6 +94,7 @@ public class PlayerRpgCharacter: PlayerRpgCharacterProtocol {
         )
     }
 
+    @discardableResult
     public init(
         name: String,
         expertises: Set<Expertise>,
@@ -114,6 +114,7 @@ public class PlayerRpgCharacter: PlayerRpgCharacterProtocol {
         brain: any RpgCharacterBrain,
         combatState: RpgCharacterCombatState? = nil,
         isPlayer: Bool,
+        andAddTo gameSession: isolated GameSession,
     ) {
         self.name = name
         self.expertises = expertises
@@ -137,9 +138,11 @@ public class PlayerRpgCharacter: PlayerRpgCharacterProtocol {
 }
 
 extension PlayerRpgCharacter {
+    @discardableResult
     public static func basicCharacter(
         name: String = "Baby son-Daddy",
-        brain: (any RpgCharacterBrain)? = nil
+        brain: (any RpgCharacterBrain)? = nil,
+        andAddTo gameSession: isolated GameSession,
     ) -> PlayerRpgCharacter {
         let brain = brain ?? RpgCharacterDummyBrain(characterRef: RpgCharacterRef(name: name))
         return PlayerRpgCharacter(
@@ -160,7 +163,8 @@ extension PlayerRpgCharacter {
             features: [],
             conditions: [],
             brain: brain,
-            isPlayer: true
+            isPlayer: true,
+            andAddTo: gameSession,
         )
     }
 }
