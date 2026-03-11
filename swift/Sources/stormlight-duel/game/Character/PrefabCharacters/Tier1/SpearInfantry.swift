@@ -57,6 +57,7 @@ extension PrefabCharacters {
             conditions: [],
             brain: brain,
             isPlayer: isPlayer,
+            andAddTo: gameSession,
         )
     }
 }
@@ -140,7 +141,9 @@ public struct MilitaryTacticsFeature: CharacterFeature {
         self.handlers = [
             EventHandler<ReactionCalculation<ReactiveStrike>> {
                 event, gameSession in
-                guard var reaction = event.reaction, reaction.reactionCost >= 1 else {
+                guard var reaction = event.reaction,
+                    reaction.reactionCost(by: characterRef, in: gameSession.game.snapshot()) >= 1
+                else {
                     return
                 }
                 guard characterRef == event.characterRef else {
@@ -171,8 +174,8 @@ public struct MilitaryTacticsFeature: CharacterFeature {
                             as1: characterRef
                         )
                     )
-                    reaction.focusCost += 1
-                    reaction.reactionCost -= 1
+                    reaction.editableFocusCost += 1
+                    reaction.editableReactionCost -= 1
                 }
                 event.reaction = reaction
                 me.conditions.upsert(

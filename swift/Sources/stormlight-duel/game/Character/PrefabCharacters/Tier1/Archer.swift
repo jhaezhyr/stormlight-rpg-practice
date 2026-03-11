@@ -36,7 +36,7 @@ extension PrefabCharacters {
                 .init(TakeAimActionFeature()),
                 .init(ImmobilizingShotReactionFeature(for: ref)),
             ],
-            conditions: [], brain: brain, isPlayer: isPlayer)
+            conditions: [], brain: brain, isPlayer: isPlayer, andAddTo: gameSession)
     }
 }
 
@@ -140,7 +140,11 @@ public enum ImmobilizingShotReactionDecision: String, CaseIterable, Sendable, Ha
 }
 
 public struct TakeAimAction: CombatAction {
-    public static let actionCost: Int = 0
+    public static func actionCost(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot)
+        -> Int
+    {
+        0
+    }
     public var opponent: RpgCharacterRef?
     public var skill: CoreSkillName?
     public init(opponent: RpgCharacterRef?, skill: CoreSkillName?) {
