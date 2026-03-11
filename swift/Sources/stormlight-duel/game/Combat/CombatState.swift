@@ -2,7 +2,7 @@ public protocol RpgCharacterCombatStateSharedProtocol {
     var space: Space1D { get }
     var turnSpeed: TurnSpeed { get }
     var actionsRemaining: Int { get }
-    var weaponsUsed: Set<WeaponName> { get }
+    var handsUsed: Set<Hand> { get }
     var actionsTaken: Set<CombatActionName> { get }
     var reactionsRemaining: Int { get }
     var recoveriesRemaining: Int { get }
@@ -14,7 +14,7 @@ public struct RpgCharacterCombatState: RpgCharacterCombatStateSharedProtocol {
     public var space: Space1D
     public var turnSpeed: TurnSpeed = .fast
     public var actionsRemaining: Int = 0
-    public var weaponsUsed: Set<WeaponName> = []
+    public var handsUsed: Set<Hand> = []
     public var actionsTaken: Set<CombatActionName> = []
     public var reactionsRemaining: Int = 1
     public var recoveriesRemaining: Int = 1
@@ -27,7 +27,7 @@ public struct RpgCharacterCombatState: RpgCharacterCombatStateSharedProtocol {
         space: Space1D,
         turnSpeed: TurnSpeed? = nil,
         actionsRemaining: Int? = nil,
-        weaponsUsed: Set<WeaponName>? = nil,
+        handsUsed: Set<Hand>? = nil,
         actionsTaken: Set<CombatActionName>? = nil,
         reactionsRemaining: Int? = nil,
         hasStrikeAdvantageOver: Set<RpgCharacterRef>? = nil,
@@ -37,7 +37,7 @@ public struct RpgCharacterCombatState: RpgCharacterCombatStateSharedProtocol {
         self.space = space
         if let turnSpeed { self.turnSpeed = turnSpeed }
         if let actionsRemaining { self.actionsRemaining = actionsRemaining }
-        if let weaponsUsed { self.weaponsUsed = weaponsUsed }
+        if let handsUsed { self.handsUsed = handsUsed }
         if let actionsTaken { self.actionsTaken = actionsTaken }
         if let reactionsRemaining { self.reactionsRemaining = reactionsRemaining }
         self.reactionProviders = [
@@ -53,7 +53,7 @@ public struct RpgCharacterCombatState: RpgCharacterCombatStateSharedProtocol {
             space: space,
             turnSpeed: turnSpeed,
             actionsRemaining: actionsRemaining,
-            weaponsUsed: weaponsUsed,
+            handsUsed: handsUsed,
             actionsTaken: actionsTaken,
             reactionsRemaining: reactionsRemaining,
             recoveriesRemaining: recoveriesRemaining,
@@ -66,7 +66,7 @@ public struct RpgCharacterCombatStateSnapshot: RpgCharacterCombatStateSharedProt
     public var space: Space1D
     public var turnSpeed: TurnSpeed
     public var actionsRemaining: Int
-    public var weaponsUsed: Set<WeaponName>
+    public var handsUsed: Set<Hand>
     public var actionsTaken: Set<CombatActionName>
     public var reactionsRemaining: Int
     public var recoveriesRemaining: Int

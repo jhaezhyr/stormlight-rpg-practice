@@ -9,7 +9,7 @@ public protocol CombatAction: Sendable, SendableMetatype {
     var actionName: CombatActionName { get }
     var reactionCost: Int { get }
     var actionCost: Int { get }
-    var focusCost: Int { get }
+    func focusCost(in gameSnapshot: GameSnapshot) -> Int
     /// Assuming actionCost, reactionCost, focusCost can be satisfied, and an action of this name hasn't already been taken this turn or it can be taken multiple times this turn, can this action be taken this turn?
     ///
     /// This is for overriding only. It shouldn't be called to see if the action can be taken. That's what canReallyTakeAction is for.
@@ -40,7 +40,9 @@ extension CombatAction {
     public var actionName: CombatActionName { Self.actionName }
     public var reactionCost: Int { Self.reactionCost }
     public var actionCost: Int { Self.actionCost }
-    public var focusCost: Int { Self.focusCost }
+    public func focusCost(in gameSnapshot: GameSnapshot) -> Int {
+        Self.focusCost
+    }
     public static var canBeTakenMoreThanOncePerTurn: Bool { false }
     public static func canMaybeTakeAction(
         by character: RpgCharacterRef,
@@ -67,7 +69,7 @@ extension CombatAction {
         guard let combatState = character.combatState else {
             return false
         }
-        return character.focus.value >= focusCost
+        return character.focus.value >= focusCost(in: gameSnapshot)
             && combatState.actionsRemaining >= actionCost
             && combatState.reactionsRemaining >= reactionCost
 
@@ -126,7 +128,7 @@ extension CombatAction {
         guard let character = gameSession.game.anyCharacter(at: characterRef) else {
             return
         }
-        character.focus.value -= focusCost
+        character.focus.value -= focusCost(in: gameSession.game.snapshot())
         character.combatState!.actionsTaken.insert(actionName)
         character.combatState!.actionsRemaining -= actionCost
         character.combatState!.reactionsRemaining -= reactionCost

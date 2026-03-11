@@ -40,6 +40,14 @@ public struct AnyRpgCharacterSnapshot: RpgCharacterSnapshot {
         get { core.equipment }
         set { core.equipment = newValue }
     }
+    public var mainHand: ItemRef? {
+        get { core.mainHand }
+        set { core.mainHand = newValue }
+    }
+    public var offHand: ItemRef? {
+        get { core.offHand }
+        set { core.offHand = newValue }
+    }
     public var reach: Distance { core.reach }
     public var isPlayer: Bool { core.isPlayer }
     public var core: any RpgCharacterSnapshot

@@ -8,7 +8,30 @@ public protocol WeaponSharedProtocol: Item, ItemSnapshot {
     var damageType: DamageType { get }
     var traits: [(trait: any WeaponTrait, condition: TraitCondition)] { get }
 }
-public typealias Weapon = WeaponSharedProtocol
+public protocol Weapon: WeaponSharedProtocol {
+    func activeTraits(
+        whenEquippedBy characterRef: RpgCharacterRef,
+        in gameSession: isolated GameSession
+    ) -> [any WeaponTrait]
+}
+extension Weapon {
+    public func activeTraits(
+        whenEquippedBy characterRef: RpgCharacterRef,
+        in gameSession: isolated GameSession
+    ) -> [any WeaponTrait] {
+        guard let character = gameSession.game.anyCharacter(at: characterRef) else {
+            return []
+        }
+        return traits.compactMap { traitPair in
+            if character.meets(traitPair.condition, for: self.weaponName) {
+                traitPair.trait
+            } else {
+                nil
+            }
+        }
+
+    }
+}
 public typealias WeaponSnapshot = WeaponSharedProtocol
 
 public enum WeaponRange: Sendable, Hashable {
@@ -74,6 +97,16 @@ public enum WeaponName: String, CaseIterable, Sendable, Hashable {
 }
 
 public protocol WeaponTrait: Sendable {}
+
+extension RpgCharacterSharedProtocol {
+    func meets(_ traitCondition: TraitCondition, for weaponTrait: WeaponName) -> Bool {
+        let iAmExpert = false  // TODO Make this affected by actual expertises
+        switch (traitCondition, iAmExpert) {
+        case (.expert, true), (.notExpert, false), (.always, _): return true
+        default: return false
+        }
+    }
+}
 
 extension CaseIterable where Self: RawRepresentable, RawValue == String {
     public init?(caseInsensitiveRawValue: String) {

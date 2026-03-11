@@ -35,6 +35,8 @@ public class PlayerRpgCharacter: PlayerRpgCharacterProtocol {
 
     public var expertises: Set<Expertise>
     public var equipment: KeyedSet<Readyable<AnyItem>>
+    public var mainHand: ItemRef?
+    public var offHand: ItemRef?
     public var money: Money = 0
     public var paths: [PathName: PathProgress] = [:]
 
@@ -98,7 +100,7 @@ public class PlayerRpgCharacter: PlayerRpgCharacterProtocol {
     public init(
         name: String,
         expertises: Set<Expertise>,
-        equipment: KeyedSet<Readyable<AnyItem>>,
+        equipment: [Readyable<AnyItem>],
         money: Money = 0,
         paths: [PathName: PathProgress] = [:],
         level: Int = 1,
@@ -118,7 +120,7 @@ public class PlayerRpgCharacter: PlayerRpgCharacterProtocol {
     ) {
         self.name = name
         self.expertises = expertises
-        self.equipment = equipment
+        self.equipment = .init(equipment)
         self.money = money
         self.paths = paths
         self.level = level
@@ -134,6 +136,16 @@ public class PlayerRpgCharacter: PlayerRpgCharacterProtocol {
         self.brain = brain
         self.combatState = combatState
         self.isPlayer = isPlayer
+
+        // Add this player straight to the game now
+        gameSession.game.characters.upsert(.init(self))
+        // If we aren't part of the game, some of the following functions will fail.
+
+        for item in equipment {
+            if item.isReady {
+                self.ready(item.primaryKey)
+            }
+        }
     }
 }
 
