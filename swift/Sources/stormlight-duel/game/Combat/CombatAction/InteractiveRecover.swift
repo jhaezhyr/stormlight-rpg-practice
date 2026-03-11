@@ -5,7 +5,11 @@ public struct InteractiveRecover: CombatAction {
     public init() {
     }
 
-    public static let actionCost: Int = 1
+    public static func actionCost(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot)
+        -> Int
+    {
+        1
+    }
 
     public func action(
         by characterRef: RpgCharacterRef, in gameSession: isolated GameSession = #isolation

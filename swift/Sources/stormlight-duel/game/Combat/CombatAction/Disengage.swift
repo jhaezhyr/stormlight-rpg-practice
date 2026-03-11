@@ -1,5 +1,9 @@
 public struct DisengageAction: CombatAction {
-    public static let actionCost: Int = 1
+    public static func actionCost(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot)
+        -> Int
+    {
+        1
+    }
     public var direction: Direction1D
 
     public init(direction: Direction1D) {

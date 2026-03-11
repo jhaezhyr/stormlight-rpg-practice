@@ -52,10 +52,25 @@ public struct ReactiveStrikeProvider: Responder {
 
 public struct ReactiveStrike: CombatReaction {
     public static var canBeTakenMoreThanOncePerTurn: Bool { true }
-    public static let focusCost: Int = 1
-    public static let reactionCost: Int = 1
-    public var focusCost: Int = Self.focusCost
-    public var reactionCost: Int = Self.reactionCost
+    public static func focusCost(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot)
+        -> Int
+    {
+        1
+    }
+    public static func reactionCost(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot)
+        -> Int
+    {
+        1
+    }
+    public var editableFocusCost = 1
+    public func focusCost(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot) -> Int {
+        self.editableFocusCost
+    }
+    public var editableReactionCost = 1
+    public func reactionCost(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot) -> Int
+    {
+        self.editableReactionCost
+    }
 
     public var stepWasCareful: Bool
     public var stepDirection: Direction1D
