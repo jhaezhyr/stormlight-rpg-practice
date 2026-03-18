@@ -29,8 +29,6 @@ extension PlayerRpgCharacterProtocol {
 public class PlayerRpgCharacter: PlayerRpgCharacterProtocol {
     public var name: String
 
-    public unowned var game: Game!
-
     public var size: CharacterSize { .normal }
 
     public var expertises: Set<Expertise>
@@ -87,6 +85,8 @@ public class PlayerRpgCharacter: PlayerRpgCharacterProtocol {
             size: size,
             deflect: deflect(),
             equipment: .init(equipment.isolatedMap { $0.snapshot(in: $1) }),
+            mainHand: mainHand,
+            offHand: offHand,
             reach: reach,
             combatState: combatState?.snapshot(),
             features: .init(
@@ -118,9 +118,14 @@ public class PlayerRpgCharacter: PlayerRpgCharacterProtocol {
         isPlayer: Bool,
         andAddTo gameSession: isolated GameSession,
     ) {
+        let itemsThatWantToBeReady = equipment.compactMap { $0.isReady ? $0.core : nil }
+        let unreadiedEquipment: KeyedSet = .init(
+            equipment.map { Readyable($0.core, isReady: false) }
+        )
+
         self.name = name
         self.expertises = expertises
-        self.equipment = .init(equipment)
+        self.equipment = unreadiedEquipment
         self.money = money
         self.paths = paths
         self.level = level
@@ -141,10 +146,28 @@ public class PlayerRpgCharacter: PlayerRpgCharacterProtocol {
         gameSession.game.characters.upsert(.init(self))
         // If we aren't part of the game, some of the following functions will fail.
 
-        for item in equipment {
-            if item.isReady {
-                self.ready(item.primaryKey)
+        for item in itemsThatWantToBeReady {
+            if let weapon = item.core as? any Weapon {
+                guard weapon.canReady(by: self.primaryKey, preferredHand: nil) != nil else {
+                    disruptDevAndReportError("Cannot ready \(weapon) for \(self.primaryKey)")
+                    return
+                }
+                weapon.ready(by: self, preferredHand: nil)
+            } else {
+                self.equipment[item.primaryKey]?.isReady = true
             }
+        }
+    }
+}
+
+public func disruptDevAndReportError(
+    _ message: String,
+    in gameSession: isolated GameSession = #isolation
+) {
+    print("Error: \(message)")
+    Task {
+        for character in gameSession.game.characters {
+            await gameSession.game.broadcaster.tellHint(message, to: character.primaryKey)
         }
     }
 }

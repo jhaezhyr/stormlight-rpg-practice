@@ -8,7 +8,7 @@ public struct Strike: CombatAction {
     public var weaponToStrikeWith: ItemRef
     public var recordStrikeForThisHand: Bool
     public var target: RpgCharacterRef
-    public func focusCost(for characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot) -> Int {
+    public func focusCost(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot) -> Int {
         guard let character = gameSnapshot.characters[characterRef]?.core,
             let readyableItem = character.equipment[weaponToStrikeWith],
             let weapon = readyableItem.core.core as? any WeaponSnapshot
@@ -18,7 +18,10 @@ public struct Strike: CombatAction {
         let isTwoHanded = weapon.traits.contains { $0.trait is TwoHanded }
         let isOffHandStrike = (character.offHand == weaponToStrikeWith && !isTwoHanded)
         if isOffHandStrike {
-            return 2
+            let isOffhandWeapon = weapon.activeTraits(
+                whenEquippedBy: characterRef, in: gameSnapshot
+            ).contains(where: { $0 is Offhand })
+            return isOffhandWeapon ? 1 : 2
         } else {
             return 0
         }

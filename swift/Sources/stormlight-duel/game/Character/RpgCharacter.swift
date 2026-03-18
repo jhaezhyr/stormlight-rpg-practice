@@ -165,55 +165,6 @@ extension RpgCharacter {
             CharacterPropertyCalculationEvent(baseDeflect, type: .deflect, for: self.primaryKey)
         )
     }
-
-    public func ready(
-        _ itemRef: ItemRef, inHand: Hand? = nil, in gameSession: isolated GameSession = #isolation
-    ) {
-        guard
-            let readyable = equipment.first(where: { !$0.isReady && $0.core.primaryKey == itemRef })
-        else {
-            return
-        }
-        let item = readyable.core.core
-        var me = self
-        if let weapon = item as? any Weapon {
-            let isTwoHanded = weapon.activeTraits(whenEquippedBy: self.primaryKey, in: gameSession)
-                .contains { $0 is TwoHanded }
-            let mainHandIsFree = self.mainHand == nil
-            let offHandIsFree = self.offHand == nil
-            if isTwoHanded {
-                if mainHandIsFree && offHandIsFree {
-                    me.mainHand = itemRef
-                    me.offHand = itemRef
-                } else {
-                    return
-                }
-            } else {
-                switch inHand {
-                case .mainHand:
-                    if mainHandIsFree {
-                        me.mainHand = itemRef
-                    } else {
-                        return
-                    }
-                case .offHand:
-                    if offHandIsFree {
-                        me.offHand = itemRef
-                    }
-                case nil:
-                    if mainHandIsFree {
-                        me.mainHand = itemRef
-                    } else if offHandIsFree {
-                        me.offHand = itemRef
-                    } else {
-                        return
-                    }
-                }
-            }
-        }
-        let newReadyable = Readyable(item, isReady: true)
-        me.equipment.upsert(newReadyable)
-    }
 }
 
 extension CalculationEventType {

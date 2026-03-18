@@ -11,15 +11,15 @@ public protocol WeaponSharedProtocol: Item, ItemSnapshot {
 public protocol Weapon: WeaponSharedProtocol {
     func activeTraits(
         whenEquippedBy characterRef: RpgCharacterRef,
-        in gameSession: isolated GameSession
+        in gameSnapshot: GameSnapshot,
     ) -> [any WeaponTrait]
 }
-extension Weapon {
+extension WeaponSharedProtocol {
     public func activeTraits(
         whenEquippedBy characterRef: RpgCharacterRef,
-        in gameSession: isolated GameSession
+        in gameSnapshot: GameSnapshot
     ) -> [any WeaponTrait] {
-        guard let character = gameSession.game.anyCharacter(at: characterRef) else {
+        guard let character = gameSnapshot.characters[characterRef] else {
             return []
         }
         return traits.compactMap { traitPair in
@@ -29,7 +29,57 @@ extension Weapon {
                 nil
             }
         }
+    }
+}
 
+extension Weapon {
+    /// If you pass a preferred hand, then it will only try to ready a single-handed weapon in that hand.
+    ///
+    /// If it returns nil, then it can't ready it as requested. If it returns a set of hands, then all those hands must be set to be this item to ready it.
+    public func canReady(
+        by characterRef: RpgCharacterRef,
+        preferredHand: Hand?,
+        in gameSession: isolated GameSession = #isolation
+    ) -> Set<Hand>? {
+        guard let me = gameSession.game.anyCharacter(at: characterRef) else {
+            return nil
+        }
+        let isTwoHanded = self.activeTraits(
+            whenEquippedBy: me.primaryKey, in: gameSession.game.snapshot()
+        )
+        .contains { $0 is TwoHanded }
+        let mainHandIsFree = me.mainHand == nil
+        let offHandIsFree = me.offHand == nil
+        if isTwoHanded {
+            return mainHandIsFree && offHandIsFree ? [.mainHand, .offHand] : nil
+        } else {
+            switch preferredHand {
+            case .mainHand:
+                return mainHandIsFree ? [.mainHand] : nil
+            case .offHand:
+                return offHandIsFree ? [.offHand] : nil
+            case nil:
+                return mainHandIsFree ? [.mainHand] : offHandIsFree ? [.offHand] : nil
+            }
+        }
+    }
+    public func ready(
+        by character: any RpgCharacter,
+        preferredHand inHand: Hand?,
+        in gameSession: isolated GameSession = #isolation,
+    ) {
+        guard let handsRequired = canReady(by: character.primaryKey, preferredHand: inHand) else {
+            return
+        }
+        var me = character
+        let itemRef = self.primaryKey
+        if handsRequired.contains(.mainHand) {
+            me.mainHand = itemRef
+        }
+        if handsRequired.contains(.offHand) {
+            me.offHand = itemRef
+        }
+        me.equipment[itemRef]?.isReady = true
     }
 }
 public typealias WeaponSnapshot = WeaponSharedProtocol

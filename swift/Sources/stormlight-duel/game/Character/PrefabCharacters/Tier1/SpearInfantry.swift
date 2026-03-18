@@ -2,12 +2,13 @@ import CompleteDictionary
 import KeyedSet
 
 extension PrefabCharacters {
+    @discardableResult
     public static func spearInfantry(
         ref: RpgCharacterRef? = nil,
         homeCulture: CultureName = .alethi,
         isPlayer: Bool,
         brain: RpgCharacterBrain,
-        in gameSession: isolated GameSession = #isolation
+        andAddTo gameSession: isolated GameSession = #isolation
     ) -> PlayerRpgCharacter {
         let ref = ref ?? RpgCharacterRef(name: "Spear Infantry")
         return PlayerRpgCharacter(
@@ -20,8 +21,8 @@ extension PrefabCharacters {
             equipment: [
                 .init(BasicArmorTypes.chain(), isReady: true),
                 .init(basicWeapons[.shortspear]!(gameSession), isReady: true),
-                .init(basicWeapons[.shortbow]!(gameSession), isReady: true),
-                .init(basicWeapons[.shield]!(gameSession), isReady: true),
+                .init(basicWeapons[.shortbow]!(gameSession), isReady: false),
+                .init(basicWeapons[.shield]!(gameSession), isReady: false),
             ],
             attributes: [
                 .strength: 2,
