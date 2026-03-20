@@ -38,7 +38,11 @@ public struct KeyedSet<Element: Keyed> {
     @discardableResult
     public mutating func upsert(_ x: Element) -> Index {
         core[x.primaryKey] = x
-        return core.index(forKey: x.primaryKey)!
+        if let index = core.index(forKey: x.primaryKey) {
+            return index
+        } else {
+            fatalError("Couldn't find the index for an item we just added")
+        }
     }
     @discardableResult
     public mutating func remove(_ x: Element) -> Element? {

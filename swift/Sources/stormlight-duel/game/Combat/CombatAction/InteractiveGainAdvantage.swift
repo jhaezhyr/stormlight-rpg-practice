@@ -2,8 +2,11 @@ public struct InteractiveGainAdvantage: CombatAction {
     public static var actionName: CombatActionName { GainAdvantage.actionName }
     public let opponent: RpgCharacterRef?
     public let chosenSkill: CoreSkillName?
-    public static var actionCost: Int { GainAdvantage.actionCost }
-    public static var focusCost: Int { GainAdvantage.focusCost }
+    public static func actionCost(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot)
+        -> Int
+    {
+        GainAdvantage.actionCost(by: characterRef, in: gameSnapshot)
+    }
 
     public init(
         opponent: RpgCharacterRef?,

@@ -35,4 +35,17 @@ extension Sequence {
         }
         return result
     }
+
+    public func isolatedCompactMap<A: Actor, U>(
+        in isolation: isolated A = #isolation,
+        _ fn: (_ x: Element, _ isolation: isolated A) -> U?
+    ) -> [U] {
+        var result = [U]()
+        for x in self {
+            if let new = fn(x, isolation) {
+                result.append(new)
+            }
+        }
+        return result
+    }
 }

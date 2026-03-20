@@ -3,16 +3,15 @@ import stormlight_duel
 
 @Test("Martial Drill feature is present on SpearInfantry and works")
 func testMartialDrillFeature() async throws {
-    let gameSession = GameSession()
+    let gameSession = GameSession(
+        game: Game(
+            characters: [], broadcaster: Broadcaster(),
+            gameMasterBrain: RpgCharacterDummyBrain(characterRef: .gameMaster)))
     func handle(in gameSession: isolated GameSession) async throws {
-        gameSession.provideGame(
-            Game(
-                characters: [], broadcaster: Broadcaster(),
-                gameMasterBrain: RpgCharacterDummyBrain(characterRef: .gameMaster)))
         let spearInfantry = PrefabCharacters.spearInfantry(
             isPlayer: false,
             brain: RpgCharacterDummyBrain(characterRef: RpgCharacterRef(name: "Test Spearman")),
-            in: gameSession
+            andAddTo: gameSession
         )
 
         gameSession.game.updateCharacter(spearInfantry)

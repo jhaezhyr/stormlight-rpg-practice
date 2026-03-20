@@ -2,19 +2,20 @@ import CompleteDictionary
 import KeyedSet
 
 extension PrefabCharacters {
+    @discardableResult
     static func archer(
         ref: RpgCharacterRef? = nil,
         homeCulture: CultureName = .alethi,
         isPlayer: Bool,
         brain: RpgCharacterBrain,
-        in gameSession: isolated GameSession = #isolation
+        andAddTo gameSession: isolated GameSession = #isolation
     ) -> PlayerRpgCharacter {
         let ref = ref ?? RpgCharacterRef(name: "Archer")
         return PlayerRpgCharacter(
             name: ref.name, expertises: [.weapon(.knife), .weapon(.longbow)],
             equipment: [
                 .init(BasicArmorTypes.leather(), isReady: true),
-                .init(basicWeapons[.knife]!(gameSession), isReady: true),
+                .init(basicWeapons[.knife]!(gameSession), isReady: false),
                 .init(basicWeapons[.longbow]!(gameSession), isReady: true),
             ],
             attributes: [
@@ -36,7 +37,7 @@ extension PrefabCharacters {
                 .init(TakeAimActionFeature()),
                 .init(ImmobilizingShotReactionFeature(for: ref)),
             ],
-            conditions: [], brain: brain, isPlayer: isPlayer)
+            conditions: [], brain: brain, isPlayer: isPlayer, andAddTo: gameSession)
     }
 }
 
@@ -140,7 +141,11 @@ public enum ImmobilizingShotReactionDecision: String, CaseIterable, Sendable, Ha
 }
 
 public struct TakeAimAction: CombatAction {
-    public static let actionCost: Int = 0
+    public static func actionCost(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot)
+        -> Int
+    {
+        0
+    }
     public var opponent: RpgCharacterRef?
     public var skill: CoreSkillName?
     public init(opponent: RpgCharacterRef?, skill: CoreSkillName?) {

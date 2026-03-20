@@ -14,6 +14,7 @@ public enum DecisionCode: Sendable, Equatable {
     case targetForGainAdvantage
     case shouldUseMilitaryTactics
     case shouldStandStrongInComingStorm
+    case drawWeaponsChoice(Hand)
 }
 
 extension DecisionCode: CustomStringConvertible {
@@ -49,6 +50,8 @@ extension DecisionCode: CustomStringConvertible {
             "You can use your military tactics once per round to Aid or Reactive Strike by spending an extra focus instead of your reaction."
         case .shouldStandStrongInComingStorm:
             "Will you divert your focus to staying upright?"
+        case .drawWeaponsChoice(let hand):
+            "You have the following weapons available to you. Which will go in your \(hand)?"
         }
     }
 }

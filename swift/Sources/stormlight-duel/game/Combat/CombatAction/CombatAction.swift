@@ -2,14 +2,14 @@ public typealias CombatActionName = String
 
 public protocol CombatAction: Sendable, SendableMetatype {
     static var actionName: CombatActionName { get }
-    static var reactionCost: Int { get }
-    static var actionCost: Int { get }
-    static var focusCost: Int { get }
+    static func reactionCost(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot) -> Int
+    static func actionCost(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot) -> Int
+    static func focusCost(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot) -> Int
     static var canBeTakenMoreThanOncePerTurn: Bool { get }
     var actionName: CombatActionName { get }
-    var reactionCost: Int { get }
-    var actionCost: Int { get }
-    var focusCost: Int { get }
+    func reactionCost(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot) -> Int
+    func actionCost(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot) -> Int
+    func focusCost(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot) -> Int
     /// Assuming actionCost, reactionCost, focusCost can be satisfied, and an action of this name hasn't already been taken this turn or it can be taken multiple times this turn, can this action be taken this turn?
     ///
     /// This is for overriding only. It shouldn't be called to see if the action can be taken. That's what canReallyTakeAction is for.
@@ -33,14 +33,33 @@ public protocol CombatAction: Sendable, SendableMetatype {
 
 // Defaults
 extension CombatAction {
-    public static var focusCost: Int { 0 }
-    public static var reactionCost: Int { 0 }
-    public static var actionCost: Int { 0 }
+    public static func reactionCost(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot)
+        -> Int
+    {
+        0
+    }
+    public static func actionCost(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot)
+        -> Int
+    {
+        0
+    }
+    public static func focusCost(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot)
+        -> Int
+    {
+        0
+    }
     public static var actionName: CombatActionName { "\(Self.self)" }
     public var actionName: CombatActionName { Self.actionName }
-    public var reactionCost: Int { Self.reactionCost }
-    public var actionCost: Int { Self.actionCost }
-    public var focusCost: Int { Self.focusCost }
+    public func reactionCost(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot) -> Int
+    {
+        Self.reactionCost(by: characterRef, in: gameSnapshot)
+    }
+    public func actionCost(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot) -> Int {
+        Self.actionCost(by: characterRef, in: gameSnapshot)
+    }
+    public func focusCost(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot) -> Int {
+        Self.focusCost(by: characterRef, in: gameSnapshot)
+    }
     public static var canBeTakenMoreThanOncePerTurn: Bool { false }
     public static func canMaybeTakeAction(
         by character: RpgCharacterRef,
@@ -67,9 +86,9 @@ extension CombatAction {
         guard let combatState = character.combatState else {
             return false
         }
-        return character.focus.value >= focusCost
-            && combatState.actionsRemaining >= actionCost
-            && combatState.reactionsRemaining >= reactionCost
+        return character.focus.value >= focusCost(by: characterRef, in: gameSnapshot)
+            && combatState.actionsRemaining >= actionCost(by: characterRef, in: gameSnapshot)
+            && combatState.reactionsRemaining >= reactionCost(by: characterRef, in: gameSnapshot)
 
     }
     public static func canMaybeAffordAction(
@@ -81,9 +100,9 @@ extension CombatAction {
         guard let combatState = character.combatState else {
             return false
         }
-        return character.focus.value >= focusCost
-            && combatState.actionsRemaining >= actionCost
-            && combatState.reactionsRemaining >= reactionCost
+        return character.focus.value >= focusCost(by: characterRef, in: gameSnapshot)
+            && combatState.actionsRemaining >= actionCost(by: characterRef, in: gameSnapshot)
+            && combatState.reactionsRemaining >= reactionCost(by: characterRef, in: gameSnapshot)
     }
 
     public static func canBeTakenAgainThisTurn(
@@ -126,10 +145,13 @@ extension CombatAction {
         guard let character = gameSession.game.anyCharacter(at: characterRef) else {
             return
         }
-        character.focus.value -= focusCost
+        let gameSnapshot = gameSession.game.snapshot()
+        character.focus.value -= focusCost(by: characterRef, in: gameSnapshot)
         character.combatState!.actionsTaken.insert(actionName)
-        character.combatState!.actionsRemaining -= actionCost
-        character.combatState!.reactionsRemaining -= reactionCost
+        character.combatState!.actionsRemaining -= actionCost(by: characterRef, in: gameSnapshot)
+        character.combatState!.reactionsRemaining -= reactionCost(
+            by: characterRef, in: gameSnapshot
+        )
 
         try await gameSession.game.dispatch(
             CombatActionEvent(characterRef: characterRef, action: self))
@@ -158,4 +180,5 @@ public let allCombatActions: [CombatAction.Type] = [
     InteractiveGainAdvantage.self,
     InteractiveRecover.self,
     DisengageAction.self,
+    InteractiveDrawWeapons.self,
 ]

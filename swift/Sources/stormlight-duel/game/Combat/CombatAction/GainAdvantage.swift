@@ -1,5 +1,9 @@
 public struct GainAdvantage: CombatAction {
-    public static let actionCost: Int = 1
+    public static func actionCost(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot)
+        -> Int
+    {
+        1
+    }
 
     public let opponent: RpgCharacterRef
     public let chosenSkill: CoreSkillName

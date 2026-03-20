@@ -19,6 +19,8 @@ public struct PlayerRpgCharacterSnapshot: RpgCharacterSnapshot {
     public var size: CharacterSize
     public var deflect: Int
     public var equipment: KeyedSet<Readyable<AnyItemSnapshot>>
+    public var mainHand: ItemRef?
+    public var offHand: ItemRef?
     public var reach: Distance
     public var combatState: RpgCharacterCombatStateSnapshot?
     public var features: KeyedSet<AnyCharacterFeatureSnapshot>

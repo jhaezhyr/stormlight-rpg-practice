@@ -2,12 +2,13 @@ import CompleteDictionary
 import KeyedSet
 
 extension PrefabCharacters {
+    @discardableResult
     public static func spearInfantry(
         ref: RpgCharacterRef? = nil,
         homeCulture: CultureName = .alethi,
         isPlayer: Bool,
         brain: RpgCharacterBrain,
-        in gameSession: isolated GameSession = #isolation
+        andAddTo gameSession: isolated GameSession = #isolation
     ) -> PlayerRpgCharacter {
         let ref = ref ?? RpgCharacterRef(name: "Spear Infantry")
         return PlayerRpgCharacter(
@@ -20,8 +21,8 @@ extension PrefabCharacters {
             equipment: [
                 .init(BasicArmorTypes.chain(), isReady: true),
                 .init(basicWeapons[.shortspear]!(gameSession), isReady: true),
-                .init(basicWeapons[.shortbow]!(gameSession), isReady: true),
-                .init(basicWeapons[.shield]!(gameSession), isReady: true),
+                .init(basicWeapons[.shortbow]!(gameSession), isReady: false),
+                .init(basicWeapons[.shield]!(gameSession), isReady: false),
             ],
             attributes: [
                 .strength: 2,
@@ -57,6 +58,7 @@ extension PrefabCharacters {
             conditions: [],
             brain: brain,
             isPlayer: isPlayer,
+            andAddTo: gameSession,
         )
     }
 }
@@ -140,7 +142,9 @@ public struct MilitaryTacticsFeature: CharacterFeature {
         self.handlers = [
             EventHandler<ReactionCalculation<ReactiveStrike>> {
                 event, gameSession in
-                guard var reaction = event.reaction, reaction.reactionCost >= 1 else {
+                guard var reaction = event.reaction,
+                    reaction.reactionCost(by: characterRef, in: gameSession.game.snapshot()) >= 1
+                else {
                     return
                 }
                 guard characterRef == event.characterRef else {
@@ -171,8 +175,8 @@ public struct MilitaryTacticsFeature: CharacterFeature {
                             as1: characterRef
                         )
                     )
-                    reaction.focusCost += 1
-                    reaction.reactionCost -= 1
+                    reaction.editableFocusCost += 1
+                    reaction.editableReactionCost -= 1
                 }
                 event.reaction = reaction
                 me.conditions.upsert(

@@ -23,6 +23,9 @@ public struct ItemRef: Hashable, Sendable {
         self = item.primaryKey
     }
 }
+extension ItemRef: CustomStringConvertible {
+    public var description: String { name }
+}
 
 public enum TraitCondition: Sendable {
     case always

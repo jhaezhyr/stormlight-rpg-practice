@@ -191,7 +191,7 @@ public struct Combat: Scene {
                 w1: "$1 ended their turn.", wU: "You ended your turn.", as1: character.primaryKey))
         try await game.dispatch(CombatPhaseEvent(phase: .endOfTurn, character: character))
         character.combatState!.turnsTaken += 1
-        character.combatState!.weaponsUsed = []
+        character.combatState!.handsUsed = []
         character.combatState!.actionsTaken = []
         return false
     }

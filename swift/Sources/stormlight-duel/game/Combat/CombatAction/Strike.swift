@@ -1,9 +1,31 @@
 public struct Strike: CombatAction {
-    public static var actionCost: Int { 1 }
+    public static func actionCost(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot)
+        -> Int
+    {
+        1
+    }
     public static var canBeTakenMoreThanOncePerTurn: Bool { true }
     public var weaponToStrikeWith: ItemRef
     public var recordStrikeForThisHand: Bool
     public var target: RpgCharacterRef
+    public func focusCost(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot) -> Int {
+        guard let character = gameSnapshot.characters[characterRef]?.core,
+            let readyableItem = character.equipment[weaponToStrikeWith],
+            let weapon = readyableItem.core.core as? any WeaponSnapshot
+        else {
+            return 0  // This is actually some kind of error state.
+        }
+        let isTwoHanded = weapon.traits.contains { $0.trait is TwoHanded }
+        let isOffHandStrike = (character.offHand == weaponToStrikeWith && !isTwoHanded)
+        if isOffHandStrike {
+            let isOffhandWeapon = weapon.activeTraits(
+                whenEquippedBy: characterRef, in: gameSnapshot
+            ).contains(where: { $0 is Offhand })
+            return isOffhandWeapon ? 1 : 2
+        } else {
+            return 0
+        }
+    }
 
     public init(
         _ target: RpgCharacterRef,
@@ -18,7 +40,7 @@ public struct Strike: CombatAction {
     public func canTakeAction(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot)
         -> Bool
     {
-        guard let character = gameSnapshot.characters[characterRef] else {
+        guard let character = gameSnapshot.characters[characterRef]?.core else {
             fatalError("Bad character reference \(characterRef)")
         }
         guard let readyableItem = character.equipment[weaponToStrikeWith]
@@ -40,7 +62,12 @@ public struct Strike: CombatAction {
         if !readyableItem.isReady {
             return false
         }
-        if character.combatState!.weaponsUsed.contains(weapon.weaponName) {
+        let usesMainHand = (character.mainHand == weapon.primaryKey)
+        if usesMainHand && character.combatState!.handsUsed.contains(.mainHand) {
+            return false
+        }
+        let usesOffHand = (character.offHand == weapon.primaryKey)
+        if usesOffHand && character.combatState!.handsUsed.contains(.offHand) {
             return false
         }
         let availableRange =
@@ -181,7 +208,14 @@ public struct Strike: CombatAction {
             )
         )
         if recordStrikeForThisHand {
-            character.combatState?.weaponsUsed.insert(weapon.weaponName)
+            let wasMainHandUsed = (character.mainHand == weapon.primaryKey)
+            let wasOffHandUsed = (character.offHand == weapon.primaryKey)
+            if wasMainHandUsed {
+                character.combatState?.handsUsed.insert(.mainHand)
+            }
+            if wasOffHandUsed {
+                character.combatState?.handsUsed.insert(.offHand)
+            }
         }
     }
 }

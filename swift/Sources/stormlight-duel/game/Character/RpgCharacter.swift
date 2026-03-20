@@ -46,6 +46,9 @@ public protocol RpgCharacterSharedProtocol: Keyed where Key == RpgCharacterRef {
     var conditions: KeyedSet<ConditionType> { get set }
     associatedtype ItemType: ItemSharedProtocol
     var equipment: KeyedSet<Readyable<ItemType>> { get set }
+
+    var mainHand: ItemRef? { get set }
+    var offHand: ItemRef? { get set }
 }
 extension RpgCharacterSharedProtocol {
     public var primaryKey: RpgCharacterRef {
@@ -168,6 +171,16 @@ extension CalculationEventType {
     public static let deflect = Self("deflect")
 }
 
+public enum Hand: String, Sendable, Hashable, CaseIterable {
+    case mainHand = "main hand"
+    case offHand = "off hand"
+}
+extension Hand: CustomStringConvertible {
+    public var description: String {
+        rawValue
+    }
+}
+
 /// Returns the damage actually taken.
 public func doDamage(
     _ damage: Damage,
@@ -251,6 +264,14 @@ public class AnyRpgCharacter: RpgCharacter {
     public var equipment: KeyedSet<Readyable<AnyItem>> {
         get { core.equipment }
         set { core.equipment = newValue }
+    }
+    public var mainHand: ItemRef? {
+        get { core.mainHand }
+        set { core.mainHand = newValue }
+    }
+    public var offHand: ItemRef? {
+        get { core.offHand }
+        set { core.offHand = newValue }
     }
     public var reach: Distance { core.reach }
     public var isPlayer: Bool { core.isPlayer }
