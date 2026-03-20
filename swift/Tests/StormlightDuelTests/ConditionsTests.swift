@@ -5,12 +5,13 @@ import stormlight_duel
 func afflicted() async throws {
     let session = GameSession(
         game: Game(
-            characters: [PlayerRpgCharacter.basicCharacter()],
+            characters: [],
             broadcaster: Broadcaster(),
             gameMasterBrain: Level1CpuBrain(for: RpgCharacterRef(name: "GM"))
         )
     )
     func doIt(in session: isolated GameSession) async throws {
+        PlayerRpgCharacter.basicCharacter(andAddTo: session)
         let player = session.game.characters.first!
         let playerRef = player.primaryKey
         session.game.characters[playerRef]!.conditions.upsert(

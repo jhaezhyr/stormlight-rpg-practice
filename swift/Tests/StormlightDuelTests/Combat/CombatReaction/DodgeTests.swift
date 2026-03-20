@@ -13,15 +13,14 @@ func dodgeCreatesOneAdvantage() async throws {
     await setPremadeAnswers()
     let session = GameSession(
         game: Game(
-            characters: [
-                PlayerRpgCharacter.basicCharacter(name: goodGuyRef.name),
-                PlayerRpgCharacter.basicCharacter(name: badGuyRef.name, brain: badBrain),
-            ],
+            characters: [],
             broadcaster: Broadcaster(),
             gameMasterBrain: RpgCharacterDummyBrain(characterRef: RpgCharacterRef(name: "GM"))
         )
     )
     func doIt(in session: isolated GameSession) async throws {
+        PlayerRpgCharacter.basicCharacter(name: goodGuyRef.name, andAddTo: session)
+        PlayerRpgCharacter.basicCharacter(name: badGuyRef.name, brain: badBrain, andAddTo: session)
         let goodGuy = session.game.character(at: goodGuyRef, as: PlayerRpgCharacter.self)!
         let knife = basicWeapons[.knife]!(session)
         goodGuy.equipment.upsert(Readyable(knife, isReady: true))
