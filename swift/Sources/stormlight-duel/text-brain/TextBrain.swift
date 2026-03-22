@@ -8,32 +8,6 @@ public actor TextBrain<Connection: TextInterfaceConnection>: RpgCharacterBrain {
     public init(characterRef: RpgCharacterRef, ui: TextInterfaceProxy<Connection>) async throws {
         self.characterRef = characterRef
         self.ui = ui
-        _ = try await self.decideBetweenOptions(
-            UnderstandingChoice.allCases,
-            prompt: """
-                Welcome to STORMLIGHT DUEL!
-
-                This videogame experience is based on the "Cosmere Roleplaying Game" by
-                Brotherwise Games, based on works by Brandon Sanderson. The videogame is
-                written and hosted by Braeden Hintze.
-
-                            * ** INSTRUCTIONS ** * 
-
-                You play as a player character named Kal. You are in a one-on-one
-                combat with an NPC, Shallan. Bring her down. Each of you might be an archer or a spear infantry.
-
-                Anytime you are prompted to make a choice, you type in your answer and
-                press ENTER. In some cases, you are given multiple numbered options. In
-                other cases, your choices are a list of one-word commands. Some commands
-                have single-letter aliases to make them easier to type.
-
-                When the game waits for your input, you also can type "status" in order
-                to see the map and the conditions of both characters. The map shows a K
-                for your location, an S for Shallan's location, and a . for every 5ft
-                distance. The map is 1-dimensional to keep things simple and brutal.
-
-                Do you understand?
-                """, in: GameSnapshot.empty)
     }
 
     @MainActor
@@ -274,9 +248,4 @@ extension TextBrain {
         )
         return answer
     }
-}
-
-enum UnderstandingChoice: String, Sendable, Hashable, CustomStringConvertible, CaseIterable {
-    case yes = "yes, life before death"
-    var description: String { self.rawValue }
 }

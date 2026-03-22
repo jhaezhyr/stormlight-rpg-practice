@@ -21,15 +21,8 @@ wsRouter.ws("/ws") { request, context in
             }
         }
         group.addTask {
-            try await GameSession.playSinglePlayerGame {
-                playerRef in
-                return try await TextBrain(
-                    characterRef: playerRef,
-                    ui: TextInterfaceProxy(
-                        connection: connection
-                    )
-                )
-            }
+            let (gameSession, scene) = try await GameBuilderSession().run(connection)
+            try await gameSession.switch(to: scene)
         }
         try await group.next()
         // once one task has finished, cancel the other

@@ -3,7 +3,7 @@ import KeyedSet
 
 extension PrefabCharacters {
     @discardableResult
-    static func archer(
+    public static func archer(
         ref: RpgCharacterRef? = nil,
         homeCulture: CultureName = .alethi,
         isPlayer: Bool,
