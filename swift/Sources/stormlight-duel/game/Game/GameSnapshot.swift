@@ -27,22 +27,67 @@ extension Game {
 extension Sequence {
     public func isolatedMap<A: Actor, U>(
         in isolation: isolated A = #isolation,
-        _ fn: (_ x: Element, _ isolation: isolated A) -> U
-    ) -> [U] {
+        _ fn: (_ x: Element, _ isolation: isolated A) throws -> U
+    ) rethrows -> [U] {
         var result = [U]()
         for x in self {
-            result.append(fn(x, isolation))
+            try result.append(fn(x, isolation))
         }
         return result
     }
 
     public func isolatedCompactMap<A: Actor, U>(
         in isolation: isolated A = #isolation,
-        _ fn: (_ x: Element, _ isolation: isolated A) -> U?
-    ) -> [U] {
+        _ fn: (_ x: Element, _ isolation: isolated A) throws -> U?
+    ) rethrows -> [U] {
         var result = [U]()
         for x in self {
-            if let new = fn(x, isolation) {
+            if let new = try fn(x, isolation) {
+                result.append(new)
+            }
+        }
+        return result
+    }
+
+    public func asyncMap<U>(
+        _ fn: (_ x: Element) async throws -> U
+    ) async rethrows -> [U] {
+        var result = [U]()
+        for x in self {
+            try await result.append(fn(x))
+        }
+        return result
+    }
+
+    public func asyncCompactMap<U>(
+        _ fn: (_ x: Element) async throws -> U?
+    ) async rethrows -> [U] {
+        var result = [U]()
+        for x in self {
+            if let new = try await fn(x) {
+                result.append(new)
+            }
+        }
+        return result
+    }
+    public func isolatedAsyncMap<A: Actor, U>(
+        in isolation: isolated A = #isolation,
+        _ fn: @Sendable (_ x: Element, _ isolation: isolated A) async throws -> U
+    ) async rethrows -> [U] {
+        var result = [U]()
+        for x in self {
+            try await result.append(fn(x, isolation))
+        }
+        return result
+    }
+
+    public func isolatedAsyncCompactMap<A: Actor, U>(
+        in isolation: isolated A = #isolation,
+        _ fn: @Sendable (_ x: Element, _ isolation: isolated A) async throws -> U?
+    ) async rethrows -> [U] {
+        var result = [U]()
+        for x in self {
+            if let new = try await fn(x, isolation) {
                 result.append(new)
             }
         }
