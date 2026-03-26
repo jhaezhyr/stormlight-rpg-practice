@@ -20,6 +20,38 @@ extension CombatAction {
     }
 }
 
+/// Multi-parser combat actions
+
+public protocol MutliParserCombatAction: CombatAction {
+    static func combatActionParsers(context: CliArgsConversionContext) -> [CliArgsParser<Self>]
+}
+extension MutliParserCombatAction where Self: CliArgsConvertibleType {
+    public static func combatActionParsers(context: CliArgsConversionContext) -> [CliArgsParser<
+        Self
+    >] {
+        [parser]
+    }
+}
+extension MutliParserCombatAction {
+    public static func combatChoiceParsers(context: CliArgsConversionContext)
+        -> [CliArgsParser<CombatChoice>]
+    {
+        combatActionParsers(context: context).map { p in p.map { t in CombatChoice.action(t) } }
+    }
+}
+extension CombatAction {
+    public static func combatChoiceParsers(context: CliArgsConversionContext)
+        -> [CliArgsParser<CombatChoice>]?
+    {
+        if let registeredGetter = MutliParserCombatAction_registry["\(Self.self)"] {
+            return registeredGetter(context)
+        }
+        return nil
+    }
+}
+private let MutliParserCombatAction_registry:
+    [CombatActionName: @Sendable (CliArgsConversionContext) -> [CliArgsParser<CombatChoice>]] = [:]
+
 struct EndTurn {}
 @MainActor public let endTurnParser = CliArgsParser<CombatChoice>(helpText: "(e)nd") {
     args, context in

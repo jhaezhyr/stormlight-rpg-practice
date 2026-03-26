@@ -48,6 +48,12 @@ public struct CliArgsParser<T>: CliArgsParserProtocol {
         self.helpText = helpText
         self.parseFunc = parseFunc
     }
+    public func map<U>(_ mapFn: @escaping (T) -> U) -> CliArgsParser<U> {
+        CliArgsParser<U>(helpText: self.helpText) {
+            (x, y) throws(CliParseError) in
+            try self.parse(args: x, context: y).map { parsedAsT in mapFn(parsedAsT) }
+        }
+    }
 }
 extension CliArgsParser where T: CliArgsConvertibleType {
     public init(_ type: T.Type) {

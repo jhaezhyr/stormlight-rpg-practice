@@ -220,11 +220,22 @@ extension TextBrain {
             fatalError("Bad character ref \(characterRef)")
         }
         let parsers =
-            character.actions.compactMap {
-                $0.canReallyMaybeTakeAction(by: character.primaryKey, in: gameSnapshot)
-                    ? $0.combatChoiceParserOpt?.asAny
-                    : nil
-            } + [endTurnParser.asAny]
+            character.actions.flatMap {
+                (actionType: CombatAction.Type) -> [CliArgsParser<CombatChoice>] in
+                if !actionType.canReallyMaybeTakeAction(by: character.primaryKey, in: gameSnapshot)
+                {
+                    return []
+                }
+                if let parsers = actionType.combatChoiceParsers(
+                    context: (gameSnapshot, characterRef)
+                ) {
+                    return parsers
+                }
+                if let parser = actionType.combatChoiceParserOpt {
+                    return [parser]
+                }
+                return []
+            } + [endTurnParser]
 
         while true {
             let answer: CombatChoice = try await decideBetweenOptions(
