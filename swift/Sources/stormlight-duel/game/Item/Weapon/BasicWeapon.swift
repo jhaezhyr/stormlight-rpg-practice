@@ -1,4 +1,4 @@
-public struct BasicWeapon: Weapon, Sendable, ItemSnapshot {
+public struct BasicWeapon: Weapon, Sendable, WeaponSnapshot {
     public var weaponName: WeaponName
     public var type: WeaponSpecies
     public var weaponsSkill: WeaponsSkill

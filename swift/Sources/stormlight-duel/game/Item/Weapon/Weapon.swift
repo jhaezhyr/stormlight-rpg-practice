@@ -82,7 +82,30 @@ extension Weapon {
         me.equipment[itemRef]?.isReady = true
     }
 }
-public typealias WeaponSnapshot = WeaponSharedProtocol
+public protocol WeaponSnapshot: WeaponSharedProtocol {}
+public struct AnyWeaponSnapshot: WeaponSharedProtocol {
+    public init(_ core: any WeaponSnapshot) {
+        self.core = core
+    }
+
+    private var core: any WeaponSnapshot
+
+    public var type: WeaponSpecies { core.type }
+    public var weaponName: WeaponName { core.weaponName }
+    public var weaponsSkill: WeaponsSkill { core.weaponsSkill }
+    public var range: WeaponRange { core.range }
+    public var damage: RandomDistribution { core.damage }
+    public var damageType: DamageType { core.damageType }
+    public var traits: [(trait: any WeaponTrait, condition: TraitCondition)] { core.traits }
+    public typealias WeaponType = any WeaponSnapshot
+    public var name: String { core.name }
+    public var price: Money? { core.price }
+    public var weight: Weight { core.weight }
+    public var trueSelf: any ItemSharedProtocol { core.trueSelf }
+}
+extension AnyWeaponSnapshot: CustomStringConvertible {
+    public var description: String { "\(core)" }
+}
 
 public enum WeaponRange: Sendable, Hashable {
     case melee(extraReach: Distance? = nil)
@@ -108,6 +131,12 @@ public enum WeaponSpecies: CaseIterable, Sendable, Hashable {
 public enum WeaponsSkill: CaseIterable, Sendable, Hashable {
     case heavy
     case light
+    public var coreSkill: CoreSkillName {
+        switch self {
+        case .heavy: .heavyWeaponry
+        case .light: .lightWeaponry
+        }
+    }
 }
 
 public enum DamageType: String, CaseIterable, Sendable, Hashable {
