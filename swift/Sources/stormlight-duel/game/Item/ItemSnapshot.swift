@@ -2,6 +2,8 @@ public protocol ItemSnapshot: ItemSharedProtocol, Sendable {
 }
 
 public struct AnyItemSnapshot: ItemSnapshot {
+    public typealias WeaponType = WeaponSnapshot
+
     public let core: any ItemSnapshot
 
     public var name: String { core.name }
