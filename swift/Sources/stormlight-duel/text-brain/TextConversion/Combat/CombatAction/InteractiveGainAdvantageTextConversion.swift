@@ -1,3 +1,4 @@
+import KeyedSet
 import stormlight_duel
 
 extension InteractiveGainAdvantage: CliArgsConvertibleType {
@@ -48,5 +49,13 @@ public let skillForGainAdvantageOptionDescriber: OptionDescriber<CoreSkillName> 
     }
     let attribute = skill.attribute
     let bonus = character.modifiersForCoreSkills[skill]
-    return "\(skill) (\(bonus >= 0 ? "+" : "")\(bonus)) (\(attribute))"
+    let drawnWeaponsWithDuplicates: [any WeaponSnapshot] = character.drawnWeapons
+    let drawnWeapons = KeyedSet(
+        removingDuplicatesFrom: drawnWeaponsWithDuplicates.map(AnyWeaponSnapshot.init))
+    let weaponsYouCannotUseThisSkillFor = drawnWeapons.filter { $0.weaponsSkill.coreSkill == skill }
+    let warning =
+        weaponsYouCannotUseThisSkillFor.count > 0
+        ? " [gives no advantage for \(weaponsYouCannotUseThisSkillFor.map { "\($0)" }.joined(separator: " or "))]"
+        : ""
+    return "\(skill) (\(bonus >= 0 ? "+" : "")\(bonus)) (\(attribute))\(warning)"
 }
