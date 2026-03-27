@@ -87,3 +87,8 @@ extension Strike: MutliParserCombatAction {
         }
     }
 }
+
+extension Strike {
+    public static let oneLineHelp =
+        "Deal full damage on a success, or partial damage if you choose to graze."
+}

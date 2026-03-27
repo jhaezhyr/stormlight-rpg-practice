@@ -31,3 +31,8 @@ extension HowToRecover: CustomStringConvertible {
         "restore \(amountHealth) health and \(amountFocus) focus\(amountLeftover > 0 ? ", leaving \(amountLeftover) leftover" : "")"
     }
 }
+extension InteractiveRecover {
+    public static func oneLineHelp(_ character: any RpgCharacterSnapshot) -> String {
+        "Roll your recovery die to gain \(character.recoveryDie) health or focus"
+    }
+}

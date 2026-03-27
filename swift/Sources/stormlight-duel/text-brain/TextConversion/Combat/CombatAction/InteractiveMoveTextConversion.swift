@@ -45,3 +45,8 @@ extension Direction1D: CliArgsContextFreeConvertibleType {
 extension InteractiveMove: CustomStringConvertible {
     public var description: String { "move" }
 }
+extension InteractiveMove {
+    public static func oneLineHelp(_ character: any RpgCharacterSnapshot) -> String {
+        "Move up to \(character.movementRate)ft"
+    }
+}

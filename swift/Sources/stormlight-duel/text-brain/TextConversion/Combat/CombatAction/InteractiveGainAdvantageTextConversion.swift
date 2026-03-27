@@ -59,3 +59,8 @@ public let skillForGainAdvantageOptionDescriber: OptionDescriber<CoreSkillName> 
         : ""
     return "\(skill) (\(bonus >= 0 ? "+" : "")\(bonus)) (\(attribute))\(warning)"
 }
+
+extension GainAdvantage {
+    static let oneLineHelp =
+        "Attempt to improve your next strike by finding a target's weakness, using one of your strengths."
+}
