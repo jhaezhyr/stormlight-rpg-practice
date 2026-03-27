@@ -1,4 +1,4 @@
-public enum DecisionCode: Sendable, Equatable {
+public enum DecisionCode: Sendable, Equatable, Hashable {
     case understanding
     case shouldGraze
     case initiative
