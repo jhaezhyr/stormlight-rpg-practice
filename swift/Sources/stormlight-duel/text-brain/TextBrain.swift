@@ -45,6 +45,7 @@ public actor TextBrain<Connection: TextInterfaceConnection>: RpgCharacterBrain {
             code, type: C.Element.self, in: gameSnapshot)
         return try await decideBetweenOptions(
             Array(options),
+            forCode: code,
             prompt: "\(code)",
             extraInterface: extraInterface,
             parsers: parsers,
@@ -59,18 +60,27 @@ public actor TextBrain<Connection: TextInterfaceConnection>: RpgCharacterBrain {
     @MainActor
     private func decideBetweenOptions<T: Sendable>(
         _ options: [T]?,
+        forCode code: DecisionCode,
         prompt: String,
         extraInterface: [String]? = nil,
         parsers: [any CliArgsParserProtocol] = [],
         displayParseableClassesInHud: Bool = false,
         in gameSnapshot: GameSnapshot,
     ) async throws -> T {
+        let describeOptionFn: OptionDescriber<T> = optionDescriber(
+            forCode: code,
+            andType: T.self
+        )
+        let describeParserFn: ParserDescriber = parserDescriber(forCode: code)
+
         var message = prompt
         message +=
-            (options?.enumerated().map { (i, x) in "\n:\(i + 1) \(x)" }.joined()
-                ?? "")
+            (options?.enumerated().map {
+                (i, x) in "\n:\(i + 1) \(describeOptionFn(x, gameSnapshot, self.characterRef))"
+            }.joined() ?? "")
         if displayParseableClassesInHud {
-            message += parsers.map { "\n:\($0.helpText)" }.joined()
+            message += parsers.map { "\n:\(describeParserFn($0, gameSnapshot, self.characterRef))" }
+                .joined()
         }
         choiceLoop: while true {
             guard
@@ -240,6 +250,7 @@ extension TextBrain {
         while true {
             let answer: CombatChoice = try await decideBetweenOptions(
                 nil,
+                forCode: .combatChoice,
                 prompt:
                     "You have \(character.combatState!.actionsRemaining) actions. What is your combat choice?",
                 parsers: parsers,
@@ -268,6 +279,7 @@ extension TextBrain {
         //await printHUD("You have \(movementRemaining) movement remaining.")
         let answer: DecideOrOther<Direction1D> = try await decideBetweenOptions(
             options,
+            forCode: .directionToMove5Ft,
             prompt: "Which direction will you step 5ft?",
             parsers: [
                 CliArgsParser<DecideOrOther<Direction1D>>(parsers: [Direction1D.parser]) {

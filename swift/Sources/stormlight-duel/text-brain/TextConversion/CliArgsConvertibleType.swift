@@ -30,6 +30,7 @@ public protocol CliArgsParserProtocol {
     associatedtype Value
     var helpText: Substring { get }
     func parse(args: [Any], context: CliArgsConversionContext) throws(CliParseError) -> Value?
+    func map<U>(_ mapFn: @escaping (Value) -> U) -> CliArgsParser<U>
 }
 public struct CliArgsParser<T>: CliArgsParserProtocol {
     public let helpText: Substring
