@@ -49,6 +49,9 @@ public protocol RpgCharacterSharedProtocol: Keyed where Key == RpgCharacterRef {
 
     var mainHand: ItemRef? { get set }
     var offHand: ItemRef? { get set }
+
+    associatedtype WeaponType
+    var drawnWeapons: [WeaponType] { get }
 }
 extension RpgCharacterSharedProtocol {
     public var primaryKey: RpgCharacterRef {
@@ -56,10 +59,26 @@ extension RpgCharacterSharedProtocol {
     }
 }
 extension RpgCharacterSharedProtocol {
-    var modifiers: [SkillName: Int] {
+    public var modifiers: [SkillName: Int] {
         [SkillName: Int].init(
             uniqueKeysWithValues: modifiersForCoreSkills.map { (cs, v) in (SkillName.core(cs), v) }
                 + modifiersForOtherSkills.map { (os, v) in (os, v) })
+    }
+    public var drawnWeapons: [WeaponType] {
+        let main = self.mainHand.compactMap { equipment[$0]?.core.trueSelf as? WeaponType }
+        let off = self.offHand.compactMap { equipment[$0]?.core.trueSelf as? WeaponType }
+        return (main.map { [$0] } ?? []) + (off.map { [$0] } ?? [])
+    }
+}
+
+extension Optional {
+    public func compactMap<T>(_ fn: (Wrapped) -> T?) -> T? {
+        switch self {
+        case .none:
+            nil
+        case .some(let wrapped):
+            fn(wrapped)
+        }
     }
 }
 
@@ -233,6 +252,11 @@ public func doDamage(
 
 /// Cannot hold one itself recursively. `AnyRpgCharacter(AnyRpgCharacter(someChar)).core === someChar`
 public class AnyRpgCharacter: RpgCharacter {
+    public typealias CharacterFeatureType = AnyCharacterFeature
+    public typealias ConditionType = AnyCondition
+    public typealias ItemType = AnyItem
+    public typealias WeaponType = any Weapon
+
     public var name: String { core.name }
     public var attributes: CompleteDictionary<AttributeName, Int> { core.attributes }
     public var ranksInCoreSkills: CompleteDictionary<CoreSkillName, Int> { core.ranksInCoreSkills }

@@ -1,6 +1,6 @@
 /// An item used in combat to do the Strike action.
 public protocol WeaponSharedProtocol: Item, ItemSnapshot {
-    var type: WeaponType { get }
+    var type: WeaponSpecies { get }
     var weaponName: WeaponName { get }
     var weaponsSkill: WeaponsSkill { get }
     var range: WeaponRange { get }
@@ -8,7 +8,7 @@ public protocol WeaponSharedProtocol: Item, ItemSnapshot {
     var damageType: DamageType { get }
     var traits: [(trait: any WeaponTrait, condition: TraitCondition)] { get }
 }
-public protocol Weapon: WeaponSharedProtocol {
+public protocol Weapon: WeaponSharedProtocol where WeaponType == any Weapon {
     func activeTraits(
         whenEquippedBy characterRef: RpgCharacterRef,
         in gameSnapshot: GameSnapshot,
@@ -89,7 +89,7 @@ public enum WeaponRange: Sendable, Hashable {
     case ranged(short: Distance, long: Distance)
 }
 
-public enum WeaponType: CaseIterable, Sendable, Hashable {
+public enum WeaponSpecies: CaseIterable, Sendable, Hashable {
     case lightWeaponry
     case heavyWeaponry
     case specialWeapons

@@ -12,6 +12,9 @@ where
 }
 
 public struct AnyRpgCharacterSnapshot: RpgCharacterSnapshot {
+    public typealias ItemType = AnyItemSnapshot
+    public typealias WeaponType = any WeaponSnapshot
+
     public var modifiersForCoreSkills: CompleteDictionary<CoreSkillName, Int> {
         core.modifiersForCoreSkills
     }

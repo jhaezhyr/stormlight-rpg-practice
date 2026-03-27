@@ -2,6 +2,8 @@ import CompleteDictionary
 import KeyedSet
 
 public struct PlayerRpgCharacterSnapshot: RpgCharacterSnapshot {
+    public typealias WeaponType = any WeaponSnapshot
+
     public var name: String
     public var attributes: CompleteDictionary<AttributeName, Int>
     public var ranksInCoreSkills: CompleteDictionary<CoreSkillName, Int>

@@ -1,6 +1,6 @@
 public struct BasicWeapon: Weapon, Sendable, ItemSnapshot {
     public var weaponName: WeaponName
-    public var type: WeaponType
+    public var type: WeaponSpecies
     public var weaponsSkill: WeaponsSkill
     public var range: WeaponRange
     public var damage: RandomDistribution
@@ -12,7 +12,7 @@ public struct BasicWeapon: Weapon, Sendable, ItemSnapshot {
 
     init(
         weaponName: WeaponName,
-        type: WeaponType,
+        type: WeaponSpecies,
         weaponsSkill: WeaponsSkill,
         range: WeaponRange,
         damage: RandomDistribution,

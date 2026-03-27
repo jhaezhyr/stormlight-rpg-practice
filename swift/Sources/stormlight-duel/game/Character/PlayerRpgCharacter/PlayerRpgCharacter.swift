@@ -27,6 +27,8 @@ extension PlayerRpgCharacterProtocol {
 }
 
 public class PlayerRpgCharacter: PlayerRpgCharacterProtocol {
+    public typealias WeaponType = any Weapon
+
     public var name: String
 
     public var size: CharacterSize { .normal }
