@@ -26,5 +26,7 @@ private func generalize<T>(_ fn: @escaping OptionDescriber<T>) -> OptionDescribe
     }
 }
 private let describeOptionFunctionRegistry: [DecisionCode: OptionDescriber<Any>] = [
-    .skillForGainAdvantage: generalize(skillForGainAdvantageOptionDescriber)
+    .skillForGainAdvantage: generalize(skillForGainAdvantageOptionDescriber),
+    .initiative: generalize(initiativeOptionDescriber),
+    .shouldGraze: generalize(grazeOptionDescriber),
 ]

@@ -25,3 +25,6 @@ extension InteractiveDrawWeapons: CliArgsContextFreeConvertibleType {
 extension InteractiveDrawWeapons: CustomStringConvertible {
     public var description: String { Self.actionName }
 }
+extension InteractiveDrawWeapons {
+    public static let oneLineHelp = "Draw weapons, switch their hands, or put them away."
+}

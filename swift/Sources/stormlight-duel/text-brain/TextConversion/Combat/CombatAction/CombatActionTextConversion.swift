@@ -73,3 +73,27 @@ struct EndTurn {}
     }
     return CombatChoice.endTurn
 }
+
+public func combatActionParserDescriber(
+    parser: any CliArgsParserProtocol, snapshot: GameSnapshot, characterRef: RpgCharacterRef
+) -> String {
+    guard let character = snapshot.characters[characterRef] else {
+        fatalError("Character missing")
+    }
+    return switch parser.valueTypeId {
+    case "\(Strike.self)":
+        "\(parser.helpText)\n  ? \(Strike.oneLineHelp)"
+    case "\(GainAdvantage.self)":
+        "\(parser.helpText)\n  ? \(GainAdvantage.oneLineHelp)"
+    case "\(InteractiveDrawWeapons.self)":
+        "\(parser.helpText)\n  ? \(InteractiveDrawWeapons.oneLineHelp)"
+    case "\(InteractiveRecover.self)":
+        "\(parser.helpText)\n  ? \(InteractiveRecover.oneLineHelp(character))"
+    case "\(InteractiveDrawWeapons.self)":
+        "\(parser.helpText)\n  ? \(InteractiveMove.oneLineHelp(character))"
+    default:
+        "\(parser.helpText)"
+    }
+    // TODO Actually, the parser is always returning "CombatChoice"s. Whoops.
+}
+private let d: ParserDescriber = combatActionParserDescriber
