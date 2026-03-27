@@ -40,3 +40,13 @@ extension InteractiveGainAdvantage: CustomStringConvertible {
         "gain advantage\(self.opponent.map {" over \($0.name)"} ?? "")\(self.chosenSkill.map {" using \($0)"} ?? "")"
     }
 }
+
+public let skillForGainAdvantageOptionDescriber: OptionDescriber<CoreSkillName> = {
+    skill, snapshot, characterRef in
+    guard let character = snapshot.characters[characterRef] else {
+        fatalError("Cannot describe skill for gain advantage action")
+    }
+    let attribute = skill.attribute
+    let bonus = character.modifiersForCoreSkills[skill]
+    return "\(skill) (\(bonus >= 0 ? "+" : "")\(bonus)) (\(attribute))"
+}
