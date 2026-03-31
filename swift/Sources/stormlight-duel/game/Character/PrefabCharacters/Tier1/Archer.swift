@@ -72,6 +72,7 @@ public struct ImmobilizingShotReactionFeature: CharacterFeature {
                 else {
                     return
                 }
+                let longbowRef = longbow.primaryKey
                 // TODO Can sense the moving subject
                 guard character.combatState!.reactionsRemaining >= 1 && character.focus.value >= 1
                 else {
@@ -120,7 +121,7 @@ public struct ImmobilizingShotReactionFeature: CharacterFeature {
                         opponent.conditions.upsert(.init(condition))
                     }
                 ]) { gameSession in
-                    try await Strike(subjectRef, with: longbow.primaryKey).action(
+                    try await Strike(subjectRef, with: longbowRef).action(
                         by: characterRef
                     )
                 }

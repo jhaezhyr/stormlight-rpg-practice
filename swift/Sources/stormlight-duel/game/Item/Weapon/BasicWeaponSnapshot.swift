@@ -1,30 +1,24 @@
-public struct BasicWeapon: Weapon, Sendable {
-    public typealias WeaponType = any Weapon
-    public func _snapshot(in gameSession: isolated GameSession) -> any ItemSnapshot {
-        BasicWeaponSnapshot(
-            name: name, weaponName: weaponName, type: type, weaponsSkill: weaponsSkill,
-            range: range, damage: damage, damageType: damageType, traits: traits.map { $0 },
-            price: price, weight: weight, in: gameSession)
-    }
+public struct BasicWeaponSnapshot: WeaponSnapshot, Sendable {
     public var weaponName: WeaponName
     public var type: WeaponSpecies
     public var weaponsSkill: WeaponsSkill
     public var range: WeaponRange
     public var damage: RandomDistribution
     public var damageType: DamageType
-    public var traits: [(trait: any WeaponTrait, condition: TraitCondition)]
+    public var traits: [(trait: any WeaponTraitSnapshot, condition: TraitCondition)]
     public var price: Money?
     public var weight: Weight
     public var name: String
 
     init(
+        name: String,
         weaponName: WeaponName,
         type: WeaponSpecies,
         weaponsSkill: WeaponsSkill,
         range: WeaponRange,
         damage: RandomDistribution,
         damageType: DamageType,
-        traits: [(trait: any WeaponTrait, condition: TraitCondition)],
+        traits: [(trait: any WeaponTraitSnapshot, condition: TraitCondition)],
         price: Money?,
         weight: Weight,
         in gameSession: isolated GameSession
@@ -38,7 +32,6 @@ public struct BasicWeapon: Weapon, Sendable {
         self.traits = traits
         self.price = price
         self.weight = weight
-        let id = gameSession.nextId()
-        name = "\(self.weaponName) \(id)"
+        self.name = name
     }
 }
