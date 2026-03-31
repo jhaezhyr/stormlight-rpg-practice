@@ -1,5 +1,5 @@
 /// An item used in combat to do the Strike action.
-public protocol WeaponSharedProtocol: Item, ItemSnapshot {
+public protocol WeaponSharedProtocol: ItemSharedProtocol {
     var type: WeaponSpecies { get }
     var weaponName: WeaponName { get }
     var weaponsSkill: WeaponsSkill { get }
@@ -8,7 +8,7 @@ public protocol WeaponSharedProtocol: Item, ItemSnapshot {
     var damageType: DamageType { get }
     var traits: [(trait: any WeaponTrait, condition: TraitCondition)] { get }
 }
-public protocol Weapon: WeaponSharedProtocol where WeaponType == any Weapon {
+public protocol Weapon: WeaponSharedProtocol, Item where WeaponType == any Weapon {
     func activeTraits(
         whenEquippedBy characterRef: RpgCharacterRef,
         in gameSnapshot: GameSnapshot,
@@ -82,7 +82,9 @@ extension Weapon {
         me.equipment[itemRef]?.isReady = true
     }
 }
-public protocol WeaponSnapshot: WeaponSharedProtocol {}
+public protocol WeaponSnapshot: WeaponSharedProtocol, ItemSnapshot
+where WeaponType == any WeaponSnapshot {
+}
 public struct AnyWeaponSnapshot: WeaponSharedProtocol {
     public init(_ core: any WeaponSnapshot) {
         self.core = core
@@ -176,10 +178,11 @@ public enum WeaponName: String, CaseIterable, Sendable, Hashable {
 }
 
 public protocol WeaponTrait: Sendable {}
+public typealias WeaponTraitSnapshot = WeaponTrait
 
 extension RpgCharacterSharedProtocol {
     func meets(_ traitCondition: TraitCondition, for weaponTrait: WeaponName) -> Bool {
-        let iAmExpert = false  // TODO Make this affected by actual expertises
+        let iAmExpert = true  // TODO Make this affected by actual expertises
         switch (traitCondition, iAmExpert) {
         case (.expert, true), (.notExpert, false), (.always, _): return true
         default: return false

@@ -1,4 +1,4 @@
-public protocol ItemSnapshot: ItemSharedProtocol, Sendable {
+public protocol ItemSnapshot: ItemSharedProtocol, Sendable where WeaponType == any WeaponSnapshot {
 }
 
 public struct AnyItemSnapshot: ItemSnapshot {
