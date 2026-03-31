@@ -18,6 +18,9 @@ extension InteractiveMove: CliArgsContextFreeConvertibleType {
     }
 
     public static var helpText: Substring { "(m)ove" }
+    public static var oneLineHelp: String? {
+        "Move up to your movement rate"
+    }
 }
 
 extension Direction1D: CliArgsContextFreeConvertibleType {

@@ -20,6 +20,9 @@ extension InteractiveRecover: CliArgsContextFreeConvertibleType {
     public static var helpText: Substring {
         "(r)ecover"
     }
+    public static var oneLineHelp: String? {
+        "Roll your recovery die to restore health or focus"
+    }
 }
 
 extension InteractiveRecover: CustomStringConvertible {
@@ -33,6 +36,6 @@ extension HowToRecover: CustomStringConvertible {
 }
 extension InteractiveRecover {
     public static func oneLineHelp(_ character: any RpgCharacterSnapshot) -> String {
-        "Roll your recovery die to gain \(character.recoveryDie) health or focus"
+        "Roll your recovery die to restore \(character.recoveryDie) health or focus"
     }
 }

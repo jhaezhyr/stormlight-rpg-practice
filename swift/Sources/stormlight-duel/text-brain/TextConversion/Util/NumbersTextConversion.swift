@@ -16,3 +16,9 @@ extension Int: CliArgsContextFreeConvertibleType {
 
     public static var helpText: Substring { "###" }
 }
+
+extension RandomDistribution: CustomStringConvertible {
+    public var description: String {
+        self.dice.map { (die, num) in "\(num)\(die)" }.joined(separator: "+")
+    }
+}

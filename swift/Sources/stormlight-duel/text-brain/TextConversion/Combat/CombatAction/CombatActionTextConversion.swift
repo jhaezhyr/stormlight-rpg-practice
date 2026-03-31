@@ -5,7 +5,7 @@ extension CombatAction {
         guard let parser = Self.self as? (any CliArgsConvertibleType.Type) else {
             return nil
         }
-        return CliArgsParser<Self>(helpText: parser.helpText) {
+        return CliArgsParser<Self>(helpText: parser.helpText, oneLineHelp: parser.oneLineHelp) {
             (args, context) throws(CliParseError) in
             let result = try parser.init(args: args, context: context)
             return result.map { $0 as! Self }
@@ -54,46 +54,75 @@ private let MutliParserCombatAction_registry:
         "\(Strike.self)": Strike.combatChoiceParsers(context:)
     ]
 
-struct EndTurn {}
-@MainActor public let endTurnParser = CliArgsParser<CombatChoice>(helpText: "(e)nd") {
-    args, context in
-    if let alreadyParsedMove = args.first as? CombatChoice,
-        args.count == 1,
-        case .endTurn = alreadyParsedMove
-    {
-        return alreadyParsedMove
-    }
-    var remaining = args[...]
-    guard
-        let firstArg = remaining.popFirst(),
-        let firstArgAsString = (firstArg as? Substring)?.lowercased(),
-        firstArgAsString == "e" || firstArgAsString == "end"
-    else {
-        return nil
-    }
-    return CombatChoice.endTurn
+// DescribableOption
+
+public protocol DescribableOption {
+    func optionDescription(context: CliArgsConversionContext) -> OptionDescription
 }
 
-public func combatActionParserDescriber(
-    parser: any CliArgsParserProtocol, snapshot: GameSnapshot, characterRef: RpgCharacterRef
-) -> String {
-    guard let character = snapshot.characters[characterRef] else {
-        fatalError("Character missing")
+extension CombatChoice: DescribableOption {
+    public func optionDescription(context: CliArgsConversionContext) -> OptionDescription {
+        switch self {
+        case .action(let action):
+            let initialDescription: OptionDescription
+            if let describableOption = action as? DescribableOption {
+                initialDescription = describableOption.optionDescription(context: context)
+            } else {
+                initialDescription = OptionDescription(name: "\(action)")
+            }
+            return OptionDescription(
+                name: "[\(action.costDescription(context: context))] \(initialDescription.name)",
+                oneLineHelp: initialDescription.oneLineHelp)
+        case .endTurn:
+            return EndTurn.optionDescription
+        }
     }
-    return switch parser.valueTypeId {
-    case "\(Strike.self)":
-        "\(parser.helpText)\n  ? \(Strike.oneLineHelp)"
-    case "\(GainAdvantage.self)":
-        "\(parser.helpText)\n  ? \(GainAdvantage.oneLineHelp)"
-    case "\(InteractiveDrawWeapons.self)":
-        "\(parser.helpText)\n  ? \(InteractiveDrawWeapons.oneLineHelp)"
-    case "\(InteractiveRecover.self)":
-        "\(parser.helpText)\n  ? \(InteractiveRecover.oneLineHelp(character))"
-    case "\(InteractiveDrawWeapons.self)":
-        "\(parser.helpText)\n  ? \(InteractiveMove.oneLineHelp(character))"
-    default:
-        "\(parser.helpText)"
-    }
-    // TODO Actually, the parser is always returning "CombatChoice"s. Whoops.
 }
-private let d: ParserDescriber = combatActionParserDescriber
+
+// End Turn
+
+struct EndTurn: CliArgsContextFreeConvertibleType {
+    public static let helpText: Substring = "(e)nd"
+    public init() {}
+    public init?(args: [Any]) throws(CliParseError) {
+        if let alreadyParsedMove = args.first as? EndTurn,
+            args.count == 1
+        {
+            self = alreadyParsedMove
+            return
+        }
+        var remaining = args[...]
+        guard
+            let firstArg = remaining.popFirst(),
+            let firstArgAsString = (firstArg as? Substring)?.lowercased(),
+            firstArgAsString == "e" || firstArgAsString == "end"
+        else {
+            return nil
+        }
+    }
+}
+
+extension CombatAction {
+    public func costDescription(context: CliArgsConversionContext) -> String {
+        let actionCost = self.actionCost(by: context.characterRef, in: context.game)
+        let actionChunk = "\(actionCost)▶"
+        let reactionCost = self.reactionCost(by: context.characterRef, in: context.game)
+        let reactionChunk = reactionCost > 0 ? "\(reactionCost)↻" : ""
+        let focusCost = self.focusCost(by: context.characterRef, in: context.game)
+        let focusChunk = focusCost > 0 ? "\(focusCost)♦︎" : ""
+        let costChunk = [actionChunk, reactionChunk, focusChunk].filter { !$0.isEmpty }.joined(
+            separator: " ")
+        return costChunk
+    }
+    public static func maybeCostDescription(context: CliArgsConversionContext) -> String {
+        let actionCost = self.actionCost(by: context.characterRef, in: context.game)
+        let actionChunk = "\(actionCost)▶"
+        let reactionCost = self.reactionCost(by: context.characterRef, in: context.game)
+        let reactionChunk = reactionCost > 0 ? "\(reactionCost)↻" : ""
+        let focusCost = self.focusCost(by: context.characterRef, in: context.game)
+        let focusChunk = focusCost > 0 ? "\(focusCost)♦︎" : ""
+        let costChunk = [actionChunk, reactionChunk, focusChunk].filter { !$0.isEmpty }.joined(
+            separator: " ")
+        return costChunk
+    }
+}

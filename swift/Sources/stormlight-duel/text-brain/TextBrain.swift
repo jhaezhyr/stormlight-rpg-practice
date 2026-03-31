@@ -245,7 +245,7 @@ extension TextBrain {
                     return [parser]
                 }
                 return []
-            } + [endTurnParser]
+            } + [EndTurn.parser.map { _ in .endTurn }]
 
         while true {
             let answer: CombatChoice = try await decideBetweenOptions(

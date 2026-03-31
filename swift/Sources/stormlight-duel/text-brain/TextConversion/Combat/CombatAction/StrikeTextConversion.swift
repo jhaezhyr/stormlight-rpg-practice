@@ -63,6 +63,8 @@ extension Strike: CliArgsConvertibleType {
     }
 
     public static var helpText: Substring { "stri(k)e [target] [weapon]" }
+    public static let oneLineHelp: String? =
+        "Deal full damage on a success, or partial damage if you choose to graze."
 }
 
 extension Strike: MutliParserCombatAction {
@@ -86,9 +88,37 @@ extension Strike: MutliParserCombatAction {
             }
         }
     }
+
+    public static func combatActionOptions(context: CliArgsConversionContext) -> [CombatAction] {
+        do {
+            let possibleStrikes = try Strike.possibleStrikes(
+                for: context.characterRef,
+                in: context.game
+            )
+            // TODO sort strikes by avg damage they could do
+            return possibleStrikes
+        } catch {
+            print("\(error)")
+            return []
+        }
+    }
 }
 
-extension Strike {
-    public static let oneLineHelp =
-        "Deal full damage on a success, or partial damage if you choose to graze."
+extension Strike: DescribableOption {
+    public func optionDescription(context: CliArgsConversionContext) -> OptionDescription {
+        let description = OptionDescription(name: "\(self)")
+        guard let character = context.game.characters[context.characterRef]?.core else {
+            return description
+        }
+        guard let weapon = character.equipment[self.weaponToStrikeWith]?.core.core.asWeapon else {
+            return description
+        }
+        let oneLineHelp =
+            "\(weapon.weaponName) (\(weapon.damage)+\(character.modifiersForCoreSkills[weapon.weaponsSkill.coreSkill]) [\(weapon.weaponsSkill.coreSkill)] \(weapon.damageType)) "
+            + "\(weapon.range) "
+            + weapon.activeTraits(whenEquippedBy: context.characterRef, in: context.game).map { t in
+                "\(t)"
+            }.joined(separator: ", ")
+        return OptionDescription(name: description.name, oneLineHelp: oneLineHelp)
+    }
 }
