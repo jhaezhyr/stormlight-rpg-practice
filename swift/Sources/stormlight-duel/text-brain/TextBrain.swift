@@ -249,7 +249,9 @@ extension TextBrain {
 
         while true {
             let answer: CombatChoice = try await decideBetweenOptions(
-                nil,
+                Strike.possibleStrikes(for: self.characterRef, in: gameSnapshot).map {
+                    .action($0)
+                },
                 forCode: .combatChoice,
                 prompt:
                     "You have \(character.combatState!.actionsRemaining) actions. What is your combat choice?",
