@@ -41,7 +41,7 @@ func makeBrain(
             ui: TextInterfaceProxy(connection: connection)
         )
     } else {
-        return Level1CpuBrain(for: ref)
+        return Mark1CpuBrain(for: ref)
     }
 }
 

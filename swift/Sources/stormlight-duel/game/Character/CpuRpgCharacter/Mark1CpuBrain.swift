@@ -1,4 +1,4 @@
-public struct Level1CpuBrain: RpgCharacterBrain {
+public struct Mark1CpuBrain: RpgCharacterBrain {
     public let meRef: RpgCharacterRef
 
     public init(for meRef: RpgCharacterRef) {
