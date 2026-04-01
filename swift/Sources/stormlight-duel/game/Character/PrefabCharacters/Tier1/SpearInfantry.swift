@@ -20,9 +20,9 @@ extension PrefabCharacters {
             ],
             equipment: [
                 .init(BasicArmorTypes.chain(), isReady: true),
-                .init(basicWeapons[.shortspear]!(gameSession), isReady: true),
+                .init(basicWeapons[.shortspear]!(gameSession), isReady: false),
                 .init(basicWeapons[.shortbow]!(gameSession), isReady: false),
-                .init(basicWeapons[.shield]!(gameSession), isReady: false),
+                .init(basicWeapons[.shield]!(gameSession), isReady: true),
             ],
             attributes: [
                 .strength: 2,
