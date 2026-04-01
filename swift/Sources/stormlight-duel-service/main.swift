@@ -54,16 +54,38 @@ func startPvPAsHost(_ connection: WebTextInterfaceConnection) async throws {
 
     do {
         try await GameSession.playTwoPlayerGame(
-            brainForPlayer1: { playerRef in
+            brainForPlayer1: { [guestConnection] playerRef in
                 return try await TextBrain(
                     characterRef: playerRef,
-                    ui: TextInterfaceProxy(connection: connection)
+                    ui: TextInterfaceProxy(connection: connection),
+                    onBeforePrompt: { name, prompt in
+                        await guestConnection.display(
+                            "hint",
+                            message: "⏳ \(name) is deciding: \(prompt)",
+                            interface: nil
+                        )
+                    },
+                    onAfterPrompt: { name in
+                        // The next game event will naturally replace the hint,
+                        // so no explicit clear is needed.
+                    }
                 )
             },
-            brainForPlayer2: { playerRef in
+            brainForPlayer2: { [connection] playerRef in
                 return try await TextBrain(
                     characterRef: playerRef,
-                    ui: TextInterfaceProxy(connection: guestConnection)
+                    ui: TextInterfaceProxy(connection: guestConnection),
+                    onBeforePrompt: { name, prompt in
+                        await connection.display(
+                            "hint",
+                            message: "⏳ \(name) is deciding: \(prompt)",
+                            interface: nil
+                        )
+                    },
+                    onAfterPrompt: { name in
+                        // The next game event will naturally replace the hint,
+                        // so no explicit clear is needed.
+                    }
                 )
             }
         )
