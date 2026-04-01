@@ -2,8 +2,15 @@ public struct Broadcaster: Sendable {
     public init() {}
     func tellAll<M: Message>(_ message: M, in gameSession: isolated GameSession = #isolation) async
     {
-        for character in gameSession.game.characters {
-            await character.brain.hear(message, in: gameSession.game.snapshot())
+        let snapshot = gameSession.game.snapshot()
+        let brains = gameSession.game.characters.map { $0.brain }
+        await withTaskGroup(of: Void.self) { group in
+            for brain in brains {
+                group.addTask {
+                    await brain.hear(message, in: snapshot)
+                }
+            }
+            await group.waitForAll()
         }
     }
 
