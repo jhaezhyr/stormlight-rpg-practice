@@ -1,21 +1,28 @@
 import Foundation
+import stormlight_duel
 
 actor Lobby {
     static let shared = Lobby()
-    private var pendingMatches: [String: CheckedContinuation<WebTextInterfaceConnection, Error>] =
-        [:]
+    private var pendingMatches:
+        [String: CheckedContinuation<(WebTextInterfaceConnection, PlayerBuilderTemplate), Error>] =
+            [:]
 
-    // Host suspends here until a guest joins. Returns the guest's connection.
-    func hostMatch(arenaCode: String) async throws -> WebTextInterfaceConnection {
+    // Host suspends here until a guest joins. Returns the guest's connection and template.
+    func hostMatch(arenaCode: String) async throws -> (
+        WebTextInterfaceConnection, PlayerBuilderTemplate
+    ) {
         try await withCheckedThrowingContinuation { pendingMatches[arenaCode] = $0 }
     }
 
     // Guest calls this, resumes host's continuation. Throws if code invalid.
-    func joinMatch(arenaCode: String, guestConnection: WebTextInterfaceConnection) throws {
+    func joinMatch(
+        arenaCode: String, guestConnection: WebTextInterfaceConnection,
+        guestTemplate: PlayerBuilderTemplate
+    ) throws {
         guard let cont = pendingMatches.removeValue(forKey: arenaCode) else {
             throw LobbyError.noSuchArenaCode
         }
-        cont.resume(returning: guestConnection)
+        cont.resume(returning: (guestConnection, guestTemplate))
     }
 
     func cancelMatch(arenaCode: String) {
