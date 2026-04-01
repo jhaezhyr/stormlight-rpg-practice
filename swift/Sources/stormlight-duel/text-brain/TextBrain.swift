@@ -5,7 +5,24 @@ public actor TextBrain<Connection: TextInterfaceConnection>: RpgCharacterBrain {
     let characterRef: RpgCharacterRef
     private var ui: TextInterfaceProxy<Connection>
 
-    public init(characterRef: RpgCharacterRef, ui: TextInterfaceProxy<Connection>) async throws {
+    /// Callback fired just before prompting the player.
+    /// Other players can use this to show a "waiting" alert.
+    private let onBeforePrompt:
+        (@Sendable (_ characterName: String, _ prompt: String) async -> Void)?
+
+    /// Callback fired just after the player responds to a prompt.
+    /// Other players can use this to clear the "waiting" alert.
+    private let onAfterPrompt: (@Sendable (_ characterName: String) async -> Void)?
+
+    public init(
+        characterRef: RpgCharacterRef,
+        ui: TextInterfaceProxy<Connection>,
+        onBeforePrompt: (@Sendable (_ characterName: String, _ prompt: String) async -> Void)? =
+            nil,
+        onAfterPrompt: (@Sendable (_ characterName: String) async -> Void)? = nil
+    ) async throws {
+        self.onBeforePrompt = onBeforePrompt
+        self.onAfterPrompt = onAfterPrompt
         self.characterRef = characterRef
         self.ui = ui
         _ = try await self.decideBetweenOptions(
@@ -152,7 +169,9 @@ public actor TextBrain<Connection: TextInterfaceConnection>: RpgCharacterBrain {
     }
 
     func read(_ message: String, interface: String? = nil) async throws -> String? {
+        await onBeforePrompt?(characterRef.name, message)
         let answer = try await ui.prompt(message, interface: interface)
+        await onAfterPrompt?(characterRef.name)
         return answer
     }
 

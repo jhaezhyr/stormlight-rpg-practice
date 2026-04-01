@@ -7,6 +7,7 @@ actor WebTextInterfaceConnection: TextInterfaceConnection {
     let outbound: WebSocketOutboundWriter
     var savedAnswers: [String] = []
     var shouldSkip: Bool = false
+    private var gameEndContinuation: CheckedContinuation<Void, Error>?
 
     init(outbound: WebSocketOutboundWriter) {
         self.outbound = outbound
@@ -77,6 +78,20 @@ actor WebTextInterfaceConnection: TextInterfaceConnection {
                 throw CancellationError()
             }
         }
+    }
+
+    func waitForGameEnd() async throws {
+        try await withCheckedThrowingContinuation { self.gameEndContinuation = $0 }
+    }
+
+    func signalGameEnd() {
+        gameEndContinuation?.resume(returning: ())
+        gameEndContinuation = nil
+    }
+
+    func signalGameError(_ error: Error) {
+        gameEndContinuation?.resume(throwing: error)
+        gameEndContinuation = nil
     }
 
     private func send(_ message: OutboundMessage) async {
