@@ -30,65 +30,54 @@ func handleConnection(_ connection: WebTextInterfaceConnection) async throws {
     }
 }
 
-func startPvEGame(_ connection: WebTextInterfaceConnection) async throws {
-    try await GameSession.playSinglePlayerGame { playerRef in
-        return try await TextBrain(
-            characterRef: playerRef,
-            ui: TextInterfaceProxy(
-                connection: connection
-            )
+/// Creates a brain for a template based on whether it has a connection.
+func makeBrain(
+    for template: PlayerBuilderTemplate,
+    ref: RpgCharacterRef
+) async throws -> RpgCharacterBrain {
+    if let connection = template.connection as? WebTextInterfaceConnection {
+        return await TextBrain(
+            characterRef: ref,
+            ui: TextInterfaceProxy(connection: connection)
         )
+    } else {
+        return Level1CpuBrain(for: ref)
     }
 }
 
+func startPvEGame(_ connection: WebTextInterfaceConnection) async throws {
+    let builder = GameBuilderSession()
+    let playerTemplate = try await builder.buildPlayerCharacter(connection: connection)
+    let enemyTemplate = try await builder.buildEnemyCharacter(connection: connection)
+    let session = try await GameSession.from(
+        [playerTemplate, enemyTemplate], brainFactory: makeBrain)
+    try await session.switch(to: Combat(map: Map.emptyDuel))
+}
+
 func startPvPAsHost(_ connection: WebTextInterfaceConnection) async throws {
+    let builder = GameBuilderSession()
+    let myTemplate = try await builder.buildPlayerCharacter(connection: connection)
+
     let arenaCode = generateArenaCode()
     await connection.display(
         "hint", message: "Your arena code: \(arenaCode)\nWaiting for opponent...", interface: nil)
 
-    let guestConnection = try await Lobby.shared.hostMatch(arenaCode: arenaCode)
+    let (guestConnection, guestTemplate) = try await Lobby.shared.hostMatch(arenaCode: arenaCode)
 
     await connection.display("hint", message: "Opponent joined! Starting...", interface: nil)
     await guestConnection.display(
         "hint", message: "Opponent joined! Starting...", interface: nil)
 
+    // Set up the templates with connections
+    var hostTemplate = myTemplate
+    hostTemplate.connection = connection as Any
+    var guestTemplateWithConn = guestTemplate
+    guestTemplateWithConn.connection = guestConnection as Any
+
     do {
-        try await GameSession.playTwoPlayerGame(
-            brainForPlayer1: { [guestConnection] playerRef in
-                return try await TextBrain(
-                    characterRef: playerRef,
-                    ui: TextInterfaceProxy(connection: connection),
-                    onBeforePrompt: { name, prompt in
-                        await guestConnection.display(
-                            "hint",
-                            message: "⏳ \(name) is deciding: \(prompt)",
-                            interface: nil
-                        )
-                    },
-                    onAfterPrompt: { name in
-                        // The next game event will naturally replace the hint,
-                        // so no explicit clear is needed.
-                    }
-                )
-            },
-            brainForPlayer2: { [connection] playerRef in
-                return try await TextBrain(
-                    characterRef: playerRef,
-                    ui: TextInterfaceProxy(connection: guestConnection),
-                    onBeforePrompt: { name, prompt in
-                        await connection.display(
-                            "hint",
-                            message: "⏳ \(name) is deciding: \(prompt)",
-                            interface: nil
-                        )
-                    },
-                    onAfterPrompt: { name in
-                        // The next game event will naturally replace the hint,
-                        // so no explicit clear is needed.
-                    }
-                )
-            }
-        )
+        let session = try await GameSession.from(
+            [hostTemplate, guestTemplateWithConn], brainFactory: makeBrain)
+        try await session.switch(to: Combat(map: Map.emptyDuel))
         await guestConnection.signalGameEnd()
     } catch {
         await guestConnection.signalGameError(error)
@@ -99,9 +88,13 @@ func startPvPAsHost(_ connection: WebTextInterfaceConnection) async throws {
 func startPvPAsGuest(_ connection: WebTextInterfaceConnection) async throws {
     await connection.display("prompt", message: "Enter arena code:", interface: nil)
     let arenaCode = try await connection.getAnswer()
-    let uppercodeCode = arenaCode.uppercased().trimmingCharacters(in: .whitespaces)
+    let uppercodeCode = arenaCode.uppercased().trimmingCharacters(in: .whitespacesAndNewlines)
 
-    try await Lobby.shared.joinMatch(arenaCode: uppercodeCode, guestConnection: connection)
+    var myTemplate = try await GameBuilderSession().buildPlayerCharacter(connection: connection)
+    myTemplate.connection = connection as Any
+
+    try await Lobby.shared.joinMatch(
+        arenaCode: uppercodeCode, guestConnection: connection, guestTemplate: myTemplate)
 
     await connection.display(
         "hint", message: "Joined! Waiting for host to start...", interface: nil)

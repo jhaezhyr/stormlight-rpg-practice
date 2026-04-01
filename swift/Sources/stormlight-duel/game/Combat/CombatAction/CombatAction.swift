@@ -145,6 +145,10 @@ extension CombatAction {
         guard let character = gameSession.game.anyCharacter(at: characterRef) else {
             return
         }
+        await gameSession.game.broadcaster.tellAll(
+            SingleTargetMessage(
+                w1: "$1 chooses to \(self)", wU: "You choose to \(self)", as1: characterRef),
+            in: gameSession)
         let gameSnapshot = gameSession.game.snapshot()
         character.focus.value -= focusCost(by: characterRef, in: gameSnapshot)
         character.combatState!.actionsTaken.insert(actionName)
@@ -152,10 +156,8 @@ extension CombatAction {
         character.combatState!.reactionsRemaining -= reactionCost(
             by: characterRef, in: gameSnapshot
         )
-
         try await gameSession.game.dispatch(
             CombatActionEvent(characterRef: characterRef, action: self))
-
         try await action(by: characterRef, in: gameSession)
     }
 }

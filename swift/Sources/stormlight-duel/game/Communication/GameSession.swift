@@ -11,9 +11,14 @@ public actor GameSession {
         return _nextId
     }
 
-    public static func playSinglePlayerGame<Brain: RpgCharacterBrain>(
-        brainForPlayer: @Sendable (_ characterRef: RpgCharacterRef) async throws -> Brain
-    ) async throws {
+    /// Creates a GameSession from player builder templates.
+    /// The brainFactory closure creates the appropriate brain for each template.
+    public static func from(
+        _ templates: [PlayerBuilderTemplate],
+        brainFactory:
+            @Sendable (_ template: PlayerBuilderTemplate, _ ref: RpgCharacterRef) async throws ->
+            RpgCharacterBrain
+    ) async throws -> GameSession {
         let session = GameSession(
             game: Game(
                 characters: [],
@@ -21,102 +26,49 @@ public actor GameSession {
                 gameMasterBrain: Level1CpuBrain(
                     for: RpgCharacterRef(name: "GM EN")
                 )))
-        func doIt(in session: isolated GameSession) async throws {
-            let player1IsArcher = Bool.random(using: &session.game.rng)
-            let player1Ref = RpgCharacterRef(
-                name: "Kal (\(player1IsArcher ? "Archer" : "Spear Infantry"))")
-            if player1IsArcher {
-                PrefabCharacters.archer(
-                    ref: player1Ref,
-                    isPlayer: true,
-                    brain: try await brainForPlayer(player1Ref),
-                    andAddTo: session,
-                )
-            } else {
-                PrefabCharacters.spearInfantry(
-                    ref: player1Ref,
-                    isPlayer: true,
-                    brain: try await brainForPlayer(player1Ref),
-                    andAddTo: session,
-                )
-            }
-            let player2IsArcher = Bool.random(using: &session.game.rng)
-            let player2Ref = RpgCharacterRef(
-                name: "Shallan (\(player2IsArcher ? "Archer" : "Spear Infantry"))")
-            if player2IsArcher {
-                PrefabCharacters.archer(
-                    ref: player2Ref,
-                    isPlayer: false,
-                    brain: Level1CpuBrain(
-                        for: player2Ref
-                    ),
-                    andAddTo: session,
-                )
-            } else {
-                PrefabCharacters.spearInfantry(
-                    ref: player2Ref,
-                    isPlayer: false,
-                    brain: Level1CpuBrain(
-                        for: player2Ref
-                    ),
-                    andAddTo: session,
-                )
-            }
-            try await session.switch(to: Combat(map: Map.emptyDuel))
-        }
-        try await doIt(in: session)
-    }
 
-    public static func playTwoPlayerGame<Brain1: RpgCharacterBrain, Brain2: RpgCharacterBrain>(
-        brainForPlayer1: @Sendable (_ characterRef: RpgCharacterRef) async throws -> Brain1,
-        brainForPlayer2: @Sendable (_ characterRef: RpgCharacterRef) async throws -> Brain2
-    ) async throws {
-        let session = GameSession(
-            game: Game(
-                characters: [],
-                broadcaster: Broadcaster(),
-                gameMasterBrain: Level1CpuBrain(
-                    for: RpgCharacterRef(name: "GM EN")
-                )))
         func doIt(in session: isolated GameSession) async throws {
-            let player1IsArcher = Bool.random(using: &session.game.rng)
-            let player1Ref = RpgCharacterRef(
-                name: "Player 1 (\(player1IsArcher ? "Archer" : "Spear Infantry"))")
-            if player1IsArcher {
-                PrefabCharacters.archer(
-                    ref: player1Ref,
-                    isPlayer: true,
-                    brain: try await brainForPlayer1(player1Ref),
-                    andAddTo: session,
-                )
-            } else {
-                PrefabCharacters.spearInfantry(
-                    ref: player1Ref,
-                    isPlayer: true,
-                    brain: try await brainForPlayer1(player1Ref),
-                    andAddTo: session,
-                )
+            for template in templates {
+                let ref = RpgCharacterRef(name: template.name)
+                let brain = try await brainFactory(template, ref)
+
+                switch template.prefab {
+                case .archer:
+                    PrefabCharacters.archer(
+                        ref: ref,
+                        isPlayer: template.isPlayer,
+                        brain: brain,
+                        andAddTo: session
+                    )
+                case .spearInfantry:
+                    PrefabCharacters.spearInfantry(
+                        ref: ref,
+                        isPlayer: template.isPlayer,
+                        brain: brain,
+                        andAddTo: session
+                    )
+                }
             }
-            let player2IsArcher = Bool.random(using: &session.game.rng)
-            let player2Ref = RpgCharacterRef(
-                name: "Player 2 (\(player2IsArcher ? "Archer" : "Spear Infantry"))")
-            if player2IsArcher {
-                PrefabCharacters.archer(
-                    ref: player2Ref,
-                    isPlayer: true,
-                    brain: try await brainForPlayer2(player2Ref),
-                    andAddTo: session,
-                )
-            } else {
-                PrefabCharacters.spearInfantry(
-                    ref: player2Ref,
-                    isPlayer: true,
-                    brain: try await brainForPlayer2(player2Ref),
-                    andAddTo: session,
-                )
+            let answers = try await session.game.broadcaster.promptAll(
+                .understanding,
+                options: UnderstandingChoice.allCases,
+                in: session
+            )
+            if !answers.allSatisfy({ (character, answer) in answer == .yes }) {
+                await session.game.broadcaster.tellAll(
+                    NoTargetMessage("The duel is off. A challenger has resigned."))
+                throw CancellationError()
             }
             try await session.switch(to: Combat(map: Map.emptyDuel))
         }
+
         try await doIt(in: session)
+        return session
     }
+}
+
+public enum UnderstandingChoice: String, Sendable, Hashable, CustomStringConvertible, CaseIterable {
+    case yes = "yes, life before death"
+    case no = "no, get me out of here"
+    public var description: String { self.rawValue }
 }

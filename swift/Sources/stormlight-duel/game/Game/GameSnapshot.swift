@@ -10,7 +10,7 @@ public struct GameSnapshot: GameSharedProtocol, Sendable {
 }
 
 extension Game {
-    func snapshot(in gameSession: isolated GameSession = #isolation) -> GameSnapshot {
+    public func snapshot(in gameSession: isolated GameSession = #isolation) -> GameSnapshot {
         GameSnapshot(
             characters: .init(
                 self.characters.isolatedMap(in: gameSession) {

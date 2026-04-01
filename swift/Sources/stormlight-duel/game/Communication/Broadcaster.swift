@@ -14,6 +14,29 @@ public struct Broadcaster: Sendable {
         }
     }
 
+    func promptAll<C: Collection & Sendable>(
+        _ code: DecisionCode,
+        options: C,
+        in gameSession: isolated GameSession = #isolation
+    ) async throws -> [RpgCharacterRef: C.Element]
+    where C.Element: Sendable {
+        let snapshot = gameSession.game.snapshot()
+        let characters = gameSession.game.characters.map { ($0.primaryKey, $0.brain) }
+        return try await withThrowingTaskGroup(of: (RpgCharacterRef, C.Element).self) { group in
+            for (ref, brain) in characters {
+                group.addTask {
+                    let choice = try await brain.decide(code, options: options, in: snapshot)
+                    return (ref, choice)
+                }
+            }
+            var results: [RpgCharacterRef: C.Element] = [:]
+            for try await (ref, choice) in group {
+                results[ref] = choice
+            }
+            return results
+        }
+    }
+
     // TODO This is a subpar pattern. We should pass context objects to prompts instead, in addition to the snapshot. Maybe that way, tests could be part of the context, instead of this weird array next to the characters.
     func tellHint(
         _ hint: String,
