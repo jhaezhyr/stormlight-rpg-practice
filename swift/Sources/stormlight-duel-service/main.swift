@@ -36,7 +36,7 @@ func makeBrain(
     ref: RpgCharacterRef
 ) async throws -> RpgCharacterBrain {
     if let connection = template.connection as? WebTextInterfaceConnection {
-        return try await TextBrain(
+        return await TextBrain(
             characterRef: ref,
             ui: TextInterfaceProxy(connection: connection)
         )
@@ -49,8 +49,6 @@ func startPvEGame(_ connection: WebTextInterfaceConnection) async throws {
     let builder = GameBuilderSession()
     let playerTemplate = try await builder.buildPlayerCharacter(connection: connection)
     let enemyTemplate = try await builder.buildEnemyCharacter(connection: connection)
-    try await builder.showInstructions(
-        player: playerTemplate, enemy: enemyTemplate, connection: connection)
     let session = try await GameSession.from(
         [playerTemplate, enemyTemplate], brainFactory: makeBrain)
     try await session.switch(to: Combat(map: Map.emptyDuel))

@@ -49,10 +49,26 @@ public actor GameSession {
                     )
                 }
             }
+            let answers = try await session.game.broadcaster.promptAll(
+                .understanding,
+                options: UnderstandingChoice.allCases,
+                in: session
+            )
+            if !answers.allSatisfy({ (character, answer) in answer == .yes }) {
+                await session.game.broadcaster.tellAll(
+                    NoTargetMessage("The duel is off. A challenger has resigned."))
+                throw CancellationError()
+            }
             try await session.switch(to: Combat(map: Map.emptyDuel))
         }
 
         try await doIt(in: session)
         return session
     }
+}
+
+public enum UnderstandingChoice: String, Sendable, Hashable, CustomStringConvertible, CaseIterable {
+    case yes = "yes, life before death"
+    case no = "no, get me out of here"
+    public var description: String { self.rawValue }
 }

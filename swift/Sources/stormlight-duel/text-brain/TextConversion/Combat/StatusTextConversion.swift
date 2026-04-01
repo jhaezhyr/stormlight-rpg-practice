@@ -27,8 +27,11 @@ extension StatusCommand: CliArgsConvertibleType {
 extension StatusCommand {
     public func evaluate(in gameSnapshot: GameSnapshot, for characterRef: RpgCharacterRef) -> String
     {
+        guard let combat = gameSnapshot.scene as? Combat else {
+            return ""
+        }
         var result = ""
-        result += (gameSnapshot.scene as! Combat).map.oneLineDescription(in: gameSnapshot) + "\n"
+        result += combat.map.oneLineDescription(in: gameSnapshot) + "\n"
         var isFirst = true
         for someCharacter in gameSnapshot.characters {
             if isFirst {
@@ -36,12 +39,15 @@ extension StatusCommand {
             } else {
                 result += "\n"
             }
+            guard let combatState = someCharacter.combatState else {
+                continue
+            }
             let opponents = gameSnapshot.characters.filter {
                 $0.primaryKey != someCharacter.primaryKey
             }
             let (distanceToNearestOppontent, nearestOpponent) =
                 opponents.map {
-                    ($0.combatState!.space.distance(to: someCharacter.combatState!.space), $0)
+                    ($0.combatState?.space.distance(to: combatState.space) ?? 1000, $0)
                 }
                 .sorted { (lh, rh) in lh.0 < rh.0 }[0]
             let conditions = someCharacter.conditions.filter { $0.type != TempCondition.type }
@@ -49,10 +55,10 @@ extension StatusCommand {
                 "\(someCharacter.primaryKey == characterRef ? "You \(someCharacter.name)" : "\(someCharacter.name)"):\n"
                 + "  Health: \(someCharacter.health.value)/\(someCharacter.health.maxValue)\n"
                 + "  Focus: \(someCharacter.focus.value)/\(someCharacter.focus.maxValue)\n"
-                + "  Actions and Reactions: \(someCharacter.combatState!.actionsRemaining) ▶ + \(someCharacter.combatState!.reactionsRemaining) ↻\n"
+                + "  Actions and Reactions: \(combatState.actionsRemaining) ▶ + \(combatState.reactionsRemaining) ↻\n"
                 + "  Main and Off hands: \(someCharacter.mainHand, default: "nothing"), \(someCharacter.offHand, default: "nothing")\n"
                 + "  Conditions: \(conditions.map { "\($0.core)" }.joined(separator: ","))\n"
-                + "  Space controlled: \(someCharacter.combatState!.space.lo)...\(someCharacter.combatState!.space.hi)\n"
+                + "  Space controlled: \(combatState.space.lo)...\(someCharacter.combatState!.space.hi)\n"
                 + "  Distance to \(nearestOpponent.name): \(distanceToNearestOppontent)"
         }
         return result

@@ -11,7 +11,7 @@ func makeCliBrain(
     ref: RpgCharacterRef
 ) async throws -> RpgCharacterBrain {
     // For CLI, we always use TextBrain with a CliInterfaceConnection
-    return try await TextBrain(
+    return await TextBrain(
         characterRef: ref,
         ui: TextInterfaceProxy(connection: CliInterfaceConnection(for: ref))
     )
