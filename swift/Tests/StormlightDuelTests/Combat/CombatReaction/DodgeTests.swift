@@ -8,7 +8,7 @@ func dodgeCreatesOneAdvantage() async throws {
     let badBrain = RpgCharacterDummyBrain(characterRef: badGuyRef)
     @MainActor
     func setPremadeAnswers() {
-        badBrain.onlyGivePremadeAnswers = true
+        badBrain.defaultBehavior = .giveUp
     }
     await setPremadeAnswers()
     let session = GameSession(

@@ -23,8 +23,9 @@ public actor GameSession {
             game: Game(
                 characters: [],
                 broadcaster: Broadcaster(),
-                gameMasterBrain: Mark1CpuBrain(
-                    for: RpgCharacterRef(name: "GM EN")
+                gameMasterBrain: RpgCharacterDummyBrain(
+                    characterRef: RpgCharacterRef(name: "GM EN"),
+                    defaultBehavior: .randomOption,
                 )))
 
         func doIt(in session: isolated GameSession) async throws {
