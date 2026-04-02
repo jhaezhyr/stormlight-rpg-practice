@@ -139,13 +139,14 @@ public struct Space1D: Equatable, Hashable, Sendable {
             || lh.contains(rhLo) || lh.contains(rhHi)
     }
 
+    /// The resulting space has the same lo/hi as `self`, but perhaps a different `origin` and `size`
     public func facing(_ newOrientation: Direction1D) -> Self {
         if orientation == self.orientation {
             return self
         }
         switch orientation {
-        case .left: return .init(origin: origin + size, size: size, orientation: .right)
-        case .right: return .init(origin: origin - size, size: size, orientation: .left)
+        case .left: return .init(origin: origin + size, size: size, orientation: .left)
+        case .right: return .init(origin: origin - size, size: size, orientation: .right)
         }
     }
 

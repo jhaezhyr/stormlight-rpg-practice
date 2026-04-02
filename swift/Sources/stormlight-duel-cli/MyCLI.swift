@@ -35,7 +35,7 @@ public struct MyCLI {
             prefab: .spearInfantry,
             isPlayer: false,
             name: "Shallan",
-            cpuBrainKey: .level1,
+            cpuBrainKey: .level2,
             connection: nil
         )
 

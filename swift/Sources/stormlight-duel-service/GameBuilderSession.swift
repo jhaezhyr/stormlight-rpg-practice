@@ -98,7 +98,7 @@ actor GameBuilderSession {
                 prefab: .archer,
                 isPlayer: false,
                 name: "Thaylenno",
-                cpuBrainKey: .level1,
+                cpuBrainKey: .level2,
                 connection: nil
             )
         case .greenie:
@@ -106,7 +106,7 @@ actor GameBuilderSession {
                 prefab: .spearInfantry,
                 isPlayer: false,
                 name: "Greenie",
-                cpuBrainKey: .level1,
+                cpuBrainKey: .level2,
                 connection: nil
             )
         case .custom:

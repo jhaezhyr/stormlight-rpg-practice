@@ -41,7 +41,12 @@ func makeBrain(
             ui: TextInterfaceProxy(connection: connection)
         )
     } else {
-        return Mark1CpuBrain(for: ref)
+        switch template.cpuBrainKey {
+        case .level1:
+            return Mark1CpuBrain(for: ref)
+        case .none, .level2:
+            return Mark2CpuBrain(for: ref)
+        }
     }
 }
 

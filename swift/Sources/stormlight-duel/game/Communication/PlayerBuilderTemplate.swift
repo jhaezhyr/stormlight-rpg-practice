@@ -35,6 +35,12 @@ public enum PlayerPrefabKey: String, CaseIterable, Sendable, CustomStringConvert
 /// Enum for selecting CPU brain difficulty.
 public enum CpuBrainKey: String, CaseIterable, Sendable, CustomStringConvertible {
     case level1
+    case level2
 
-    public var description: String { "Level 1 CPU" }
+    public var description: String {
+        switch self {
+        case .level1: "Mark 1 AI: Strike, dodge, and graze"
+        case .level2: "Mark 2 AI: Aggressively strike and advance, but save focus sometimes"
+        }
+    }
 }
