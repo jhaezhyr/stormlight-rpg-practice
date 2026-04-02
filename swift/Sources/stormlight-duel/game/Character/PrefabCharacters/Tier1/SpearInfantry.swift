@@ -222,17 +222,55 @@ public struct ExhaustedMilitaryTacticsConditionSnapshot: ConditionSnapshot {
 
 public struct ShieldBashActionFeature: CharacterFeature, CharacterFeatureSnapshot {
     public var name: CharacterFeatureRef { "Shield Bash action" }
-    public let actionsProvided: [any CombatAction.Type]
+    public let actionTypesProvided: [any CombatAction.Type]
     public init(
         for characterRef: RpgCharacterRef,
         in gameSession: isolated GameSession = #isolation
     ) {
-        self.actionsProvided = [ShieldBashAction.self]
+        self.actionTypesProvided = [ShieldBashAction.self]
     }
 }
 
 public struct ShieldBashAction: CombatAction {
     public let opponentRef: RpgCharacterRef
+    public init(opponentRef: RpgCharacterRef) {
+        self.opponentRef = opponentRef
+    }
+    public static func canMaybeTakeAction(
+        by character: RpgCharacterRef, in gameSnapshot: GameSnapshot
+    ) -> Bool {
+        gameSnapshot.opponentRefs(of: character).map { Self(opponentRef: $0) }.contains(where: {
+            $0.canTakeAction(by: character, in: gameSnapshot)
+        })
+    }
+    public func canTakeAction(by characterRef: RpgCharacterRef, in gameSnapshot: GameSnapshot)
+        -> Bool
+    {
+        guard let opponent = gameSnapshot.characters[opponentRef] else {
+            return false
+        }
+        guard let me = gameSnapshot.characters[characterRef] else {
+            return false
+        }
+        guard
+            let shield = me.equipment.filter({ $0.isReady }).compactMap({
+                $0.core.trueSelf as? any WeaponSnapshot
+            }).filter({ $0.weaponName == .shield }).first
+        else {
+            return false
+        }
+        guard case .melee(let shieldReach) = shield.range else {
+            return false
+        }
+        guard let myCombatState = me.combatState,
+            let opponentCombatState = opponent.combatState,
+            myCombatState.space.expanded(by: shieldReach ?? 0).touchesOrOverlaps(
+                opponentCombatState.space)
+        else {
+            return false
+        }
+        return true
+    }
     public func action(by characterRef: RpgCharacterRef, in gameSession: isolated GameSession)
         async throws
     {

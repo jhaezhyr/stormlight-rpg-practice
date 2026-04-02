@@ -123,9 +123,10 @@ public struct ImmobilizingShotReactionFeature: CharacterFeature {
                         opponent.conditions.upsert(.init(condition))
                     }
                 ]) { gameSession in
-                    try await Strike(subjectRef, with: longbowRef).action(
-                        by: characterRef
-                    )
+                    try await Strike(subjectRef, with: longbowRef, recordStrikeForThisHand: false)
+                        .action(
+                            by: characterRef
+                        )
                 }
             }
         ]
