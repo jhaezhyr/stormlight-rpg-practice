@@ -31,4 +31,7 @@ extension DisengageAction: CliArgsContextFreeConvertibleType {
     public static var helpText: Substring {
         "(d)isengage \(Direction1D.helpText)"
     }
+    public static var oneLineHelp: String? {
+        "Move 5ft without triggering reactive strikes"
+    }
 }

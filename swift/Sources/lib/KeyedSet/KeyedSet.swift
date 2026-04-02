@@ -10,6 +10,10 @@ public struct KeyedSet<Element: Keyed> {
         self.core = Dictionary(uniqueKeysWithValues: core.map { ($0.primaryKey, $0) })
     }
 
+    public init<C: Collection>(removingDuplicatesFrom core: C) where C.Element == Element {
+        self.core = Dictionary(core.map { ($0.primaryKey, $0) }, uniquingKeysWith: { x, y in y })
+    }
+
     public subscript(_ key: Key) -> Element? {
         get { core[key] }
         set {

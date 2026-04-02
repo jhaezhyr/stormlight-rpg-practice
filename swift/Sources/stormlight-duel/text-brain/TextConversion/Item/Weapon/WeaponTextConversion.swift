@@ -22,3 +22,20 @@ extension BasicWeapon: CustomStringConvertible {
         "\(weaponName)"
     }
 }
+
+extension BasicWeaponSnapshot: CustomStringConvertible {
+    public var description: String {
+        "\(weaponName)"
+    }
+}
+
+extension WeaponRange: CustomStringConvertible {
+    public var description: String {
+        switch self {
+        case .melee(let extraReach):
+            "melee" + (extraReach.map { $0 > 0 ? " [+\($0)]" : " [\($0)]" } ?? "")
+        case .ranged(short: let shortRange, long: let longRange):
+            "ranged [\(shortRange)/\(longRange)]"
+        }
+    }
+}

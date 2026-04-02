@@ -1,15 +1,15 @@
 public struct Thrown: WeaponTrait {
-    var short: Distance
-    var long: Distance
+    public var short: Distance
+    public var long: Distance
 }
 public struct Offhand: WeaponTrait {}
 public struct Loaded: WeaponTrait {
-    var ammunition: Resource
+    public var ammunition: Resource
 }
 public struct TwoHanded: WeaponTrait {}
 public struct Deadly: WeaponTrait {}
 public struct CumbersomeWeapon: WeaponTrait {
-    var minStrength: Int
+    public var minStrength: Int
 }
 public struct Pierce: WeaponTrait {}
 public struct Defensive: WeaponTrait {}

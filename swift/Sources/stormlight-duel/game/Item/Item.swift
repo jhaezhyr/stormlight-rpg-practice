@@ -1,17 +1,23 @@
 import KeyedSet
 
 public protocol ItemSharedProtocol: Keyed where Key == ItemRef {
+    associatedtype WeaponType
     var name: String { get }
     var price: Money? { get }
     var weight: Weight { get }
 
     var trueSelf: any ItemSharedProtocol { get }
+
+    var asWeapon: WeaponType? { get }
 }
 extension ItemSharedProtocol {
     public var primaryKey: ItemRef {
         ItemRef(name: self.name)
     }
     public var trueSelf: any ItemSharedProtocol { self }
+    public var asWeapon: WeaponType? {
+        trueSelf as? WeaponType
+    }
 }
 
 public struct ItemRef: Hashable, Sendable {
@@ -46,6 +52,8 @@ extension Item where Self: ItemSnapshot {
 }
 
 public struct AnyItem: Item {
+    public typealias WeaponType = any Weapon
+
     public let core: any Item
 
     public var name: String { core.name }

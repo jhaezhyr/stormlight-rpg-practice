@@ -1,3 +1,4 @@
+import KeyedSet
 import stormlight_duel
 
 extension InteractiveGainAdvantage: CliArgsConvertibleType {
@@ -33,10 +34,31 @@ extension InteractiveGainAdvantage: CliArgsConvertibleType {
     public static var helpText: Substring {
         "(g)ainadv \(CoreSkillName.helpText) [target]"
     }
+    public static let oneLineHelp: String? =
+        "Attempt to improve your next strike by finding a target's weakness, using one of your strengths."
 }
 
-extension InteractiveGainAdvantage: CustomStringConvertible {
+extension InteractiveGainAdvantage: CustomStringConvertible, DescribableOption {
     public var description: String {
         "gain advantage\(self.opponent.map {" over \($0.name)"} ?? "")\(self.chosenSkill.map {" using \($0)"} ?? "")"
     }
+}
+
+public let skillForGainAdvantageOptionDescriber: OptionDescriber<CoreSkillName> = {
+    skill, snapshot, characterRef in
+    guard let character = snapshot.characters[characterRef] else {
+        fatalError("Cannot describe skill for gain advantage action")
+    }
+    let attribute = skill.attribute
+    let bonus = character.modifiersForCoreSkills[skill]
+    let drawnWeaponsWithDuplicates: [any WeaponSnapshot] = character.drawnWeapons
+    let drawnWeapons = KeyedSet(
+        removingDuplicatesFrom: drawnWeaponsWithDuplicates.map(AnyWeaponSnapshot.init))
+    let weaponsYouCannotUseThisSkillFor = drawnWeapons.filter { $0.weaponsSkill.coreSkill == skill }
+    let warning =
+        weaponsYouCannotUseThisSkillFor.count > 0
+        ? " [gives no advantage for \(weaponsYouCannotUseThisSkillFor.map { "\($0)" }.joined(separator: " or "))]"
+        : ""
+    return OptionDescription(
+        name: "\(skill) (\(bonus >= 0 ? "+" : "")\(bonus)) (\(attribute))\(warning)")
 }

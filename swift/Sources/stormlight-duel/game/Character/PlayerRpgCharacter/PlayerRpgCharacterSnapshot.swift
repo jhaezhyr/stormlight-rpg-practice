@@ -2,6 +2,8 @@ import CompleteDictionary
 import KeyedSet
 
 public struct PlayerRpgCharacterSnapshot: RpgCharacterSnapshot {
+    public typealias WeaponType = any WeaponSnapshot
+
     public var name: String
     public var attributes: CompleteDictionary<AttributeName, Int>
     public var ranksInCoreSkills: CompleteDictionary<CoreSkillName, Int>
@@ -24,6 +26,7 @@ public struct PlayerRpgCharacterSnapshot: RpgCharacterSnapshot {
     public var reach: Distance
     public var combatState: RpgCharacterCombatStateSnapshot?
     public var features: KeyedSet<AnyCharacterFeatureSnapshot>
-    public var actions: [any CombatAction.Type]
+    public var registeredActionTypes: [any CombatAction.Type]
+    public var registeredActions: [any CombatAction]
     public var isPlayer: Bool
 }

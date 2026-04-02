@@ -1,6 +1,6 @@
 /// An item used in combat to do the Strike action.
-public protocol WeaponSharedProtocol: Item, ItemSnapshot {
-    var type: WeaponType { get }
+public protocol WeaponSharedProtocol: ItemSharedProtocol {
+    var type: WeaponSpecies { get }
     var weaponName: WeaponName { get }
     var weaponsSkill: WeaponsSkill { get }
     var range: WeaponRange { get }
@@ -8,7 +8,7 @@ public protocol WeaponSharedProtocol: Item, ItemSnapshot {
     var damageType: DamageType { get }
     var traits: [(trait: any WeaponTrait, condition: TraitCondition)] { get }
 }
-public protocol Weapon: WeaponSharedProtocol {
+public protocol Weapon: WeaponSharedProtocol, Item where WeaponType == any Weapon {
     func activeTraits(
         whenEquippedBy characterRef: RpgCharacterRef,
         in gameSnapshot: GameSnapshot,
@@ -82,14 +82,39 @@ extension Weapon {
         me.equipment[itemRef]?.isReady = true
     }
 }
-public typealias WeaponSnapshot = WeaponSharedProtocol
+public protocol WeaponSnapshot: WeaponSharedProtocol, ItemSnapshot
+where WeaponType == any WeaponSnapshot {
+}
+public struct AnyWeaponSnapshot: WeaponSharedProtocol {
+    public init(_ core: any WeaponSnapshot) {
+        self.core = core
+    }
+
+    private var core: any WeaponSnapshot
+
+    public var type: WeaponSpecies { core.type }
+    public var weaponName: WeaponName { core.weaponName }
+    public var weaponsSkill: WeaponsSkill { core.weaponsSkill }
+    public var range: WeaponRange { core.range }
+    public var damage: RandomDistribution { core.damage }
+    public var damageType: DamageType { core.damageType }
+    public var traits: [(trait: any WeaponTrait, condition: TraitCondition)] { core.traits }
+    public typealias WeaponType = any WeaponSnapshot
+    public var name: String { core.name }
+    public var price: Money? { core.price }
+    public var weight: Weight { core.weight }
+    public var trueSelf: any ItemSharedProtocol { core.trueSelf }
+}
+extension AnyWeaponSnapshot: CustomStringConvertible {
+    public var description: String { "\(core)" }
+}
 
 public enum WeaponRange: Sendable, Hashable {
     case melee(extraReach: Distance? = nil)
     case ranged(short: Distance, long: Distance)
 }
 
-public enum WeaponType: CaseIterable, Sendable, Hashable {
+public enum WeaponSpecies: CaseIterable, Sendable, Hashable {
     case lightWeaponry
     case heavyWeaponry
     case specialWeapons
@@ -108,6 +133,12 @@ public enum WeaponType: CaseIterable, Sendable, Hashable {
 public enum WeaponsSkill: CaseIterable, Sendable, Hashable {
     case heavy
     case light
+    public var coreSkill: CoreSkillName {
+        switch self {
+        case .heavy: .heavyWeaponry
+        case .light: .lightWeaponry
+        }
+    }
 }
 
 public enum DamageType: String, CaseIterable, Sendable, Hashable {
@@ -147,10 +178,11 @@ public enum WeaponName: String, CaseIterable, Sendable, Hashable {
 }
 
 public protocol WeaponTrait: Sendable {}
+public typealias WeaponTraitSnapshot = WeaponTrait
 
 extension RpgCharacterSharedProtocol {
     func meets(_ traitCondition: TraitCondition, for weaponTrait: WeaponName) -> Bool {
-        let iAmExpert = false  // TODO Make this affected by actual expertises
+        let iAmExpert = true  // TODO Make this affected by actual expertises
         switch (traitCondition, iAmExpert) {
         case (.expert, true), (.notExpert, false), (.always, _): return true
         default: return false

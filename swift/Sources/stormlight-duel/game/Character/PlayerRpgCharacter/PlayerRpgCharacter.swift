@@ -27,6 +27,8 @@ extension PlayerRpgCharacterProtocol {
 }
 
 public class PlayerRpgCharacter: PlayerRpgCharacterProtocol {
+    public typealias WeaponType = any Weapon
+
     public var name: String
 
     public var size: CharacterSize { .normal }
@@ -58,8 +60,11 @@ public class PlayerRpgCharacter: PlayerRpgCharacterProtocol {
     public var brain: any RpgCharacterBrain
 
     public var combatState: RpgCharacterCombatState?
-    public var actions: [any CombatAction.Type] {
-        allCombatActions + self.features.flatMap { $0.actionsProvided }
+    public var registeredActionTypes: [any CombatAction.Type] {
+        allRegisteredCombatActionTypes + self.features.flatMap { $0.actionTypesProvided }
+    }
+    public var registeredActions: [any CombatAction] {
+        allRegisteredCombatActions + self.features.flatMap { $0.actionsProvided }
     }
 
     public var isPlayer: Bool
@@ -91,7 +96,8 @@ public class PlayerRpgCharacter: PlayerRpgCharacterProtocol {
             combatState: combatState?.snapshot(),
             features: .init(
                 features.isolatedMap { AnyCharacterFeatureSnapshot($0.snapshot(in: $1)) }),
-            actions: actions,
+            registeredActionTypes: registeredActionTypes,
+            registeredActions: registeredActions,
             isPlayer: isPlayer,
         )
     }

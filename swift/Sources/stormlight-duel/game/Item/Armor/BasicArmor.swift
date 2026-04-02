@@ -1,4 +1,6 @@
 public struct BasicArmor: Armor, Sendable {
+    public typealias WeaponType = any Weapon
+
     public var name: String
 
     public var price: Money?
@@ -53,6 +55,7 @@ public struct BasicArmor: Armor, Sendable {
 }
 
 public struct BasicArmorSnapshot: ArmorSnapshot {
+    public typealias WeaponType = any WeaponSnapshot
     public var name: String
     public var price: Money?
     public var weight: Weight

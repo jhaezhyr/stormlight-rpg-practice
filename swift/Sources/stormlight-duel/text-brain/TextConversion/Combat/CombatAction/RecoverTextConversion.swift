@@ -20,14 +20,22 @@ extension InteractiveRecover: CliArgsContextFreeConvertibleType {
     public static var helpText: Substring {
         "(r)ecover"
     }
+    public static var oneLineHelp: String? {
+        "Roll your recovery die to restore health or focus"
+    }
 }
 
-extension InteractiveRecover: CustomStringConvertible {
-    public var description: String { Self.actionName }
+extension InteractiveRecover: CustomStringConvertible, DescribableOption {
+    public var description: String { "recover" }
 }
 
 extension HowToRecover: CustomStringConvertible {
     public var description: String {
         "restore \(amountHealth) health and \(amountFocus) focus\(amountLeftover > 0 ? ", leaving \(amountLeftover) leftover" : "")"
+    }
+}
+extension InteractiveRecover {
+    public static func oneLineHelp(_ character: any RpgCharacterSnapshot) -> String {
+        "Roll your recovery die to restore \(character.recoveryDie) health or focus"
     }
 }
