@@ -23,7 +23,7 @@ public actor GameSession {
             game: Game(
                 characters: [],
                 broadcaster: Broadcaster(),
-                gameMasterBrain: Level1CpuBrain(
+                gameMasterBrain: Mark1CpuBrain(
                     for: RpgCharacterRef(name: "GM EN")
                 )))
 

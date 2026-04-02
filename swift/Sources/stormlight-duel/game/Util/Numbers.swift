@@ -20,11 +20,11 @@ extension NumberDie {
         case .disadvantage:
             let firstRoll = self.roll(rng: &rng)
             let secondRoll = self.roll(rng: &rng)
-            return min(firstRoll, secondRoll)
+            return Swift.min(firstRoll, secondRoll)
         case .advantage:
             let firstRoll = self.roll(rng: &rng)
             let secondRoll = self.roll(rng: &rng)
-            return max(firstRoll, secondRoll)
+            return Swift.max(firstRoll, secondRoll)
         default:
             let roll = self.roll(rng: &rng)
             return roll

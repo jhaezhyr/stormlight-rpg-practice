@@ -7,7 +7,7 @@ func afflicted() async throws {
         game: Game(
             characters: [],
             broadcaster: Broadcaster(),
-            gameMasterBrain: Level1CpuBrain(for: RpgCharacterRef(name: "GM"))
+            gameMasterBrain: Mark1CpuBrain(for: RpgCharacterRef(name: "GM"))
         )
     )
     func doIt(in session: isolated GameSession) async throws {
