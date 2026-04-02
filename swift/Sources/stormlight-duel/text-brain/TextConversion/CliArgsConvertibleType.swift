@@ -18,23 +18,30 @@ public protocol CliArgsConvertibleType {
     /// If it throws, it means it is trying to be this type, but it's wrong.
     init?(args: [Any], context: CliArgsConversionContext) throws(CliParseError)
     static var helpText: Substring { get }
+    static var oneLineHelp: String? { get }
 }
 extension CliArgsConvertibleType {
     public static var parser: CliArgsParser<Self> {
         CliArgsParser(Self.self)
     }
     public static var anyParser: CliArgsParser<Any> { parser.asAny }
+    public static var oneLineHelp: String? { nil }
+    public static var optionDescription: OptionDescription {
+        .init(name: "\(helpText)", oneLineHelp: oneLineHelp)
+    }
 }
 
 public protocol CliArgsParserProtocol {
     associatedtype Value
     var valueTypeId: String { get }
     var helpText: Substring { get }
+    var oneLineHelp: String? { get }
     func parse(args: [Any], context: CliArgsConversionContext) throws(CliParseError) -> Value?
     func map<U>(_ mapFn: @escaping (Value) -> U) -> CliArgsParser<U>
 }
 public struct CliArgsParser<T>: CliArgsParserProtocol {
     public let helpText: Substring
+    public let oneLineHelp: String?
     public var valueTypeId: String { "\(T.self)" }
     private let parseFunc:
         (_ args: [Any], _ context: CliArgsConversionContext) throws(CliParseError) -> T?
@@ -44,11 +51,13 @@ public struct CliArgsParser<T>: CliArgsParserProtocol {
     }
     public init(
         helpText: Substring,
+        oneLineHelp: String? = nil,
         parseFunc:
             @escaping (_ args: [Any], _ context: CliArgsConversionContext) throws(CliParseError) ->
             T?
     ) {
         self.helpText = helpText
+        self.oneLineHelp = oneLineHelp
         self.parseFunc = parseFunc
     }
     public func map<U>(_ mapFn: @escaping (T) -> U) -> CliArgsParser<U> {
@@ -62,6 +71,7 @@ extension CliArgsParser where T: CliArgsConvertibleType {
     public init(_ type: T.Type) {
         self.helpText = type.helpText
         self.parseFunc = type.init(args:context:)
+        self.oneLineHelp = type.oneLineHelp
     }
 }
 extension CliArgsParser {
@@ -77,6 +87,7 @@ extension CliArgsParser {
             return nil
         }
         self.helpText = parsers.map { $0.helpText }.joined(separator: "\n")[...]
+        self.oneLineHelp = parsers.compactMap { $0.oneLineHelp }.joined(separator: "\n")
     }
 }
 extension CliArgsParser {

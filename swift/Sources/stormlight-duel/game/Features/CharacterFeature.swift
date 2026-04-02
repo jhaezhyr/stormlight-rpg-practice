@@ -4,7 +4,8 @@ public typealias CharacterFeatureRef = String
 
 public protocol CharacterFeatureSharedProtocol: Keyed where Key == CharacterFeatureRef {
     var name: CharacterFeatureRef { get }
-    var actionsProvided: [CombatAction.Type] { get }
+    var actionTypesProvided: [CombatAction.Type] { get }
+    var actionsProvided: [CombatAction] { get }
 }
 
 public protocol CharacterFeature: Responder, CharacterFeatureSharedProtocol, Keyed
@@ -21,13 +22,15 @@ extension CharacterFeature {
 }
 extension CharacterFeatureSharedProtocol {
     public var primaryKey: Key { name }
-    public var actionsProvided: [CombatAction.Type] { [] }
+    public var actionsProvided: [CombatAction] { [] }
+    public var actionTypesProvided: [CombatAction.Type] { [] }
 }
 
 public struct AnyCharacterFeature: CharacterFeature, Keyed {
     public let core: any CharacterFeature
     public var name: CharacterFeatureRef { core.name }
-    public var actionsProvided: [any CombatAction.Type] { core.actionsProvided }
+    public var actionTypesProvided: [any CombatAction.Type] { core.actionTypesProvided }
+    public var actionsProvided: [any CombatAction] { core.actionsProvided }
     public var childResponders: [any Responder] { core.childResponders }
     public var handlers: [any EventHandlerProtocol] { core.handlers }
     public var syncHandlers: [any EventHandlerSyncProtocol] { core.syncHandlers }
@@ -56,7 +59,8 @@ extension CharacterFeature where Self: CharacterFeatureSnapshot {
 
 public struct AnyCharacterFeatureSnapshot: CharacterFeatureSnapshot {
     public var name: CharacterFeatureRef { core.name }
-    public var actionsProvided: [any CombatAction.Type] { core.actionsProvided }
+    public var actionsProvided: [any CombatAction] { core.actionsProvided }
+    public var actionTypesProvided: [any CombatAction.Type] { core.actionTypesProvided }
     public var primaryKey: String { core.primaryKey }
     public let core: any CharacterFeatureSnapshot
     public init(_ core: any CharacterFeatureSnapshot) {
@@ -70,5 +74,6 @@ public struct AnyCharacterFeatureSnapshot: CharacterFeatureSnapshot {
 
 public struct DummyCharacterFeatureSnapshot: CharacterFeatureSnapshot {
     public var name: CharacterFeatureRef
-    public var actionsProvided: [any CombatAction.Type] = []
+    public var actionTypesProvided: [any CombatAction.Type] = []
+    public var actionsProvided: [any CombatAction] = []
 }

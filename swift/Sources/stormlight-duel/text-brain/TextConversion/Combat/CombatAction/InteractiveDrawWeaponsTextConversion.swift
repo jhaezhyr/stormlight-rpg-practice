@@ -17,14 +17,11 @@ extension InteractiveDrawWeapons: CliArgsContextFreeConvertibleType {
         self.init()
     }
 
-    public static var helpText: Substring {
-        "dra(w)"
-    }
+    public static let helpText: Substring = "dra(w)"
+    public static let oneLineHelp: String? = "Draw weapons, switch their hands, or put them away."
+
 }
 
-extension InteractiveDrawWeapons: CustomStringConvertible {
-    public var description: String { Self.actionName }
-}
-extension InteractiveDrawWeapons {
-    public static let oneLineHelp = "Draw weapons, switch their hands, or put them away."
+extension InteractiveDrawWeapons: CustomStringConvertible, DescribableOption {
+    public var description: String { "exchange weapons" }
 }

@@ -15,11 +15,13 @@ extension TakeAimAction: CliArgsConvertibleType {
     }
 
     public static var helpText: Substring {
-        "takeaim \(CoreSkillName.helpText) [\(RpgCharacterRef.helpText)]"
+        "takeaim [\(CoreSkillName.helpText)] [\(RpgCharacterRef.helpText)]"
     }
+    public static let oneLineHelp: String? =
+        "On your first turn, you may take Gain Advantage as a free action"
 }
 
-extension TakeAimAction: CustomStringConvertible {
+extension TakeAimAction: CustomStringConvertible, DescribableOption {
     public var description: String {
         "take aim\(self.opponent.map {" at \($0.name)"} ?? "")\(self.skill.map {" using \($0)"} ?? "")"
     }

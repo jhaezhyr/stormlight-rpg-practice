@@ -1,12 +1,28 @@
 import stormlight_duel
 
-public typealias OptionDescriber<T> = @Sendable (T, GameSnapshot, RpgCharacterRef) -> String
+public struct OptionDescription {
+    var name: String
+    var oneLineHelp: String? = nil
+}
+extension OptionDescription: CustomStringConvertible {
+    public var description: String {
+        name + (oneLineHelp.map { "\n  ? " + $0 } ?? "")
+    }
+}
+
+public typealias OptionDescriber<T> =
+    @Sendable (T, GameSnapshot, RpgCharacterRef) -> OptionDescription
 
 public func optionDescriber<T>(forCode code: DecisionCode, andType _: T.Type)
     -> OptionDescriber<T>
 {
     guard let untyped = describeOptionFunctionRegistry[code] else {
-        return { x, y, z in "\(x)" }
+        return { x, y, z in
+            if let describableOption = x as? DescribableOption {
+                return describableOption.optionDescription(context: (y, z))
+            }
+            return OptionDescription(name: "\(x)", oneLineHelp: nil)
+        }
     }
     return {
         x, y, z in

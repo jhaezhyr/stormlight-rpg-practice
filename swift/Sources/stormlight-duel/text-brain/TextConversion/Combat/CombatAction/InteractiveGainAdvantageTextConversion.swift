@@ -34,9 +34,11 @@ extension InteractiveGainAdvantage: CliArgsConvertibleType {
     public static var helpText: Substring {
         "(g)ainadv \(CoreSkillName.helpText) [target]"
     }
+    public static let oneLineHelp: String? =
+        "Attempt to improve your next strike by finding a target's weakness, using one of your strengths."
 }
 
-extension InteractiveGainAdvantage: CustomStringConvertible {
+extension InteractiveGainAdvantage: CustomStringConvertible, DescribableOption {
     public var description: String {
         "gain advantage\(self.opponent.map {" over \($0.name)"} ?? "")\(self.chosenSkill.map {" using \($0)"} ?? "")"
     }
@@ -57,10 +59,6 @@ public let skillForGainAdvantageOptionDescriber: OptionDescriber<CoreSkillName> 
         weaponsYouCannotUseThisSkillFor.count > 0
         ? " [gives no advantage for \(weaponsYouCannotUseThisSkillFor.map { "\($0)" }.joined(separator: " or "))]"
         : ""
-    return "\(skill) (\(bonus >= 0 ? "+" : "")\(bonus)) (\(attribute))\(warning)"
-}
-
-extension GainAdvantage {
-    static let oneLineHelp =
-        "Attempt to improve your next strike by finding a target's weakness, using one of your strengths."
+    return OptionDescription(
+        name: "\(skill) (\(bonus >= 0 ? "+" : "")\(bonus)) (\(attribute))\(warning)")
 }

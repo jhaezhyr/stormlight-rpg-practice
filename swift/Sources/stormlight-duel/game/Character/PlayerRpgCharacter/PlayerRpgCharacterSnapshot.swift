@@ -26,6 +26,7 @@ public struct PlayerRpgCharacterSnapshot: RpgCharacterSnapshot {
     public var reach: Distance
     public var combatState: RpgCharacterCombatStateSnapshot?
     public var features: KeyedSet<AnyCharacterFeatureSnapshot>
-    public var actions: [any CombatAction.Type]
+    public var registeredActionTypes: [any CombatAction.Type]
+    public var registeredActions: [any CombatAction]
     public var isPlayer: Bool
 }

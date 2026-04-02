@@ -43,7 +43,9 @@ extension PrefabCharacters {
 
 public struct TakeAimActionFeature: CharacterFeature, CharacterFeatureSnapshot {
     public var name: CharacterFeatureRef { "Take Aim action" }
-    public var actionsProvided: [any CombatAction.Type] { [TakeAimAction.self] }
+    public var actionsProvided: [any CombatAction] {
+        [TakeAimAction(opponent: nil, skill: nil)]
+    }
 }
 
 public struct ImmobilizingShotReactionFeature: CharacterFeature {

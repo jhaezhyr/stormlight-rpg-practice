@@ -38,7 +38,8 @@ public struct AnyRpgCharacterSnapshot: RpgCharacterSnapshot {
     public var size: CharacterSize { core.size }
     public var combatState: RpgCharacterCombatStateSnapshot? { core.combatState }
     public var features: KeyedSet<AnyCharacterFeatureSnapshot> { core.features }
-    public var actions: [any CombatAction.Type] { core.actions }
+    public var registeredActions: [any CombatAction] { core.registeredActions }
+    public var registeredActionTypes: [any CombatAction.Type] { core.registeredActionTypes }
     public var equipment: KeyedSet<Readyable<AnyItemSnapshot>> {
         get { core.equipment }
         set { core.equipment = newValue }

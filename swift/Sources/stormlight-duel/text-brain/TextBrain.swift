@@ -230,7 +230,7 @@ extension TextBrain {
             fatalError("Bad character ref \(characterRef)")
         }
         let parsers =
-            character.actions.flatMap {
+            character.registeredActionTypes.flatMap {
                 (actionType: CombatAction.Type) -> [CliArgsParser<CombatChoice>] in
                 if !actionType.canReallyMaybeTakeAction(by: character.primaryKey, in: gameSnapshot)
                 {
@@ -241,17 +241,27 @@ extension TextBrain {
                 ) {
                     return parsers
                 }
-                if let parser = actionType.combatChoiceParserOpt {
+                if let parser = actionType.combatChoiceParserOpt(
+                    context: (gameSnapshot, characterRef))
+                {
                     return [parser]
                 }
                 return []
-            } + [endTurnParser]
+            } + [EndTurn.parser.map { _ in .endTurn }]
+        let options: [CombatChoice] =
+            Strike.possibleStrikes(
+                for: self.characterRef,
+                in: gameSnapshot
+            ).map {
+                .action($0)
+            }
+            + character.registeredActions.filter {
+                $0.canReallyTakeAction(by: characterRef, in: gameSnapshot)
+            }.map { .action($0) }
 
         while true {
             let answer: CombatChoice = try await decideBetweenOptions(
-                Strike.possibleStrikes(for: self.characterRef, in: gameSnapshot).map {
-                    .action($0)
-                },
+                options,
                 forCode: .combatChoice,
                 prompt:
                     "You have \(character.combatState!.actionsRemaining) actions. What is your combat choice?",
