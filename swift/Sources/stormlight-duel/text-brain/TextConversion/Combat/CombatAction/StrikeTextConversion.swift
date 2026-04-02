@@ -46,50 +46,10 @@ extension Strike: CliArgsConvertibleType {
                 throw CliParseError("\(arg) not a target or weapon name")
             }
         }
+        let possibleStrikes = Strike.possibleStrikes(
+            for: context.characterRef, in: context.game, target: target, weapon: weaponToStrikeWith)
         // What if the target wasn't provided?
-        let targetCandidates: [RpgCharacterRef] = try
-            ({ (x: ()) throws(CliParseError) in
-                if let target {
-                    return [target]
-                } else {
-                    let characters = context.game.characters
-                    let viableTargets = characters.filter {
-                        $0.primaryKey != contextCharacter.primaryKey && $0.health.value > 0
-                    }
-                    return viableTargets.map { $0.primaryKey }
-                }
-            })(())
-        let weaponCandidates: [ItemRef] = try
-            ({ (x: ()) throws(CliParseError) in
-                if let weaponToStrikeWith {
-                    return [weaponToStrikeWith]
-                } else {
-                    let equipment = contextCharacter.equipment
-                    let viableWeapons = equipment.compactMap { x -> (any WeaponSnapshot)? in
-                        guard x.isReady else {
-                            return nil
-                        }
-                        return x.core.core as? any WeaponSnapshot
-                    }
-                    return viableWeapons.map { $0.primaryKey }
-                }
-            })(())
-        var possibleStrikes: [Strike] = []
-        for target in targetCandidates {
-            for weapon in weaponCandidates {
-                let possibleStrike = Strike(target, with: weapon)
-                if possibleStrike.canTakeAction(by: contextCharacter.primaryKey, in: context.game) {
-                    possibleStrikes.append(possibleStrike)
-                }
-            }
-        }
         if possibleStrikes.isEmpty {
-            if weaponCandidates.isEmpty {
-                throw CliParseError("You have no ready weapons.")
-            }
-            if targetCandidates.isEmpty {
-                throw CliParseError("You have no potential targets.")
-            }
             throw CliParseError(
                 "You have at least one weapon and target, but you cannot strike them with it at this time."
             )

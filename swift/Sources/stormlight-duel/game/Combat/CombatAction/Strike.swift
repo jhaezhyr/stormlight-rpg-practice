@@ -244,3 +244,50 @@ extension GrazeChoice: CustomStringConvertible {
         }
     }
 }
+
+extension Strike {
+    public static func possibleStrikes(
+        for characterRef: RpgCharacterRef, in snapshot: GameSnapshot,
+        target: RpgCharacterRef? = nil, weapon: ItemRef? = nil
+    ) -> [Strike] {
+        guard let character = snapshot.characters[characterRef] else {
+            fatalError(
+                "Can't calculate possibleStrikes for a character that doesn't exist.")
+        }
+        let targetCandidates: [RpgCharacterRef] =
+            ({ (x: ()) in
+                if let target {
+                    return [target]
+                }
+                let characters = snapshot.characters
+                let viableTargets = characters.filter {
+                    $0.primaryKey != character.primaryKey && $0.health.value > 0
+                }
+                return viableTargets.map { $0.primaryKey }
+            })(())
+        let weaponCandidates: [ItemRef] =
+            ({ (x: ()) in
+                if let weapon {
+                    return [weapon]
+                }
+                let equipment = character.equipment
+                let viableWeapons = equipment.compactMap { x -> (any WeaponSnapshot)? in
+                    guard x.isReady else {
+                        return nil
+                    }
+                    return x.core.core as? any WeaponSnapshot
+                }
+                return viableWeapons.map { $0.primaryKey }
+            })(())
+        var possibleStrikes: [Strike] = []
+        for target in targetCandidates {
+            for weapon in weaponCandidates {
+                let possibleStrike = Strike(target, with: weapon)
+                if possibleStrike.canTakeAction(by: character.primaryKey, in: snapshot) {
+                    possibleStrikes.append(possibleStrike)
+                }
+            }
+        }
+        return possibleStrikes
+    }
+}
