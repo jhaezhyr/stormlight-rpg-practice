@@ -6,7 +6,8 @@ func testMartialDrillFeature() async throws {
     let gameSession = GameSession(
         game: Game(
             characters: [], broadcaster: Broadcaster(),
-            gameMasterBrain: RpgCharacterDummyBrain(characterRef: .gameMaster)))
+            gameMasterBrain: RpgCharacterDummyBrain(
+                characterRef: .gameMaster, defaultBehavior: .firstOption)))
     func handle(in gameSession: isolated GameSession) async throws {
         let spearInfantry = PrefabCharacters.spearInfantry(
             isPlayer: false,

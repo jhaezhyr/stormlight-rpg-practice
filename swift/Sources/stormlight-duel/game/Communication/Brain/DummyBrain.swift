@@ -5,10 +5,17 @@ public final class RpgCharacterDummyBrain: RpgCharacterBrain {
     @MainActor
     public private(set) var premadeAnswers: [any Sendable] = []
     @MainActor
-    public var onlyGivePremadeAnswers: Bool = false
+    public var defaultBehavior: DefaultBehavior
 
-    public init(characterRef: RpgCharacterRef) {
+    public enum DefaultBehavior: Sendable {
+        case firstOption
+        case randomOption
+        case giveUp
+    }
+
+    public init(characterRef: RpgCharacterRef, defaultBehavior: DefaultBehavior = .firstOption) {
         self.characterRef = characterRef
+        self.defaultBehavior = defaultBehavior
     }
 
     /// If we have a valid premade answer, return it!
@@ -21,12 +28,16 @@ public final class RpgCharacterDummyBrain: RpgCharacterBrain {
         if let answer = getPremadeAnswer(ofType: C.Element.self) {
             return answer
         }
-        if !onlyGivePremadeAnswers {
+        switch self.defaultBehavior {
+        case .firstOption:
             return options.first!
+        case .randomOption:
+            return options.randomElement()!
+        case .giveUp:
+            fatalError(
+                "\(self.characterRef.name) is too much of a dummy to decide between these \(options.count) options: \(options)."
+            )
         }
-        fatalError(
-            "\(self.characterRef.name) is too much of a dummy to decide between these \(options.count) options: \(options)."
-        )
     }
 
     @MainActor
