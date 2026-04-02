@@ -48,6 +48,10 @@ public struct InteractiveMove: CombatAction {
                     MovementStepEvent(subject: me, direction: direction, carefully: false),
                     in: gameSession
                 )
+                await gameSession.game.broadcaster.tellAll(
+                    SingleTargetMessage(
+                        w1: "$1 moved 5ft to the \(direction)",
+                        wU: "You moved 5ft to the \(direction)", as1: me.primaryKey))
             case .other(_):
                 break movementLoop
             }
