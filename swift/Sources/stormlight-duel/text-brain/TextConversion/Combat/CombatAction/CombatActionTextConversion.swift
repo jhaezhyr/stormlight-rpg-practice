@@ -50,7 +50,9 @@ extension CombatAction {
     }
 }
 private let MutliParserCombatAction_registry:
-    [CombatActionName: @Sendable (CliArgsConversionContext) -> [CliArgsParser<CombatChoice>]] = [:]
+    [CombatActionName: @Sendable (CliArgsConversionContext) -> [CliArgsParser<CombatChoice>]] = [
+        "\(Strike.self)": Strike.combatChoiceParsers(context:)
+    ]
 
 struct EndTurn {}
 @MainActor public let endTurnParser = CliArgsParser<CombatChoice>(helpText: "(e)nd") {

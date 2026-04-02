@@ -64,3 +64,26 @@ extension Strike: CliArgsConvertibleType {
 
     public static var helpText: Substring { "stri(k)e [target] [weapon]" }
 }
+
+extension Strike: MutliParserCombatAction {
+    public static func combatActionParsers(context: CliArgsConversionContext) -> [CliArgsParser<
+        Strike
+    >] {
+        let possibleStrikes = Strike.possibleStrikes(
+            for: context.characterRef,
+            in: context.game
+        )
+        // TODO sort strikes by avg damage they could do
+        return possibleStrikes.enumerated().map {
+            (i, possibleStrike) in
+            let number = "k\(i)"
+            return CliArgsParser<Strike>(helpText: "\(number) - \(possibleStrike)") {
+                args, _ in
+                guard "\(args.first, default: "")" == number else {
+                    return nil
+                }
+                return possibleStrike
+            }
+        }
+    }
+}
